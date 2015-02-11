@@ -12,8 +12,6 @@ if (!class_exists('Micropub')) :
 
 add_action('init', array('Micropub', 'init'));
 
-$token = 'soopersekret';
-
 /**
  * Micropub Plugin Class
  */
@@ -61,17 +59,42 @@ class Micropub {
 
     $input = file_get_contents('php://input');
     parse_str($input, $q);
-    global $token;
 
     header('Content-Type: text/plain; charset=' . get_option('blog_charset'));
 
     // verify token
-    if ($q['access_token'] != $token &&
-        getallheaders()['Authorization'] == 'Bearer ' . $token) {
+    $headers = getallheaders();
+    if (isset($headers['Authorization'])) {
+      $auth_header = $headers['Authorization'];
+    } elseif (isset($q['access_token'])) {
+      $auth_header = 'Bearer ' . $q['access_token'];
+    } else {
       status_header(401);
-      echo 'Invalid access token';
+      echo 'Missing access_token';
       exit;
-    } elseif (!isset($q['h']) && !isset($q['url'])) {
+    }
+
+    $resp = wp_remote_get('https://tokens.indieauth.com/token',
+                          array('headers' => array(
+                            'Content-type' => 'application/x-www-form-urlencoded',
+                            'Authorization' => $auth_header)));
+    $code = wp_remote_retrieve_response_code($resp);
+    $body = wp_remote_retrieve_body($resp);
+    if ($code / 100 != 2) {
+      status_header($code);
+      echo 'Invalid access_token: ' . $body;
+      exit;
+    }
+    parse_str($body, $verified);
+    $home = home_url();
+    if ($verified['me'] != $home) {
+      status_header(401);
+      echo 'access_token domain ' . $verified['me'] . " doesn't match " . $url;
+      exit;
+    }
+
+    // validate micropub request params
+    if (!isset($q['h']) && !isset($q['url'])) {
       status_header(400);
       echo 'requires either h= (for create) or url= (for update, delete, etc)';
       exit;
@@ -88,7 +111,7 @@ class Micropub {
         'post_title'    => $q['name'] || '',
         'post_content'  => $q['content'] || '',
         'post_excerpt'  => $q['summary'] || '',
-        'post_status'   => 'publish',
+        // 'post_status'   => 'publish',
       ));
       status_header(201);
       header('Location: ' . get_permalink($post_id));
@@ -96,7 +119,7 @@ class Micropub {
     } else {
       $post_id = url_to_postid($q['url']);
       if ($post_id == 0) {
-        status_header(404);
+        status_header(400);
         echo $q['url'] . 'not found';
         exit;
       }
@@ -135,23 +158,32 @@ class Micropub {
    * The micropub autodicovery meta tags
    */
   public static function html_header() {
-    echo '<link rel="micropub" href="'.site_url("?micropub=endpoint").'" />'."\n";
+?>
+<link rel="micropub" href="<?php echo site_url('?micropub=endpoint') ?>">
+<link rel="authorization_endpoint" href="https://indieauth.com/auth">
+<link rel="token_endpoint" href="https://tokens.indieauth.com/token">
+<?php
   }
 
   /**
    * The micropub autodicovery http-header
    */
   public static function http_header() {
-    header('Link: <'.site_url("?micropub=endpoint").'>; rel="micropub"', false);
+    header('Link: <' . site_url('?micropub=endpoint') . '>; rel="micropub"', false);
+    header('Link: <https://indieauth.com/auth>; rel="authorization_endpoint"', false);
+    header('Link: <https://tokens.indieauth.com/token>; rel="token_endpoint"', false);
   }
 
   /**
    * Generates webfinger/host-meta links
    */
   public static function jrd_links($array) {
-    $array["links"][] = array("rel" => "micropub",
-                              "href" => site_url("?micropub=endpoint"));
-    return $array;
+    $array['links'][] = array('rel' => 'micropub',
+                              'href' => site_url('?micropub=endpoint'));
+    $array['links'][] = array('rel' => 'authorization_endpoint',
+                              'href' => 'https://indieauth.com/auth');
+    $array['links'][] = array('rel' => 'token_endpoint',
+                              'href' => 'https://tokens.indieauth.com/token');
   }
 }
 
@@ -170,3 +202,4 @@ if (!function_exists('getallheaders')) {
 }
 
 endif;
+?>
