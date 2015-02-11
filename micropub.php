@@ -23,7 +23,9 @@ class Micropub {
    */
   public static function init() {
     // register endpoint
-    add_rewrite_endpoint('micropub', EP_ALL);
+    // (I originally used add_rewrite_endpoint() to serve on /micropub instead
+    // of ?micropub=endpoint, but that had problems. details in
+    // https://github.com/snarfed/wordpress-micropub/commit/d3bdc433ee019d3968be6c195b0384cba5ffe36b#commitcomment-9690066 )
     add_filter('query_vars', array('Micropub', 'query_var'));
     add_action('parse_query', array('Micropub', 'parse_query'));
 
@@ -133,21 +135,22 @@ class Micropub {
    * The micropub autodicovery meta tags
    */
   public static function html_header() {
-    echo '<link rel="micropub" href="'.site_url("micropub").'" />'."\n";
+    echo '<link rel="micropub" href="'.site_url("?micropub=endpoint").'" />'."\n";
   }
 
   /**
    * The micropub autodicovery http-header
    */
   public static function http_header() {
-    header('Link: <'.site_url("micropub").'>; rel="micropub"', false);
+    header('Link: <'.site_url("?micropub=endpoint").'>; rel="micropub"', false);
   }
 
   /**
    * Generates webfinger/host-meta links
    */
   public static function jrd_links($array) {
-    $array["links"][] = array("rel" => "micropub", "href" => site_url("micropub"));
+    $array["links"][] = array("rel" => "micropub",
+                              "href" => site_url("?micropub=endpoint"));
     return $array;
   }
 }
