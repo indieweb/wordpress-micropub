@@ -6,11 +6,6 @@
  Author: Ryan Barrett
  Author URI: https://snarfed.org/
  Version: 0.1
-
-TODO
-- /micropub instead of ?micropub=endpoint
-- support Authorization HTTP header (how to get a request header from WP?)
-- undelete
 */
 
 // check if class already exists
