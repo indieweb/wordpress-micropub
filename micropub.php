@@ -75,7 +75,9 @@ class Micropub {
     header('Content-Type: text/plain; charset=' . get_option('blog_charset'));
 
     // verify token
-    if ($access_token != $token) {
+    if (!((isset($access_token) && $access_token == $token) ||
+          (!isset($access_token) &&
+           getallheaders()['Authorization'] == 'Bearer ' . $token))) {
       status_header(401);
       echo 'Invalid access token';
       exit;
@@ -157,6 +159,20 @@ class Micropub {
     $array["links"][] = array("rel" => "micropub",
                               "href" => site_url("?micropub=endpoint"));
     return $array;
+  }
+}
+
+// blatantly stolen from https://github.com/idno/Known/blob/master/Idno/Pages/File/View.php#L25
+if (!function_exists('getallheaders')) {
+  function getallheaders()
+  {
+    $headers = '';
+    foreach ($_SERVER as $name => $value) {
+      if (substr($name, 0, 5) == 'HTTP_') {
+        $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+      }
+    }
+    return $headers;
   }
 }
 
