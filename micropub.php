@@ -8,10 +8,8 @@
  Version: 0.1
 */
 
-// check if class already exists
 if (!class_exists('Micropub')) :
 
-// initialize plugin
 add_action('init', array('Micropub', 'init'));
 
 $token = 'soopersekret';
@@ -60,54 +58,55 @@ class Micropub {
     }
 
     $input = file_get_contents('php://input');
-    parse_str($input, $params);
+    parse_str($input, $q);
     global $token;
 
     header('Content-Type: text/plain; charset=' . get_option('blog_charset'));
 
     // verify token
-    if (!((isset($params['access_token']) && $access_token == $token) ||
-          (!isset($params['access_token']) &&
-           getallheaders()['Authorization'] == 'Bearer ' . $token))) {
+    if ($q['access_token'] != $token &&
+        getallheaders()['Authorization'] == 'Bearer ' . $token) {
       status_header(401);
       echo 'Invalid access token';
       exit;
-    } elseif (!isset($params['h']) && !isset($params['url'])) {
+    } elseif (!isset($q['h']) && !isset($q['url'])) {
       status_header(400);
       echo 'requires either h= (for create) or url= (for update, delete, etc)';
       exit;
     }
 
     // support both action= and operation= parameter names
-    if (!isset($params['action']) && isset($params['operation'])) {
-      $params['action'] = $params['operation'];
+    if (!isset($q['action']) && isset($q['operation'])) {
+      $q['action'] = $q['operation'];
     }
 
-    if (!isset($params['url']) || $params['action'] == 'create') {
+    if (!isset($q['url']) || $q['action'] == 'create') {
       $post_id = wp_insert_post(array(
-        'post_title'    => $params['name'],
-        'post_content'  => $params['content'],
+        'post_name'     => $q['slug'] || '',
+        'post_title'    => $q['name'] || '',
+        'post_content'  => $q['content'] || '',
+        'post_excerpt'  => $q['summary'] || '',
         'post_status'   => 'publish',
       ));
       status_header(201);
       header('Location: ' . get_permalink($post_id));
 
     } else {
-      $post_id = url_to_postid($params['url']);
+      $post_id = url_to_postid($q['url']);
       if ($post_id == 0) {
         status_header(404);
-        echo $params['url'] . 'not found';
+        echo $q['url'] . 'not found';
         exit;
       }
 
-      if ($params['action'] == 'edit' || !isset($params['action'])) {
+      if ($q['action'] == 'edit' || !isset($q['action'])) {
         wp_update_post(array(
           'ID'            => $post_id,
-          'post_title'    => $params['name'],
-          'post_content'  => $params['content'],
+          'post_title'    => $q['name'],
+          'post_content'  => $q['content'],
         ));
         status_header(204);
-      } elseif ($params['action'] == 'delete') {
+      } elseif ($q['action'] == 'delete') {
         wp_trash_post($post_id);
         status_header(204);
       // TODO: figure out how to make url_to_postid() support posts in trash
@@ -119,7 +118,7 @@ class Micropub {
       //   status_header(204);
       } else {
         status_header(400);
-        echo 'unknown action ' . $params['action'];
+        echo 'unknown action ' . $q['action'];
         exit;
       }
     }
@@ -167,5 +166,4 @@ if (!function_exists('getallheaders')) {
   }
 }
 
-// end check if class already exists
 endif;
