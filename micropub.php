@@ -85,7 +85,11 @@ class Micropub {
       exit;
     }
 
-    if (!isset($url) || $operation == 'create') {
+    if (!isset($action) && isset($operation)) {
+      $action = $operation;
+    }
+
+    if (!isset($url) || $action == 'create') {
       $post_id = wp_insert_post(array(
         'post_title'    => $name,
         'post_content'  => $content,
@@ -93,12 +97,37 @@ class Micropub {
       ));
       status_header(201);
       header('Location: ' . get_permalink($post_id));
-    } elseif ($operation == 'edit' || !isset($operation)) {
-        // TODO
-    } elseif ($operation == 'delete') {
-        // TODO
-    } elseif ($operation == 'undelete') {
-        // TODO
+
+    } else {
+      $post_id = url_to_postid($url);
+      if ($post_id == 0) {
+        status_header(404);
+        echo $url . 'not found';
+        exit;
+      }
+
+      if ($action == 'edit' || !isset($action)) {
+        wp_update_post(array(
+          'ID'            => $post_id,
+          'post_title'    => $name,
+          'post_content'  => $content,
+        ));
+        status_header(204);
+      } elseif ($action == 'delete') {
+        wp_trash_post($post_id);
+        status_header(204);
+      // TODO: figure out how to make url_to_postid() support posts in trash
+      // } elseif ($action == 'undelete') {
+      //   wp_update_post(array(
+      //     'ID'           => $post_id,
+      //     'post_status'  => 'publish',
+      //   ));
+      //   status_header(204);
+      } else {
+        status_header(400);
+        echo 'unknown action ' . $action;
+        exit;
+      }
     }
 
     // be sure to add an exit; to the end of your request handler
