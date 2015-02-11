@@ -10,10 +10,7 @@
 TODO
 - /micropub instead of ?micropub=endpoint
 - support Authorization HTTP header (how to get a request header from WP?)
-- edit, delete, undelete
-
-TO USE:
-url_to_postid, wp_update_post, wp_trash_post, apply_filters, do_action
+- undelete
 */
 
 // check if class already exists
@@ -33,7 +30,7 @@ class Micropub {
    */
   public static function init() {
     // register endpoint
-    // TODO: add_rewrite_endpoint('micropub', EP_ROOT);
+    add_rewrite_endpoint('micropub', EP_ALL);
     add_filter('query_vars', array('Micropub', 'query_var'));
     add_action('parse_query', array('Micropub', 'parse_query'));
 
@@ -63,7 +60,6 @@ class Micropub {
    * @uses do_action() Calls 'micropub_request' on the default request
    */
   public static function parse_query($wp) {
-    // check if it is a micropub request or not
     if (!array_key_exists('micropub', $wp->query_vars)) {
       return;
     }
@@ -142,22 +138,21 @@ class Micropub {
    * The micropub autodicovery meta tags
    */
   public static function html_header() {
-    echo '<link rel="micropub" href="'.site_url("?micropub=endpoint").'" />'."\n";
+    echo '<link rel="micropub" href="'.site_url("micropub").'" />'."\n";
   }
 
   /**
    * The micropub autodicovery http-header
    */
   public static function http_header() {
-    header('Link: <'.site_url("?micropub=endpoint").'>; rel="micropub"', false);
+    header('Link: <'.site_url("micropub").'>; rel="micropub"', false);
   }
 
   /**
    * Generates webfinger/host-meta links
    */
   public static function jrd_links($array) {
-    $array["links"][] = array("rel" => "micropub",
-                              "href" => site_url("?micropub=endpoint"));
+    $array["links"][] = array("rel" => "micropub", "href" => site_url("micropub"));
     return $array;
   }
 }
