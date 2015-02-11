@@ -2,6 +2,9 @@
 
 And so it begins...
 
+This project is placed in the public domain. You may also use it under the
+[CC0 license](http://creativecommons.org/publicdomain/zero/1.0/).
+
 Micropub spec: http://indiewebcamp.com/micropub
 
 Current plan: start with an existing API plugin, hopefully steal its token
