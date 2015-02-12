@@ -1,0 +1,40 @@
+=== Plugin Name ===
+Contributors: snarfed
+Tags: micropub
+Requires at least: 3.0.1
+Tested up to: 4.1
+Stable tag: trunk
+License: CC0
+License URI: http://creativecommons.org/publicdomain/zero/1.0/
+Donate link: -
+
+A Micropub (http://micropub.net/) server plugin.
+
+== Description ==
+
+A [Micropub](http://micropub.net/) server plugin. From [micropub.net](http://micropub.net/):
+
+> Micropub is an open API standard that is used to create posts on one's own domain using third-party clients. Web apps and native apps (e.g. iPhone, Android) can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com."
+
+Supports create, update, and delete, but not undelete. Supports most Micropub properties but not all, notably `published`, `location`, and `photo`. Delegates token handling to [tokens.indieauth.com](https://tokens.indieauth.com/).
+
+== Installation ==
+
+Install from the WordPress plugin directory or put `micropub.php` in your plugin directory. No setup needed.
+
+== Frequently Asked Questions ==
+
+None yet.
+
+== Upgrade Notice ==
+
+None yet.
+
+== Screenshots ==
+
+TODO
+
+== Changelog ==
+
+= 0.1 =
+Initial release.
