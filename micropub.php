@@ -79,9 +79,9 @@ class Micropub {
     $args = Micropub::map_params($q);
     if (!isset($q['url']) || $q['action'] == 'create') {
       $args['post_status'] = 'publish';
-      $post_id = wp_insert_post($args);
+      $result = Micropub::check_error(wp_insert_post($args));
       status_header(201);
-      header('Location: ' . get_permalink($post_id));
+      header('Location: ' . get_permalink($result));
 
     } else {
       if ($args['ID'] == 0) {
@@ -91,19 +91,19 @@ class Micropub {
       }
 
       if ($q['action'] == 'edit' || !isset($q['action'])) {
-        wp_update_post($args);
+        Micropub::check_error(wp_update_post($args));
         status_header(204);
       } elseif ($q['action'] == 'delete') {
-        wp_trash_post($args['ID']);
+        Micropub::check_error(wp_trash_post($args['ID']));
         status_header(204);
       // TODO: figure out how to make url_to_postid() support posts in trash
       // here's one way:
       // https://gist.github.com/peterwilsoncc/bb40e52cae7faa0e6efc
       // } elseif ($action == 'undelete') {
-      //   wp_update_post(array(
+      //   Micropub::check_error(wp_update_post(array(
       //     'ID'           => $args['ID'],
       //     'post_status'  => 'publish',
-      //   ));
+      //   )));
       //   status_header(204);
       } else {
         status_header(400);
@@ -188,6 +188,19 @@ class Micropub {
     }
 
     return $args;
+  }
+
+  private static function check_error($result) {
+    if (!$result) {
+      status_header(500);
+      echo 'Unknown WordPress error';
+      exit;
+    } else if (is_wp_error($result)) {
+      status_header(500);
+      echo $result->get_error_message();
+      exit;
+    }
+    return $result;
   }
 
   /**
