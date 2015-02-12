@@ -62,37 +62,7 @@ class Micropub {
 
     header('Content-Type: text/plain; charset=' . get_option('blog_charset'));
 
-    // verify token
-    $headers = getallheaders();
-    if (isset($headers['Authorization'])) {
-      $auth_header = $headers['Authorization'];
-    } elseif (isset($q['access_token'])) {
-      $auth_header = 'Bearer ' . $q['access_token'];
-    } else {
-      status_header(401);
-      echo 'Missing access_token';
-      exit;
-    }
-
-    $resp = wp_remote_get('https://tokens.indieauth.com/token',
-                          array('headers' => array(
-                            'Content-type' => 'application/x-www-form-urlencoded',
-                            'Authorization' => $auth_header)));
-    $code = wp_remote_retrieve_response_code($resp);
-    $body = wp_remote_retrieve_body($resp);
-    if ($code / 100 != 2) {
-      status_header($code);
-      echo 'Invalid access_token: ' . $body;
-      exit;
-    }
-    parse_str($body, $verified);
-    $home = untrailingslashit(home_url());
-    if ($home != 'http://localhost' &&
-        $home != untrailingslashit($verified['me'])) {
-      status_header(401);
-      echo 'access_token domain ' . $verified['me'] . " doesn't match " . $url;
-      exit;
-    }
+    Micropub::authorize($q);
 
     // validate micropub request params
     if (!isset($q['h']) && !isset($q['url'])) {
@@ -145,6 +115,48 @@ class Micropub {
     do_action('micropub_request', $q);
 
     exit;
+  }
+
+  /**
+   * Use tokens.indieauth.com to validate the access token.
+   */
+  private static function authorize($q) {
+    $headers = getallheaders();
+    if (isset($headers['Authorization'])) {
+      $auth_header = $headers['Authorization'];
+    } elseif (isset($q['access_token'])) {
+      $auth_header = 'Bearer ' . $q['access_token'];
+    } else {
+      status_header(401);
+      echo 'Missing access_token';
+      exit;
+    }
+
+    $resp = wp_remote_get('https://tokens.indieauth.com/token',
+                          array('headers' => array(
+                            'Content-type' => 'application/x-www-form-urlencoded',
+                            'Authorization' => $auth_header)));
+    $code = wp_remote_retrieve_response_code($resp);
+    $body = wp_remote_retrieve_body($resp);
+    if ($code / 100 != 2) {
+      status_header($code);
+      echo 'Invalid access_token: ' . $body;
+      exit;
+    }
+
+    parse_str($body, $resp);
+    $home = untrailingslashit(home_url());
+    if ($home != 'http://localhost' &&
+        $home != untrailingslashit($resp['me'])) {
+      status_header(401);
+      echo 'access_token domain ' . $resp['me'] . " doesn't match " . $url;
+      exit;
+    } else if (!isset($resp['scope']) ||
+               !in_array('post', explode(' ', $resp['scope']))) {
+      status_header(403);
+      echo "access token is missing post scope; got " . $resp['scope'];
+      exit;
+    }
   }
 
   /**
