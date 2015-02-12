@@ -151,6 +151,7 @@ class Micropub {
    * Map Micropub parameters to WordPress wp_insert_post() args.
    */
   private static function map_params($q) {
+    // these can be passed through untouched
     $mp_to_wp = array(
       'slug'     => 'post_name',
       'name'     => 'post_title',
@@ -165,8 +166,13 @@ class Micropub {
       }
     }
 
+    // these are transformed or looked up
     if (isset($q['url'])) {
       $args['ID'] = url_to_postid($q['url']);
+    }
+
+    if (isset($q['published'])) {
+      $args['post_date'] = iso8601_to_datetime($q['published']);
     }
 
     return $args;
