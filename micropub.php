@@ -86,8 +86,9 @@ class Micropub {
       exit;
     }
     parse_str($body, $verified);
-    $home = home_url();
-    if ($verified['me'] != $home) {
+    $home = untrailingslashit(home_url());
+    if ($home != 'http://localhost' &&
+        $home != untrailingslashit($verified['me'])) {
       status_header(401);
       echo 'access_token domain ' . $verified['me'] . " doesn't match " . $url;
       exit;
@@ -105,39 +106,32 @@ class Micropub {
       $q['action'] = $q['operation'];
     }
 
+    $args = Micropub::map_params($q);
     if (!isset($q['url']) || $q['action'] == 'create') {
-      $post_id = wp_insert_post(array(
-        'post_name'     => $q['slug'] || '',
-        'post_title'    => $q['name'] || '',
-        'post_content'  => $q['content'] || '',
-        'post_excerpt'  => $q['summary'] || '',
-        // 'post_status'   => 'publish',
-      ));
+      $args['post_status'] = 'publish';
+      $post_id = wp_insert_post($args);
       status_header(201);
       header('Location: ' . get_permalink($post_id));
 
     } else {
-      $post_id = url_to_postid($q['url']);
-      if ($post_id == 0) {
+      if ($args['ID'] == 0) {
         status_header(400);
-        echo $q['url'] . 'not found';
+        echo $q['url'] . ' not found';
         exit;
       }
 
       if ($q['action'] == 'edit' || !isset($q['action'])) {
-        wp_update_post(array(
-          'ID'            => $post_id,
-          'post_title'    => $q['name'],
-          'post_content'  => $q['content'],
-        ));
+        wp_update_post($args);
         status_header(204);
       } elseif ($q['action'] == 'delete') {
-        wp_trash_post($post_id);
+        wp_trash_post($args['ID']);
         status_header(204);
       // TODO: figure out how to make url_to_postid() support posts in trash
+      // here's one way:
+      // https://gist.github.com/peterwilsoncc/bb40e52cae7faa0e6efc
       // } elseif ($action == 'undelete') {
       //   wp_update_post(array(
-      //     'ID'           => $post_id,
+      //     'ID'           => $args['ID'],
       //     'post_status'  => 'publish',
       //   ));
       //   status_header(204);
@@ -148,10 +142,34 @@ class Micropub {
       }
     }
 
-    // be sure to add an exit; to the end of your request handler
-    do_action('micropub_request', $source, $target, $contents);
+    do_action('micropub_request', $q);
 
     exit;
+  }
+
+  /**
+   * Map Micropub parameters to WordPress wp_insert_post() args.
+   */
+  private static function map_params($q) {
+    $mp_to_wp = array(
+      'slug'     => 'post_name',
+      'name'     => 'post_title',
+      'content'  => 'post_content',
+      'summary'  => 'post_excerpt'
+    );
+
+    $args = array();
+    foreach ($q as $param => $value) {
+      if (isset($mp_to_wp[$param])) {
+        $args[$mp_to_wp[$param]] = $value;
+      }
+    }
+
+    if (isset($q['url'])) {
+      $args['ID'] = url_to_postid($q['url']);
+    }
+
+    return $args;
   }
 
   /**
