@@ -25,9 +25,10 @@ Micropub properties:
 * `slug`
 * `url`
 * `published`
+* `photo`
 
-Adds one WordPress filter, `before_micropub($wp_args, $micropub_params)`, and
-one hook, `after_micropub($micropub_params, $post_id)`.
+Adds one WordPress filter, `before_micropub($wp_args)`, and one hook,
+`after_micropub($post_id)`.
 
 Delegates token handling to [tokens.indieauth.com](https://tokens.indieauth.com/).
 

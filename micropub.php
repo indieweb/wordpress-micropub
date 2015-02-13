@@ -120,7 +120,7 @@ class Micropub {
         exit;
       }
     }
-    do_action('after_micropub', $_POST, $args['ID']);
+    do_action('after_micropub', $args['ID']);
     exit;
   }
 
