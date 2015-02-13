@@ -8,6 +8,10 @@
  Version: 0.1
 */
 
+// Example command line for testing:
+// curl -i -H 'Authorization: Bearer ...' -F h=entry -F name=foo -F content=bar \
+//   -F photo=@gallery/snarfed.gif 'http://localhost/w/?micropub=endpoint'
+
 if (!class_exists('Micropub')) :
 
 add_action('init', array('Micropub', 'init'));
@@ -77,6 +81,13 @@ class Micropub {
     if (!isset($_POST['url']) || $_POST['action'] == 'create') {
       $args['post_status'] = 'publish';
       $args['ID'] = Micropub::check_error(wp_insert_post($args));
+
+      if (isset($_FILES['photo'])) {
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+        Micropub::check_error(media_handle_upload('photo', $args['ID']));
+      }
 
       status_header(201);
       header('Location: ' . get_permalink($args['ID']));
@@ -173,6 +184,10 @@ class Micropub {
         $args[$mp_to_wp[$param]] = $value;
       }
     }
+
+    if (isset($_FILES['photo'])) {
+      $args['post_content'] .= "\n\n[gallery size=full columns=1]";
+    }      
 
     // these are transformed or looked up
     if (isset($_POST['url'])) {
