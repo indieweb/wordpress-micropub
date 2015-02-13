@@ -76,11 +76,13 @@ class Micropub {
       $_POST['action'] = $_POST['operation'];
     }
 
-    $args = apply_filters('before_micropub', Micropub::map_params());
+    $args = apply_filters('before_micropub', Micropub::generate_args());
 
     if (!isset($_POST['url']) || $_POST['action'] == 'create') {
       $args['post_status'] = 'publish';
+      kses_remove_filters();  // prevent sanitizing HTML tags in post_content
       $args['ID'] = Micropub::check_error(wp_insert_post($args));
+      kses_init_filters();
 
       if (isset($_FILES['photo'])) {
         require_once(ABSPATH . 'wp-admin/includes/image.php');
@@ -167,14 +169,13 @@ class Micropub {
   }
 
   /**
-   * Map Micropub parameters to WordPress wp_insert_post() args.
+   * Generate args for WordPress wp_insert_post() and friends.
    */
-  private static function map_params() {
+  private static function generate_args() {
     // these can be passed through untouched
     $mp_to_wp = array(
       'slug'     => 'post_name',
       'name'     => 'post_title',
-      'content'  => 'post_content',
       'summary'  => 'post_excerpt'
     );
 
@@ -185,10 +186,6 @@ class Micropub {
       }
     }
 
-    if (isset($_FILES['photo'])) {
-      $args['post_content'] .= "\n\n[gallery size=full columns=1]";
-    }      
-
     // these are transformed or looked up
     if (isset($_POST['url'])) {
       $args['ID'] = url_to_postid($_POST['url']);
@@ -198,7 +195,38 @@ class Micropub {
       $args['post_date'] = iso8601_to_datetime($_POST['published']);
     }
 
+    $args['post_content'] = Micropub::generate_post_content();
     return $args;
+  }
+
+  private static function generate_post_content() {
+    foreach (array('like', 'repost', 'in-reply-to') as $cls) {
+      $val = isset($_POST[$cls]) ? $_POST[$cls]
+             : (isset($_POST[$cls . '-of']) ? $_POST[$cls . '-of'] : NULL);
+      if ($val) {
+        if ($cls != 'in-reply-to') {
+          $cls .= 's';
+        }
+        $lines[] = '<p>' . ucfirst(str_replace('-', ' ', $cls)) .
+          ' <a class="u-' . $cls . ' href="' . $val . '">' . $val . '</a>.</p>';
+      }
+    }
+
+    if (isset($_POST['rsvp'])) {
+      $lines[] = '<p>RSVPs <data class="p-rsvp" value="' . $_POST['rsvp'] .
+        '">' . $_POST['rsvp'] . '</data>.</p>';
+    }
+
+    if (isset($_POST['content'])) {
+      $lines[] = "<div class=\"e-content\">\n" . $_POST['content'] . '\n</div>';
+    }
+
+    // TODO: generate my own markup so i can include u-photo
+    if (isset($_FILES['photo'])) {
+      $lines[] = "\n[gallery size=full columns=1]";
+    }
+
+    return implode("\n", $lines);
   }
 
   private static function check_error($result) {
