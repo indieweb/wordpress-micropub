@@ -56,10 +56,10 @@ class Micropub {
     if (!array_key_exists('micropub', $wp->query_vars)) {
       return;
     }
-
+    $result = 0;
     $input = file_get_contents('php://input');
     parse_str($input, $q);
-
+    
     header('Content-Type: text/plain; charset=' . get_option('blog_charset'));
 
     Micropub::authorize($q);
@@ -91,7 +91,7 @@ class Micropub {
       }
 
       if ($q['action'] == 'edit' || !isset($q['action'])) {
-        Micropub::check_error(wp_update_post($args));
+        $result = Micropub::check_error(wp_update_post($args));
         status_header(204);
       } elseif ($q['action'] == 'delete') {
         Micropub::check_error(wp_trash_post($args['ID']));
@@ -112,7 +112,7 @@ class Micropub {
       }
     }
 
-    do_action('micropub_request', $q);
+    do_action('micropub_request', $q, $result);
 
     exit;
   }
@@ -187,7 +187,7 @@ class Micropub {
       $args['post_date'] = iso8601_to_datetime($q['published']);
     }
 
-    return $args;
+    return apply_filter('mp_to_wp', $args, $q);
   }
 
   private static function check_error($result) {
