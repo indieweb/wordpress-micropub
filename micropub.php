@@ -83,14 +83,7 @@ class Micropub {
       kses_remove_filters();  // prevent sanitizing HTML tags in post_content
       $args['ID'] = Micropub::check_error(wp_insert_post($args));
       kses_init_filters();
-
-      if (isset($_FILES['photo'])) {
-        require_once(ABSPATH . 'wp-admin/includes/image.php');
-        require_once(ABSPATH . 'wp-admin/includes/file.php');
-        require_once(ABSPATH . 'wp-admin/includes/media.php');
-        Micropub::check_error(media_handle_upload('photo', $args['ID']));
-      }
-
+      Micropub::postprocess($args['ID']);
       status_header(201);
       header('Location: ' . get_permalink($args['ID']));
 
@@ -103,6 +96,7 @@ class Micropub {
 
       if ($_POST['action'] == 'edit' || !isset($_POST['action'])) {
         Micropub::check_error(wp_update_post($args));
+        Micropub::postprocess($args['ID']);
         status_header(200);
       } elseif ($_POST['action'] == 'delete') {
         Micropub::check_error(wp_trash_post($args['ID']));
@@ -236,10 +230,34 @@ class Micropub {
     return implode("\n", $lines);
   }
 
+  /**
+   * Postprocesses a post that has been created or updated. Useful for changes
+   * that require the post id, e.g. uploading media and adding post metadata.
+   */
+  private static function postprocess($post_id) {
+    if (isset($_FILES['photo'])) {
+      require_once(ABSPATH . 'wp-admin/includes/image.php');
+      require_once(ABSPATH . 'wp-admin/includes/file.php');
+      require_once(ABSPATH . 'wp-admin/includes/media.php');
+      Micropub::check_error(media_handle_upload('photo', $post_id));
+    }
+
+    if (isset($_POST['location'])) {
+      // Geo URI format:
+      // http://en.wikipedia.org/wiki/Geo_URI#Example
+      // https://indiewebcamp.com/micropub##location
+      $geo = str_replace('geo:', '', urldecode($_POST['location']));
+      $geo = explode(';', explode(':', $geo)[0])[0];
+      $coords = explode(',', $geo);
+      update_post_meta($post_id, 'geo_latitude', trim($coords[0]));
+      update_post_meta($post_id, 'geo_longitude', trim($coords[1]));
+    }
+}
+
   private static function check_error($result) {
     if (!$result) {
       status_header(500);
-      echo 'Unknown WordPress error';
+      echo 'Unknown WordPress error: ' . $result;
       exit;
     } else if (is_wp_error($result)) {
       status_header(500);

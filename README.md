@@ -10,16 +10,17 @@ Supports create, update, and delete, but not undelete. Supports these
 Micropub properties:
 
 * `content`
-* `name`
-* `summary`
-* `slug`
-* `url`
-* `published`
-* `photo`
 * `in-reply-to`
 * `like-of`/`like`
+* `location`
+* `name`
+* `photo`
+* `published`
 * `repost-of`/`repost`
 * `rsvp`
+* `slug`
+* `summary`
+* `url`
 
 Adds one WordPress filter, `before_micropub($wp_args)`, and one hook,
 `after_micropub($post_id)`.
