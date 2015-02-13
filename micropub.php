@@ -56,10 +56,8 @@ class Micropub {
     if (!array_key_exists('micropub', $wp->query_vars)) {
       return;
     }
-
     $input = file_get_contents('php://input');
     parse_str($input, $q);
-
     header('Content-Type: text/plain; charset=' . get_option('blog_charset'));
 
     Micropub::authorize($q);
@@ -76,10 +74,11 @@ class Micropub {
       $q['action'] = $q['operation'];
     }
 
-    $args = Micropub::map_params($q);
+    $args = apply_filters('before_micropub', Micropub::map_params($q), $q);
     if (!isset($q['url']) || $q['action'] == 'create') {
       $args['post_status'] = 'publish';
       $result = Micropub::check_error(wp_insert_post($args));
+      $args['ID'] = $result;
       status_header(201);
       header('Location: ' . get_permalink($result));
 
@@ -111,9 +110,7 @@ class Micropub {
         exit;
       }
     }
-
-    do_action('micropub_request', $q);
-
+    do_action('after_micropub', $q, $args['ID']);
     exit;
   }
 
