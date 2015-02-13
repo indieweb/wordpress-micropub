@@ -56,43 +56,42 @@ class Micropub {
     if (!array_key_exists('micropub', $wp->query_vars)) {
       return;
     }
-    $input = file_get_contents('php://input');
-    parse_str($input, $q);
     header('Content-Type: text/plain; charset=' . get_option('blog_charset'));
 
-    Micropub::authorize($q);
+    Micropub::authorize();
 
     // validate micropub request params
-    if (!isset($q['h']) && !isset($q['url'])) {
+    if (!isset($_POST['h']) && !isset($_POST['url'])) {
       status_header(400);
       echo 'requires either h= (for create) or url= (for update, delete, etc)';
       exit;
     }
 
     // support both action= and operation= parameter names
-    if (!isset($q['action']) && isset($q['operation'])) {
-      $q['action'] = $q['operation'];
+    if (!isset($_POST['action']) && isset($_POST['operation'])) {
+      $_POST['action'] = $_POST['operation'];
     }
 
-    $args = apply_filters('before_micropub', Micropub::map_params($q), $q);
-    if (!isset($q['url']) || $q['action'] == 'create') {
+    $args = apply_filters('before_micropub', Micropub::map_params());
+
+    if (!isset($_POST['url']) || $_POST['action'] == 'create') {
       $args['post_status'] = 'publish';
-      $result = Micropub::check_error(wp_insert_post($args));
-      $args['ID'] = $result;
+      $args['ID'] = Micropub::check_error(wp_insert_post($args));
+
       status_header(201);
-      header('Location: ' . get_permalink($result));
+      header('Location: ' . get_permalink($args['ID']));
 
     } else {
       if ($args['ID'] == 0) {
         status_header(400);
-        echo $q['url'] . ' not found';
+        echo $_POST['url'] . ' not found';
         exit;
       }
 
-      if ($q['action'] == 'edit' || !isset($q['action'])) {
+      if ($_POST['action'] == 'edit' || !isset($_POST['action'])) {
         Micropub::check_error(wp_update_post($args));
         status_header(204);
-      } elseif ($q['action'] == 'delete') {
+      } elseif ($_POST['action'] == 'delete') {
         Micropub::check_error(wp_trash_post($args['ID']));
         status_header(204);
       // TODO: figure out how to make url_to_postid() support posts in trash
@@ -106,26 +105,26 @@ class Micropub {
       //   status_header(204);
       } else {
         status_header(400);
-        echo 'unknown action ' . $q['action'];
+        echo 'unknown action ' . $_POST['action'];
         exit;
       }
     }
-    do_action('after_micropub', $q, $args['ID']);
+    do_action('after_micropub', $_POST, $args['ID']);
     exit;
   }
 
   /**
    * Use tokens.indieauth.com to validate the access token.
    */
-  private static function authorize($q) {
+  private static function authorize() {
     $headers = getallheaders();
     if (isset($headers['Authorization'])) {
       $auth_header = $headers['Authorization'];
-    } elseif (isset($q['access_token'])) {
-      $auth_header = 'Bearer ' . $q['access_token'];
+    } elseif (isset($_POST['access_token'])) {
+      $auth_header = 'Bearer ' . $_POST['access_token'];
     } else {
       status_header(401);
-      echo 'Missing access_token';
+      echo 'Missing access token';
       exit;
     }
 
@@ -137,7 +136,7 @@ class Micropub {
     $body = wp_remote_retrieve_body($resp);
     if ($code / 100 != 2) {
       status_header($code);
-      echo 'Invalid access_token: ' . $body;
+      echo 'Invalid access token: ' . $body;
       exit;
     }
 
@@ -146,7 +145,7 @@ class Micropub {
     if ($home != 'http://localhost' &&
         $home != untrailingslashit($resp['me'])) {
       status_header(401);
-      echo 'access_token domain ' . $resp['me'] . " doesn't match " . $url;
+      echo 'access token domain ' . $resp['me'] . " doesn't match " . $url;
       exit;
     } else if (!isset($resp['scope']) ||
                !in_array('post', explode(' ', $resp['scope']))) {
@@ -159,7 +158,7 @@ class Micropub {
   /**
    * Map Micropub parameters to WordPress wp_insert_post() args.
    */
-  private static function map_params($q) {
+  private static function map_params() {
     // these can be passed through untouched
     $mp_to_wp = array(
       'slug'     => 'post_name',
@@ -169,19 +168,19 @@ class Micropub {
     );
 
     $args = array();
-    foreach ($q as $param => $value) {
+    foreach ($_POST as $param => $value) {
       if (isset($mp_to_wp[$param])) {
         $args[$mp_to_wp[$param]] = $value;
       }
     }
 
     // these are transformed or looked up
-    if (isset($q['url'])) {
-      $args['ID'] = url_to_postid($q['url']);
+    if (isset($_POST['url'])) {
+      $args['ID'] = url_to_postid($_POST['url']);
     }
 
-    if (isset($q['published'])) {
-      $args['post_date'] = iso8601_to_datetime($q['published']);
+    if (isset($_POST['published'])) {
+      $args['post_date'] = iso8601_to_datetime($_POST['published']);
     }
 
     return $args;
