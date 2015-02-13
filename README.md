@@ -18,5 +18,8 @@ Micropub properties:
 
 Delegates token handling to [tokens.indieauth.com](https://tokens.indieauth.com/).
 
+Adds one WordPress filter, `before_micropub($wp_args, $micropub_params)`, and
+one hook, `after_micropub($micropub_params, $post_id)`.
+
 This project is placed in the public domain. You may also use it under the
 [CC0 license](http://creativecommons.org/publicdomain/zero/1.0/).
