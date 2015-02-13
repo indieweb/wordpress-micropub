@@ -103,10 +103,10 @@ class Micropub {
 
       if ($_POST['action'] == 'edit' || !isset($_POST['action'])) {
         Micropub::check_error(wp_update_post($args));
-        status_header(204);
+        status_header(200);
       } elseif ($_POST['action'] == 'delete') {
         Micropub::check_error(wp_trash_post($args['ID']));
-        status_header(204);
+        status_header(200);
       // TODO: figure out how to make url_to_postid() support posts in trash
       // here's one way:
       // https://gist.github.com/peterwilsoncc/bb40e52cae7faa0e6efc
@@ -115,7 +115,7 @@ class Micropub {
       //     'ID'           => $args['ID'],
       //     'post_status'  => 'publish',
       //   )));
-      //   status_header(204);
+      //   status_header(200);
       } else {
         status_header(400);
         echo 'unknown action ' . $_POST['action'];
@@ -136,9 +136,7 @@ class Micropub {
     } elseif (isset($_POST['access_token'])) {
       $auth_header = 'Bearer ' . $_POST['access_token'];
     } else {
-      status_header(401);
-      echo 'Missing access token';
-      exit;
+      return Micropub::handle_authorize_error(401, 'missing access token');
     }
 
     $resp = wp_remote_get('https://tokens.indieauth.com/token',
@@ -148,24 +146,33 @@ class Micropub {
     $code = wp_remote_retrieve_response_code($resp);
     $body = wp_remote_retrieve_body($resp);
     if ($code / 100 != 2) {
-      status_header($code);
-      echo 'Invalid access token: ' . $body;
-      exit;
+      return Micropub::handle_authorize_error(
+        $code, 'invalid access token: ' . $body);
     }
 
     parse_str($body, $resp);
     $home = untrailingslashit(home_url());
-    if ($home != 'http://localhost' &&
-        $home != untrailingslashit($resp['me'])) {
-      status_header(401);
-      echo 'access token domain ' . $resp['me'] . " doesn't match " . $url;
-      exit;
+    $me = untrailingslashit($resp['me']);
+    if ($home != $me) {
+      return Micropub::handle_authorize_error(
+        401, 'access token URL ' . $me . " doesn't match " . $home);
     } else if (!isset($resp['scope']) ||
                !in_array('post', explode(' ', $resp['scope']))) {
-      status_header(403);
-      echo "access token is missing post scope; got " . $resp['scope'];
-      exit;
+      return Micropub::handle_authorize_error(
+        403, 'access token is missing post scope; got ' . $resp['scope']);
     }
+  }
+
+  private static function handle_authorize_error($code, $msg) {
+    $home = untrailingslashit(home_url());
+    if ($home == 'http://localhost') {
+        echo 'WARNING: ' . $code . ' ' . $msg .
+          ". Allowing only because this is localhost.\n";
+        return;
+    }
+    status_header($code);
+    echo $msg;
+    exit;
   }
 
   /**

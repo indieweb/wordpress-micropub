@@ -26,11 +26,18 @@ Micropub properties:
 * `url`
 * `published`
 * `photo`
+* `in-reply-to`
+* `like-of`/`like`
+* `repost-of`/`repost`
+* `rsvp`
 
 Adds one WordPress filter, `before_micropub($wp_args)`, and one hook,
 `after_micropub($post_id)`.
 
-Delegates token handling to [tokens.indieauth.com](https://tokens.indieauth.com/).
+Delegates token handling to
+[tokens.indieauth.com](https://tokens.indieauth.com/). For ease of development,
+if the WordPress site is running on `localhost`, it logs a warning if the access
+token is missing or invalid and still allows the request.
 
 Development happens at http://github.com/snarfed/wordpress-micropub . Feedback
 and pull requests are welcome!
