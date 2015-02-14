@@ -5,7 +5,7 @@
  Description: <a href="https://indiewebcamp.com/micropub">Micropub</a> server.
  Author: Ryan Barrett
  Author URI: https://snarfed.org/
- Version: 0.1
+ Version: 0.2
 */
 
 // Example command line for testing:

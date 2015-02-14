@@ -66,6 +66,12 @@ TODO
 
 == Changelog ==
 
+= 0.2 =
+* Support more Micropub properties: photo, like-of, repost-of, in-reply-to,
+  rsvp, location, category, h=event
+* Check but don't require access tokens on localhost.
+* Better error handling.
+
 = 0.1 =
 Initial release.
 
