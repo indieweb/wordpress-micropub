@@ -317,8 +317,9 @@ class Micropub {
       // http://en.wikipedia.org/wiki/Geo_URI#Example
       // https://indiewebcamp.com/micropub##location
       $geo = str_replace('geo:', '', urldecode($_POST['location']));
-      $geo = explode(';', explode(':', $geo)[0])[0];
-      $coords = explode(',', $geo);
+      $geo = explode(':', $geo);
+      $geo = explode(';', $geo[0]);
+      $coords = explode(',', $geo[0]);
       update_post_meta($post_id, 'geo_latitude', trim($coords[0]));
       update_post_meta($post_id, 'geo_longitude', trim($coords[1]));
     }
