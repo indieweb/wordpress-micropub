@@ -9,8 +9,11 @@ From [micropub.net](http://micropub.net/):
 Supports create, update, and delete, but not undelete. Supports these
 Micropub properties:
 
-* `category` maps to WordPress category if it exists, otherwise to tag
+* `category` maps to WordPress category if it exists, otherwise to WordPress tag
 * `content`
+* `description`
+* `end`
+* `h`=entry and `h`=event
 * `in-reply-to`
 * `like-of`/`like`
 * `location` is stored in [WordPress standard geodata format](http://codex.wordpress.org/Geodata)
@@ -20,6 +23,7 @@ Micropub properties:
 * `repost-of`/`repost`
 * `rsvp`
 * `slug`
+* `start`
 * `summary`
 * `url`
 

@@ -72,8 +72,9 @@ class Micropub {
     }
 
     // support both action= and operation= parameter names
-    if (!isset($_POST['action']) && isset($_POST['operation'])) {
-      $_POST['action'] = $_POST['operation'];
+    if (!isset($_POST['action'])) {
+      $_POST['action'] = isset($_POST['operation']) ? $_POST['operation']
+        : isset($_POST['url']) ? 'edit' : 'create';
     }
 
     $args = apply_filters('before_micropub', Micropub::generate_args());
@@ -95,7 +96,9 @@ class Micropub {
       }
 
       if ($_POST['action'] == 'edit' || !isset($_POST['action'])) {
+        kses_remove_filters();  // prevent sanitizing HTML tags in post_content
         Micropub::check_error(wp_update_post($args));
+        kses_init_filters();
         Micropub::postprocess($args['ID']);
         status_header(200);
       } elseif ($_POST['action'] == 'delete') {
@@ -213,10 +216,16 @@ class Micropub {
     return $args;
   }
 
+  /**
+   * Generates and returns a post_content string suitable for wp_insert_post()
+   * and friends.
+   */
   private static function generate_post_content() {
+    // interactions
     foreach (array('like', 'repost', 'in-reply-to') as $cls) {
       $val = isset($_POST[$cls]) ? $_POST[$cls]
-             : (isset($_POST[$cls . '-of']) ? $_POST[$cls . '-of'] : NULL);
+             : (isset($_POST[$cls . '-of']) ? $_POST[$cls . '-of']
+             : NULL);
       if ($val) {
         if ($cls != 'in-reply-to') {
           $cls .= 's';
@@ -231,8 +240,14 @@ class Micropub {
         '">' . $_POST['rsvp'] . '</data>.</p>';
     }
 
+    // content, event
     if (isset($_POST['content'])) {
-      $lines[] = "<div class=\"e-content\">\n" . $_POST['content'] . '\n</div>';
+      $lines[] = '<div class="e-content">';
+      $lines[] = $_POST['content'];
+      if (isset($_POST['h']) && $_POST['h'] == 'event') {
+        $lines[] = Micropub::generate_event();
+      }
+      $lines[] = '</div>';
     }
 
     // TODO: generate my own markup so i can include u-photo
@@ -240,6 +255,48 @@ class Micropub {
       $lines[] = "\n[gallery size=full columns=1]";
     }
 
+    return implode("\n", $lines);
+  }
+
+  /**
+   * Generates and returns a string h-event.
+   */
+  private static function generate_event() {
+    $lines[] = '<div class="h-event">';
+
+    if (isset($_POST['name'])) {
+      $lines[] = '<h1 class="p-name">' . $_POST['name'] . '</h1>';
+    }
+
+    $lines[] = '<p>';
+    $times = array();
+    foreach (array('start', 'end') as $cls) {
+      if (isset($_POST[$cls])) {
+        $datetime = iso8601_to_datetime($_POST[$cls]);
+        $times[] = '<time class="dt-' . $cls . '" datetime="' . $_POST[$cls] .
+          '">' . $datetime . '</time>';
+      }
+    }
+    $lines[] = implode("\nto\n", $times);
+
+    if (isset($_POST['location']) && substr($_POST['location'], 0, 4) != 'geo:') {
+      $lines[] = 'at <a class="p-location" href="' . $_POST['location'] . '">' .
+        $_POST['location'] . '</a>';
+    }
+
+    end($lines);
+    $lines[key($lines)] .= '.';
+    $lines[] = '</p>';
+
+    if (isset($_POST['summary'])) {
+      $lines[] = '<p class="p-summary">' . urldecode($_POST['summary']) . '</p>';
+    }
+  
+    if (isset($_POST['description'])) {
+      $lines[] = '<p class="p-description">' . urldecode($_POST['description']) . '</p>';
+    }
+
+    $lines[] = '</div>';
     return implode("\n", $lines);
   }
 
@@ -255,7 +312,7 @@ class Micropub {
       Micropub::check_error(media_handle_upload('photo', $post_id));
     }
 
-    if (isset($_POST['location'])) {
+    if (isset($_POST['location']) && substr($_POST['location'], 0, 4) == 'geo:') {
       // Geo URI format:
       // http://en.wikipedia.org/wiki/Geo_URI#Example
       // https://indiewebcamp.com/micropub##location
