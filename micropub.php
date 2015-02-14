@@ -196,6 +196,19 @@ class Micropub {
       $args['post_date'] = iso8601_to_datetime($_POST['published']);
     }
 
+    // Map micropub categories to WordPress categories if they exist, otherwise
+    // to WordPress tags.
+    if (isset($_POST['category'])) {
+      foreach ($_POST['category'] as $mp_cat) {
+        $wp_cat = get_category_by_slug($mp_cat);
+        if ($wp_cat) {
+          $args['post_category'][] = $wp_cat->term_id;
+        } else {
+          $args['tags_input'][] = $mp_cat;
+        }
+      }
+    }
+
     $args['post_content'] = Micropub::generate_post_content();
     return $args;
   }

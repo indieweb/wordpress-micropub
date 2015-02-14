@@ -19,10 +19,11 @@ A [Micropub](http://micropub.net/) server plugin. From [micropub.net](http://mic
 Supports create, update, and delete, but not undelete. Supports these
 Micropub properties:
 
+* `category` maps to WordPress category if it exists, otherwise to tag
 * `content`
 * `in-reply-to`
 * `like-of`/`like`
-* `location`
+* `location` is stored in [WordPress standard geodata format](http://codex.wordpress.org/Geodata)
 * `name`
 * `photo`
 * `published`
