@@ -323,7 +323,34 @@ class Micropub {
       update_post_meta($post_id, 'geo_latitude', trim($coords[0]));
       update_post_meta($post_id, 'geo_longitude', trim($coords[1]));
     }
-}
+
+    Micropub::store_mf2($post_id);
+  }
+
+  /**
+   * Store properties as post metadata. Details:
+   * https://indiewebcamp.com/WordPress_Data#Microformats_data
+   */
+  private static function store_mf2($post_id) {
+    $props = array('category', 'content', 'description', 'end', 'h', 'in-reply-to',
+                   'like', 'like-of', 'location', 'name', 'photo', 'published',
+                   'repost', 'repost-of', 'rsvp', 'slug', 'start', 'summary');
+
+    foreach ($props as $prop) {
+      if (isset($_POST[$prop])) {
+        $vals = $_POST[$prop];
+        if (!is_array($vals)) {
+          $vals = array($vals);
+        }
+
+        $key = 'mf2_' . $prop;
+        delete_post_meta($post_id, $key);  // clear old value(s)
+        foreach ($vals as $val) {
+          add_post_meta($post_id, $key, $val);
+        }
+      }
+    }
+  }
 
   private static function check_error($result) {
     if (!$result) {

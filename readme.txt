@@ -45,6 +45,11 @@ Delegates token handling to
 if the WordPress site is running on `localhost`, it logs a warning if the access
 token is missing or invalid and still allows the request.
 
+Stores [microformats2](http://microformats.org/wiki/microformats2) properties in
+[post metadata](http://codex.wordpress.org/Function_Reference/post_meta_Function_Examples)
+with keys prefixed by `mf2_`.
+[Details here.](https://indiewebcamp.com/WordPress_Data#Microformats_data)
+
 Development happens at http://github.com/snarfed/wordpress-micropub . Feedback
 and pull requests are welcome!
 
