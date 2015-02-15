@@ -54,7 +54,8 @@ class Micropub {
    *
    * @param WP $wp WordPress request context
    *
-   * @uses do_action() Calls 'micropub_request' on the default request
+   * @uses apply_filter() Calls 'before_micropub' on the default request
+   * @uses do_action() Calls 'after_micropub' for additional postprocessing
    */
   public static function parse_query($wp) {
     if (!array_key_exists('micropub', $wp->query_vars)) {
@@ -211,8 +212,16 @@ class Micropub {
         }
       }
     }
-
-    $args['post_content'] = Micropub::generate_post_content();
+    // If the theme declares it supports microformats2, pass the content through
+    if (current_theme_supports('microformats2')) {
+      if (isset($_POST['content']) {
+        $args['post_content'] = $_POST['content']));
+      }
+    }
+    // Else markup the content before passing it through
+    else {
+      $args['post_content'] = Micropub::generate_post_content();
+    }
     return $args;
   }
 
