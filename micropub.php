@@ -214,8 +214,8 @@ class Micropub {
     }
     // If the theme declares it supports microformats2, pass the content through
     if (current_theme_supports('microformats2')) {
-	if (isset($_POST['content']) {
-          $args['post_content'] = $_POST['content']));
+      if (isset($_POST['content']) {
+        $args['post_content'] = $_POST['content']));
 	}
     }
     // Else markup the content before passing it through
