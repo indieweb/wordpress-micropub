@@ -16,6 +16,13 @@ A [Micropub](http://micropub.net/) server plugin. From [micropub.net](http://mic
 
 > Micropub is an open API standard that is used to create posts on one's own domain using third-party clients. Web apps and native apps (e.g. iPhone, Android) can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com.
 
+Once you've installed and activated the plugin, try using
+[Quill](http://quill.p3k.io/) to create a new post on your site. It walks you
+through the steps and helps you troubleshoot if you run into any problems. After
+that, try other clients like [OwnYourGram](http://ownyourgram.com/),
+[MobilePub](http://indiewebcamp.com/MobilePub), and
+[Teacup](https://teacup.p3k.io/).
+
 Supports create, update, and delete, but not undelete. Supports these
 Micropub properties:
 
