@@ -237,17 +237,18 @@ class Micropub {
    * and friends.
    */
   private static function generate_post_content() {
+    $verbs = array('like' => 'Likes',
+                   'repost' => 'Reposted',
+                   'in-reply-to' => 'In reply to');
+
     // interactions
     foreach (array('like', 'repost', 'in-reply-to') as $cls) {
       $val = isset($_POST[$cls]) ? $_POST[$cls]
              : (isset($_POST[$cls . '-of']) ? $_POST[$cls . '-of']
              : NULL);
       if ($val) {
-        if ($cls != 'in-reply-to') {
-          $cls .= 's';
-        }
-        $lines[] = '<p>' . ucfirst(str_replace('-', ' ', $cls)) .
-          ' <a class="u-' . $cls . ' href="' . $val . '">' . $val . '</a>.</p>';
+        $lines[] = '<p>' . $verbs[$cls] .
+          ' <a class="u-' . $cls . '-of" href="' . $val . '">' . $val . '</a>.</p>';
       }
     }
 
