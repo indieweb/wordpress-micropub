@@ -11,6 +11,13 @@
 // Example command line for testing:
 // curl -i -H 'Authorization: Bearer ...' -F h=entry -F name=foo -F content=bar \
 //   -F photo=@gallery/snarfed.gif 'http://localhost/w/?micropub=endpoint'
+//
+// To generate an access token for testing:
+// 1. Log into https://indieauth.com/
+// 2. Extract the code param from the URL.
+// 3. Run this command line, filling in CODE and SITE (which logged into IndieAuth):
+//   curl -i -d 'code=CODE&me=SITE&client_id=indieauth&redirect_uri=https://indieauth.com/success' 'https://tokens.indieauth.com/token'
+// 4. Extract the access_token parameter from the response body.
 
 if (!class_exists('Micropub')) :
 
