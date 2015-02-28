@@ -92,6 +92,9 @@ class Micropub {
     }
 
     if (!isset($_POST['url']) || $_POST['action'] == 'create') {
+      if ($user_id && !user_can($user_id, 'publish_posts')) {
+        Micropub::error(403, 'user id ' . $user_id . ' cannot publish posts');
+      }
       $args['post_status'] = 'publish';
       kses_remove_filters();  // prevent sanitizing HTML tags in post_content
       $args['ID'] = Micropub::check_error(wp_insert_post($args));
@@ -106,12 +109,19 @@ class Micropub {
       }
 
       if ($_POST['action'] == 'edit' || !isset($_POST['action'])) {
+        if ($user_id && !user_can($user_id, 'edit_posts')) {
+          Micropub::error(403, 'user id ' . $user_id . ' cannot edit posts');
+        }
         kses_remove_filters();  // prevent sanitizing HTML tags in post_content
         Micropub::check_error(wp_update_post($args));
         kses_init_filters();
         Micropub::postprocess($args['ID']);
         status_header(200);
+
       } elseif ($_POST['action'] == 'delete') {
+        if ($user_id && !user_can($user_id, 'delete_posts')) {
+          Micropub::error(403, 'user id ' . $user_id . ' cannot delete posts');
+        }
         Micropub::check_error(wp_trash_post($args['ID']));
         status_header(200);
       // TODO: figure out how to make url_to_postid() support posts in trash
@@ -390,7 +400,7 @@ class Micropub {
 
   private static function error($code, $msg) {
     status_header($code);
-    echo $msg;
+    echo $msg . "\r\n";
     exit;
   }
 
