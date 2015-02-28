@@ -38,9 +38,13 @@ Adds one WordPress filter, `before_micropub($wp_args)`, and one hook,
 `after_micropub($post_id)`.
 
 Delegates token handling to
-[tokens.indieauth.com](https://tokens.indieauth.com/). For ease of development,
-if the WordPress site is running on `localhost`, it logs a warning if the access
-token is missing or invalid and still allows the request.
+[tokens.indieauth.com](https://tokens.indieauth.com/). If the token's `me` value
+matches a WordPress user's URL, that user will be used. Otherwise, the token
+must match the site's URL, and no user will be used.
+
+For ease of development, if the WordPress site is running on `localhost`, it
+logs a warning if the access token is missing or invalid and still allows the
+request.
 
 Stores [microformats2](http://microformats.org/wiki/microformats2) properties in
 [post metadata](http://codex.wordpress.org/Function_Reference/post_meta_Function_Examples)

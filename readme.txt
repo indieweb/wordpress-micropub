@@ -78,6 +78,11 @@ TODO
 
 == Changelog ==
 
+= 0.3 =
+* Use the specific WordPress user whose URL matches the access token, if
+  possible.
+* Set `post_date_gmt` as well as `post_date`.
+
 = 0.2 =
 * Support more Micropub properties: photo, like-of, repost-of, in-reply-to,
   rsvp, location, category, h=event
