@@ -18,6 +18,9 @@
 // 3. Run this command line, filling in CODE and SITE (which logged into IndieAuth):
 //   curl -i -d 'code=CODE&me=SITE&client_id=indieauth&redirect_uri=https://indieauth.com/success' 'https://tokens.indieauth.com/token'
 // 4. Extract the access_token parameter from the response body.
+//
+// Note that this does *not* include scope=post. TODO: instructions to generate
+// a token with that.
 
 if (!class_exists('Micropub')) :
 
@@ -70,7 +73,7 @@ class Micropub {
     }
     header('Content-Type: text/plain; charset=' . get_option('blog_charset'));
 
-    Micropub::authorize();
+    $user_id = Micropub::authorize();
 
     // validate micropub request params
     if (!isset($_POST['h']) && !isset($_POST['url'])) {
@@ -86,6 +89,9 @@ class Micropub {
     }
 
     $args = apply_filters('before_micropub', Micropub::generate_args());
+    if ($user_id) {
+      $args['post_author'] = $user_id;
+    }
 
     if (!isset($_POST['url']) || $_POST['action'] == 'create') {
       $args['post_status'] = 'publish';
@@ -133,8 +139,12 @@ class Micropub {
 
   /**
    * Use tokens.indieauth.com to validate the access token.
+   *
+   * If the token is valid, returns the user id to use as the post's author, or
+   * NULL if the token only matched the site URL and no specific user.
    */
   private static function authorize() {
+    // find the access token
     $headers = getallheaders();
     if (isset($headers['Authorization'])) {
       $auth_header = $headers['Authorization'];
@@ -144,6 +154,7 @@ class Micropub {
       return Micropub::handle_authorize_error(401, 'missing access token');
     }
 
+    // verify it with tokens.indieauth.com
     $resp = wp_remote_get('https://tokens.indieauth.com/token',
                           array('headers' => array(
                             'Content-type' => 'application/x-www-form-urlencoded',
@@ -153,19 +164,34 @@ class Micropub {
     if ($code / 100 != 2) {
       return Micropub::handle_authorize_error(
         $code, 'invalid access token: ' . $body);
-    }
-
-    parse_str($body, $resp);
-    $home = untrailingslashit(home_url());
-    $me = untrailingslashit($resp['me']);
-    if ($home != $me) {
-      return Micropub::handle_authorize_error(
-        401, 'access token URL ' . $me . " doesn't match " . $home);
     } else if (!isset($resp['scope']) ||
                !in_array('post', explode(' ', $resp['scope']))) {
       return Micropub::handle_authorize_error(
         403, 'access token is missing post scope; got ' . $resp['scope']);
     }
+
+    parse_str($body, $resp);
+    $me = untrailingslashit($resp['me']);
+
+    // look for a user with the same url as the token's `me` value. search both
+    // with and without trailing slash.
+    foreach (array_merge(get_users(array('search' => $me)),
+                         get_users(array('search' => $me . '/')))
+                         as $user) {
+      if (untrailingslashit($user->user_url) == $me) {
+        return $user->ID;
+      }
+    }
+
+    // no user with that url. if the token is for this site itself, allow it and
+    // post as the default user
+    $home = untrailingslashit(home_url());
+    if ($home != $me) {
+      return Micropub::handle_authorize_error(
+        401, 'access token URL ' . $me . " doesn't match site " . $home . ' or any user');
+    }
+
+    return NULL;
   }
 
   private static function handle_authorize_error($code, $msg) {
