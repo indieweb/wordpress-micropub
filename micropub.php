@@ -77,9 +77,7 @@ class Micropub {
 
     // validate micropub request params
     if (!isset($_POST['h']) && !isset($_POST['url'])) {
-      status_header(400);
-      echo 'requires either h= (for create) or url= (for update, delete, etc)';
-      exit;
+      Micropub::error(400, 'requires either h= (for create) or url= (for update, delete, etc)');
     }
 
     // support both action= and operation= parameter names
@@ -104,9 +102,7 @@ class Micropub {
 
     } else {
       if ($args['ID'] == 0) {
-        status_header(400);
-        echo $_POST['url'] . ' not found';
-        exit;
+        Micropub::error(400, $_POST['url'] . ' not found');
       }
 
       if ($_POST['action'] == 'edit' || !isset($_POST['action'])) {
@@ -128,9 +124,7 @@ class Micropub {
       //   )));
       //   status_header(200);
       } else {
-        status_header(400);
-        echo 'unknown action ' . $_POST['action'];
-        exit;
+        Micropub::error(400, 'unknown action ' . $_POST['action']);
       }
     }
     do_action('after_micropub', $args['ID']);
@@ -201,9 +195,7 @@ class Micropub {
           ". Allowing only because this is localhost.\n";
         return;
     }
-    status_header($code);
-    echo $msg;
-    exit;
+    Micropub::error($code, $msg);
   }
 
   /**
@@ -396,15 +388,17 @@ class Micropub {
     }
   }
 
+  private static function error($code, $msg) {
+    status_header($code);
+    echo $msg;
+    exit;
+  }
+
   private static function check_error($result) {
     if (!$result) {
-      status_header(500);
-      echo 'Unknown WordPress error: ' . $result;
-      exit;
+      Micropub::error(500, 'Unknown WordPress error: ' . $result);
     } else if (is_wp_error($result)) {
-      status_header(500);
-      echo $result->get_error_message();
-      exit;
+      Micropub::error(500, $result->get_error_message());
     }
     return $result;
   }
