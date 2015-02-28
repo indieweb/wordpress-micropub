@@ -13,14 +13,12 @@
 //   -F photo=@gallery/snarfed.gif 'http://localhost/w/?micropub=endpoint'
 //
 // To generate an access token for testing:
-// 1. Log into https://indieauth.com/
+// 1. Open this in a browser, filling in SITE:
+//   https://indieauth.com/auth?me=SITE&scope=post&client_id=indieauth&redirect_uri=https%3A%2F%2Findieauth.com%2Fsuccess
 // 2. Extract the code param from the URL.
 // 3. Run this command line, filling in CODE and SITE (which logged into IndieAuth):
 //   curl -i -d 'code=CODE&me=SITE&client_id=indieauth&redirect_uri=https://indieauth.com/success' 'https://tokens.indieauth.com/token'
 // 4. Extract the access_token parameter from the response body.
-//
-// Note that this does *not* include scope=post. TODO: instructions to generate
-// a token with that.
 
 if (!class_exists('Micropub')) :
 
@@ -165,13 +163,14 @@ class Micropub {
                             'Authorization' => $auth_header)));
     $code = wp_remote_retrieve_response_code($resp);
     $body = wp_remote_retrieve_body($resp);
+    parse_str($body, $params);
     if ($code / 100 != 2) {
       return Micropub::handle_authorize_error(
         $code, 'invalid access token: ' . $body);
-    } else if (!isset($resp['scope']) ||
-               !in_array('post', explode(' ', $resp['scope']))) {
+    } else if (!isset($params['scope']) ||
+               !in_array('post', explode(' ', $params['scope']))) {
       return Micropub::handle_authorize_error(
-        403, 'access token is missing post scope; got ' . $resp['scope']);
+        403, 'access token is missing post scope; got `' . $params['scope'] . '`');
     }
 
     parse_str($body, $resp);
