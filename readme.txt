@@ -1,8 +1,8 @@
 === Plugin Name ===
-Contributors: snarfed
+Contributors: snarfed, dshanske
 Tags: micropub
 Requires at least: 3.0.1
-Tested up to: 4.1
+Tested up to: 4.2
 Stable tag: trunk
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
@@ -44,13 +44,18 @@ Micropub properties:
 * `summary`
 * `url`
 
-Adds one WordPress filter, `before_micropub($wp_args)`, and one hook,
-`after_micropub($post_id)`.
+Adds the following filters:
+* `before_micropub($wp_args)`
+* `micropub_syndicate-to', array(), $user_id)`
+
+And the hook:
+* `after_micropub($post_id)`
 
 Delegates token handling to
-[tokens.indieauth.com](https://tokens.indieauth.com/). For ease of development,
-if the WordPress site is running on `localhost`, it logs a warning if the access
-token is missing or invalid and still allows the request.
+[tokens.indieauth.com](https://tokens.indieauth.com/) by default. For ease of
+development, if the WordPress site is running on `localhost`, it logs a warning
+if the access token is missing or invalid and still allows the request. 
+There is also a wp-config option to use WordPress authentication.
 
 Stores [microformats2](http://microformats.org/wiki/microformats2) properties in
 [post metadata](http://codex.wordpress.org/Function_Reference/post_meta_Function_Examples)
@@ -63,6 +68,18 @@ and pull requests are welcome!
 == Installation ==
 
 Install from the WordPress plugin directory or put `micropub.php` in your plugin directory. No setup needed.
+
+== Configuration Options ==
+
+These configuration options can be enabled by adding them to your wp-config.php
+
+* `define('MICROPUB_LOCAL_AUTH', '1')` - Bypasses Micropub authentication in 
+favor of WordPress authentication for testing purposes
+* `define('MICROPUB_AUTHENTICATION_ENDPOINT'`, 'https://indieauth.com/auth') 
+Define a custom authentication endpoint
+* `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` - 
+Define a custom token endpoint
+* `define('MICROPUB_DRAFT_MODE', '1')` - set all micropub posts to draft mode
 
 == Frequently Asked Questions ==
 
@@ -77,6 +94,17 @@ None yet.
 TODO
 
 == Changelog ==
+
+= 0.4 =
+* Store all properties in post meta except those in a blacklist
+* Support setting authentication and token endpoint in wp-config
+  (set MICROPUB_AUTHENTICATION_ENDPOINT and MICROPUB_TOKEN_ENDPOINT)
+* Support setting all micropub posts to draft in wp-config for testing by 
+setting MICROPUB_DRAFT_MODE in wp-config.
+* Support using local auth to authenticate as opposed to Indieauth 
+as by setting MICROPUB_LOCAL_AUTH in wp-config
+* Set content to summary if no content provided
+* Support querying for syndicate-to and future query options
 
 = 0.3 =
 * Use the specific WordPress user whose URL matches the access token, if

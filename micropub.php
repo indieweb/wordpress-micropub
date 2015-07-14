@@ -5,7 +5,7 @@
  Description: <a href="https://indiewebcamp.com/micropub">Micropub</a> server.
  Author: Ryan Barrett
  Author URI: https://snarfed.org/
- Version: 0.3
+ Version: 0.4
 */
 
 // Example command line for testing:
@@ -19,6 +19,23 @@
 // 3. Run this command line, filling in CODE and SITE (which logged into IndieAuth):
 //   curl -i -d 'code=CODE&me=SITE&client_id=indieauth&redirect_uri=https://indieauth.com/success' 'https://tokens.indieauth.com/token'
 // 4. Extract the access_token parameter from the response body.
+
+// For debugging purposes this will bypass Micropub authentication
+// in favor of WordPress authentication
+// Using this to test querying(q=) parameters quickly
+if ( ! defined( 'MICROPUB_LOCAL_AUTH' ) )
+    define('MICROPUB_LOCAL_AUTH', '0');
+
+// Allows for a custom Authentication and Token Endpoint
+if ( ! defined( 'MICROPUB_AUTHENTICATION_ENDPOINT' ) )
+    define('MICROPUB_AUTHENTICATION_ENDPOINT', 'https://indieauth.com/auth');
+if ( ! defined( 'MICROPUB_TOKEN_ENDPOINT' ) )
+    define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token');
+
+// For debugging purposes this will set all Micropub posts to Draft
+if ( ! defined( 'MICROPUB_DRAFT_MODE' ) )
+    define('MICROPUB_DRAFT_MODE', '0');
+
 
 if (!class_exists('Micropub')) :
 
@@ -70,14 +87,26 @@ class Micropub {
       return;
     }
     header('Content-Type: text/plain; charset=' . get_option('blog_charset'));
-
-    $user_id = Micropub::authorize();
+    // For debug purposes be able to bypass Micropub auth with WordPress auth
+    if (MICROPUB_LOCAL_AUTH!=0) {
+      if (!is_user_logged_in()) {
+        auth_redirect();
+      }
+      $user_id = wp_get_current_user();
+    }   
+    else {
+      $user_id = Micropub::authorize();
+    }
+    // TODO: future development note to add JSON support    
 
     // validate micropub request params
-    if (!isset($_POST['h']) && !isset($_POST['url'])) {
-      Micropub::error(400, 'requires either h= (for create) or url= (for update, delete, etc)');
+    if (!isset($_POST['h']) && !isset($_POST['url']) && !isset($_POST['edit-of']) && !isset($_GET['q'])) {
+      Micropub::error(400, 'Empty Micropub request. Either an "h", "edit-of", "url" or "q" property is required, e.g. h=entry or url=http://example.com/post/100 or q=syndicate-to');
     }
-
+    if (isset($_GET['q'])) {
+      Micropub::return_query($user_id);
+      exit;
+    }
     // support both action= and operation= parameter names
     if (!isset($_POST['action'])) {
       $_POST['action'] = isset($_POST['operation']) ? $_POST['operation']
@@ -89,11 +118,11 @@ class Micropub {
       $args['post_author'] = $user_id;
     }
 
-    if (!isset($_POST['url']) || $_POST['action'] == 'create') {
+    if (!isset($_POST['edit-of']) || !isset($_POST['url']) || $_POST['action'] == 'create') {
       if ($user_id && !user_can($user_id, 'publish_posts')) {
         Micropub::error(403, 'user id ' . $user_id . ' cannot publish posts');
       }
-      $args['post_status'] = 'publish';
+      $args['post_status'] = MICROPUB_DRAFT_MODE ? 'draft' : 'publish';
       kses_remove_filters();  // prevent sanitizing HTML tags in post_content
       $args['ID'] = Micropub::check_error(wp_insert_post($args));
       kses_init_filters();
@@ -103,7 +132,7 @@ class Micropub {
 
     } else {
       if ($args['ID'] == 0) {
-        Micropub::error(400, $_POST['url'] . ' not found');
+        Micropub::error(400, $_POST['edit-of'] ?: $_POST['url'] . ' not found');
       }
 
       if ($_POST['action'] == 'edit' || !isset($_POST['action'])) {
@@ -197,6 +226,24 @@ class Micropub {
     return NULL;
   }
 
+  private static function return_query($user_id) {
+    header('Content-type: application/x-www-form-urlencoded');
+    switch($_GET['q']) {
+      case 'syndicate-to':
+      // Fallback
+      case 'mp-syndicate-to':
+        status_header(200);
+        // return empty syndication target with filter
+        $syndication = apply_filters('micropub_syndicate-to', array(), $user_id);
+        if (!empty($syndication)) {
+          echo 'syndicate-to[]=' . implode('&syndicate-to[]=', $syndication);
+        }
+        break;
+      default:
+        Micropub::error(400, 'unknown query ' . $_GET['q']);
+    }
+  }   
+
   private static function handle_authorize_error($code, $msg) {
     $home = untrailingslashit(home_url());
     if ($home == 'http://localhost') {
@@ -226,9 +273,13 @@ class Micropub {
     }
 
     // these are transformed or looked up
+    if (isset($_POST['edit-of'])) {
+      $args['ID'] = url_to_postid($_POST['edit-of']);
+    }
     if (isset($_POST['url'])) {
       $args['ID'] = url_to_postid($_POST['url']);
     }
+
 
     if (isset($_POST['published'])) {
       $args['post_date'] = iso8601_to_datetime($_POST['published']);
@@ -251,6 +302,9 @@ class Micropub {
     if (current_theme_supports('microformats2')) {
       if (isset($_POST['content'])) {
         $args['post_content'] = $_POST['content'];
+      }
+      else if (isset($_POST['summary'])) {
+        $args['post_content'] = $_POST['summary'];
       }
     }
     // Else markup the content before passing it through
@@ -377,24 +431,23 @@ class Micropub {
    * https://indiewebcamp.com/WordPress_Data#Microformats_data
    */
   private static function store_mf2($post_id) {
-    $props = array('category', 'content', 'description', 'end', 'h', 'in-reply-to',
-                   'like', 'like-of', 'location', 'name', 'photo', 'published',
-                   'repost', 'repost-of', 'rsvp', 'slug', 'start', 'summary');
-
-    foreach ($props as $prop) {
-      if (isset($_POST[$prop])) {
-        $vals = $_POST[$prop];
-        if (!is_array($vals)) {
-          $vals = array($vals);
-        }
-
-        $key = 'mf2_' . $prop;
+    // Do not store access_token or other optional parameters
+    $blacklist = array('access_token');
+    foreach ($_POST as $key => $value) {
+      if (!is_array($value)) {
+        $value = array($value);
+      }
+      if (!in_array($key, $blacklist)) {
+        $key = 'mf2_' . $key;
         delete_post_meta($post_id, $key);  // clear old value(s)
-        foreach ($vals as $val) {
-          add_post_meta($post_id, $key, $val);
+        foreach ($value as $val) {
+          if (!empty($val)) {
+            add_post_meta($post_id, $key, $val);
+          }
         }
       }
     }
+   
   }
 
   private static function error($code, $msg) {
@@ -416,11 +469,9 @@ class Micropub {
    * The micropub autodicovery meta tags
    */
   public static function html_header() {
-?>
-<link rel="micropub" href="<?php echo site_url('?micropub=endpoint') ?>">
-<link rel="authorization_endpoint" href="https://indieauth.com/auth">
-<link rel="token_endpoint" href="https://tokens.indieauth.com/token">
-<?php
+    echo '<link rel="micropub" href="' . site_url('?micropub=endpoint') . '">';
+    echo '<link rel="authorization_endpoint" href="' . MICROPUB_AUTHENTICATION_ENDPOINT . '">';
+    echo '<link rel="token_endpoint" href="' . MICROPUB_TOKEN_ENDPOINT . '">';
   }
 
   /**
@@ -428,8 +479,8 @@ class Micropub {
    */
   public static function http_header() {
     header('Link: <' . site_url('?micropub=endpoint') . '>; rel="micropub"', false);
-    header('Link: <https://indieauth.com/auth>; rel="authorization_endpoint"', false);
-    header('Link: <https://tokens.indieauth.com/token>; rel="token_endpoint"', false);
+    header('Link: <' . MICROPUB_AUTHENTICATION_ENDPOINT . '>; rel="authorization_endpoint"', false);
+    header('Link: <' . MICROPUB_TOKEN_ENDPOINT . '>; rel="token_endpoint"', false);
   }
 
   /**
@@ -439,9 +490,9 @@ class Micropub {
     $array['links'][] = array('rel' => 'micropub',
                               'href' => site_url('?micropub=endpoint'));
     $array['links'][] = array('rel' => 'authorization_endpoint',
-                              'href' => 'https://indieauth.com/auth');
+                              'href' => MICROPUB_AUTHENTICATION_ENDPOINT);
     $array['links'][] = array('rel' => 'token_endpoint',
-                              'href' => 'https://tokens.indieauth.com/token');
+                              'href' => MICROPUB_TOKEN_ENDPOINT);
   }
 }
 
