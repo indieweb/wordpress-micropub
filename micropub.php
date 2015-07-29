@@ -36,7 +36,6 @@ if ( ! defined( 'MICROPUB_TOKEN_ENDPOINT' ) )
 if ( ! defined( 'MICROPUB_DRAFT_MODE' ) )
     define('MICROPUB_DRAFT_MODE', '0');
 
-
 if (!class_exists('Micropub')) :
 
 add_action('init', array('Micropub', 'init'));
@@ -85,6 +84,9 @@ class Micropub {
   public static function parse_query($wp) {
     if (!array_key_exists('micropub', $wp->query_vars)) {
       return;
+    }
+    if (WP_DEBUG) {
+      error_log('Micropub Data: ' . serialize($_POST));
     }
     header('Content-Type: text/plain; charset=' . get_option('blog_charset'));
     // For debug purposes be able to bypass Micropub auth with WordPress auth
@@ -271,7 +273,6 @@ class Micropub {
         $args[$mp_to_wp[$param]] = $value;
       }
     }
-
     // these are transformed or looked up
     if (isset($_POST['edit-of'])) {
       $args['ID'] = url_to_postid($_POST['edit-of']);
@@ -279,7 +280,15 @@ class Micropub {
     if (isset($_POST['url'])) {
       $args['ID'] = url_to_postid($_POST['url']);
     }
-
+    // perform these functions only for creates
+    if (!isset($args['ID'])) {
+      if (isset($args['post_title']) && !isset($args['post_name'])) {
+        $args['post_name'] = $args['post_title'];
+      }
+    }
+    if (isset($args['post_name'])) {
+      $args['post_name'] = sanitize_title($args['post_name']);
+    }  
 
     if (isset($_POST['published'])) {
       $args['post_date'] = iso8601_to_datetime($_POST['published']);
@@ -289,6 +298,9 @@ class Micropub {
     // Map micropub categories to WordPress categories if they exist, otherwise
     // to WordPress tags.
     if (isset($_POST['category'])) {
+      if (empty($_POST['category'])) {
+        $_POST['category'] = array();
+      }
       foreach ($_POST['category'] as $mp_cat) {
         $wp_cat = get_category_by_slug($mp_cat);
         if ($wp_cat) {
