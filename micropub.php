@@ -447,7 +447,7 @@ if ( ! class_exists( 'Micropub' ) ) :
 		 */
 		private static function store_mf2($post_id) {
 			// Do not store reserved parameters
-			$blacklist = array( 'access_token', 'mp-action', 'action', 'url' );
+			$blacklist = array( 'access_token', 'mp-action', 'action', 'url', 'cite' );
 			foreach ( $_POST as $key => $value ) {
 				if ( ! is_array( $value ) ) {
 					$value = array( $value );
