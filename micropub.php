@@ -56,12 +56,21 @@ if ( ! class_exists( 'Micropub' ) ) :
 			 */
 			add_filter( 'query_vars', array( 'Micropub', 'query_var' ) );
 			add_action( 'parse_query', array( 'Micropub', 'parse_query' ) );
-
+			// Generate Post Content - if you want to generate your own remove this filter. 
+			add_filter( 'before_micropub', array( 'Micropub', 'generate_post_content' ) );
 			// endpoint discovery
 			add_action( 'wp_head', array( 'Micropub', 'html_header' ), 99 );
 			add_action( 'send_headers', array( 'Micropub', 'http_header' ) );
 			add_filter( 'host_meta', array( 'Micropub', 'jrd_links' ) );
 			add_filter( 'webfinger_data', array( 'Micropub', 'jrd_links' ) );
+
+			// Store all properties in Post Meta with the prefix mf2_
+			add_action( 'after_micropub', array( 'Micropub', 'store_mf2' ), 9 );
+			// Store Geo Coordinates in WordPress Standard Place
+			add_action( 'after_micropub', array( 'Micropub', 'geoset' ), 8 );
+			// File Handler
+			add_action( 'after_micropub', array( 'Micropub', 'default_file_handler' ), 10 );
+
 		}
 
 		/**
@@ -76,78 +85,68 @@ if ( ! class_exists( 'Micropub' ) ) :
 		}
 
 		/**
-		 * Parse the micropub request and render the document
+		 * Handles authentication and passes control to handlers
 		 *
 		 * @param WP $wp WordPress request context
 		 *
-		 * @uses apply_filter() Calls 'before_micropub' on the default request
-		 * @uses do_action() Calls 'after_micropub' for additional postprocessing
 		 */
 		public static function parse_query($wp) {
 			if ( ! array_key_exists( 'micropub', $wp->query_vars ) ) {
 				return;
 			}
-			if ( WP_DEBUG ) {
-				error_log( 'Micropub Data: ' . serialize( $_POST ) );
-			}
+
 			header( 'Content-Type: text/plain; charset=' . get_option( 'blog_charset' ) );
-			// Bypass Micropub auth with WordPress auth.
-			if ( MICROPUB_LOCAL_AUTH ) {
-				if ( ! is_user_logged_in() ) {
-					auth_redirect();
-				}
-				$user_id = wp_get_current_user();
-			} else {
-				$user_id = Micropub::authorize();
+
+			$user_id = Micropub::authorize();
+			// Set action and adjust old deprecated parameters to new
+			Micropub::set_micropub_action();
+
+     if ( WP_DEBUG ) {
+        error_log( 'Micropub Data: ' . serialize( $_POST ) );
+      }
+	    if ( ! isset( $_POST['h']) && !isset($_POST['mp-url']) && !isset($_POST['mp-action']) && !isset($_GET['q'])) {
+				Micropub::error( 400, 'Empty Micropub request. Either an "h", "mp-action", "mp-url" or "q" property is required, e.g. h=entry or url=http://example.com/post/100 or q=syndicate-to' );
 			}
+			// Handle Logic for Return Queries.
+			Micropub::return_query( $user_id );
 			// TODO: future development note to add JSON support.
 			// Validate micropub request params.
-			if ( ! isset( $_POST['h'] ) && ! isset( $_POST['url'] ) && ! isset( $_POST['mp-action'] ) && ! isset( $_POST['action'] ) && ! isset( $_GET['q'] ) ) {
-				Micropub::error( 400, 'Empty Micropub request. Either an "h", "mp-action", "url" or "q" property is required, e.g. h=entry or url=http://example.com/post/100 or q=syndicate-to' );
-			}
-			if ( isset( $_GET['q'] ) ) {
-				Micropub::return_query( $user_id );
-				exit;
-			}
-			// support both mp-action and operation parameter names
-			if ( ! isset( $_POST['mp-action'] ) ) {
-				$_POST['mp-action'] = isset( $_POST['operation'] ) ? $_POST['operation']
-				: isset( $_POST['url'] ) ? 'edit' : 'create';
-			}
 
 			$args = apply_filters( 'before_micropub', Micropub::generate_args() );
 			if ( $user_id ) {
 				$args['post_author'] = $user_id;
 			}
 
-			if ( ! isset( $_POST['mp-action'] ) || ! isset( $_POST['url'] ) ) {
-				if ( $user_id && ! user_can( $user_id, 'publish_posts' ) ) {
-					Micropub::error( 403, 'user id ' . $user_id . ' cannot publish posts' );
-				}
-				$args['post_status'] = MICROPUB_DRAFT_MODE ? 'draft' : 'publish';
-				kses_remove_filters();  // prevent sanitizing HTML tags in post_content
-				$args['ID'] = Micropub::check_error( wp_insert_post( $args ) );
-				kses_init_filters();
-				Micropub::postprocess( $args['ID'] );
-				status_header( 201 );
-				header( 'Location: ' . get_permalink( $args['ID'] ) );
-
-			} else {
-				if ( 0 === $args['ID'] ) {
-					Micropub::error( 400, $_POST['mp-action'] ?: $_POST['url'] . ' not found' );
-				}
-
-				if ( 'edit' === $_POST['mp-action'] || ! isset( $_POST['mp-action'] ) ) {
+			switch( $_POST['mp-action'] ) {
+				case 'create':
+					// If user has insufficient privileges, exit.
+					if ( $user_id && ! user_can( $user_id, 'publish_posts' ) ) {
+						Micropub::error( 403, 'user id ' . $user_id . ' cannot publish posts' );
+					}
+					$args['post_status'] = MICROPUB_DRAFT_MODE ? 'draft' : 'publish';
+					kses_remove_filters();  // prevent sanitizing HTML tags in post_content
+					$args['ID'] = Micropub::check_error( wp_insert_post( $args ) );
+					kses_init_filters();
+					status_header( 201 );
+					header( 'Location: ' . get_permalink( $args['ID'] ) );
+					break;
+				case 'edit':
+          if ( 0 === $args['ID'] ) {
+            Micropub::error( 400, $_POST['mp-action'] ?: $_POST['mp-url'] . ' not found' );
+          } 
 					if ( $user_id && ! user_can( $user_id, 'edit_posts' ) ) {
 						Micropub::error( 403, 'user id ' . $user_id . ' cannot edit posts' );
 					}
 					kses_remove_filters();  // prevent sanitizing HTML tags in post_content
 					Micropub::check_error( wp_update_post( $args ) );
 					kses_init_filters();
-					Micropub::postprocess( $args['ID'] );
 					status_header( 200 );
+					break;
+				case 'delete':
+          if ( 0 === $args['ID'] ) {
+            Micropub::error( 400, $_POST['mp-action'] ?: $_POST['mp-url'] . ' not found' );
+          } 
 
-				} elseif ( 'delete' === $_POST['mp-action'] ) {
 					if ( $user_id && ! user_can( $user_id, 'delete_posts' ) ) {
 						Micropub::error( 403, 'user id ' . $user_id . ' cannot delete posts' );
 					}
@@ -162,12 +161,57 @@ if ( ! class_exists( 'Micropub' ) ) :
 					// 'post_status'  => 'publish',
 					// )));
 					// status_header(200);
-				} else {
-					Micropub::error( 400, 'unknown action ' . $_POST['action'] );
-				}
+				break;
+				case 'add':
+				case 'undelete':
+				  Micropub::error( 400, 'Not Currently Supported' );
+				default:
+					Micropub::error( 400, 'unknown action ' . $_POST['mp-action'] );
 			}
-			do_action( 'after_micropub', $args['ID'] );
+
+			do_action( 'after_micropub', $args['ID'], $_POST );
 			exit;
+		}
+
+		 /**
+				 * Parse the micropub query and return
+				 *
+				 * @param int   $user_id User ID
+				 *
+				 */
+		public static function return_query($user_id) {
+			// Validate micropub request params.
+			if ( isset( $_GET['q'] ) ) {
+				header( 'Content-type: application/x-www-form-urlencoded' );
+				switch ( $_GET['q'] ) {
+					case 'syndicate-to':
+						// Fallback
+					case 'mp-syndicate-to':
+						status_header( 200 );
+						// return empty syndication target with filter
+						$syndication = apply_filters( 'micropub_syndicate-to', array(), $user_id );
+						if ( ! empty( $syndication ) ) {
+							echo 'syndicate-to[]=' . implode( '&syndicate-to[]=', $syndication );
+						}
+					break;
+					default:
+						Micropub::error( 400, 'unknown query ' . $_GET['q'] );
+				}
+				exit;
+			}
+		}
+
+		// Determine Action if Not Expressly Set. Also confirms backward compatibility
+		private static function set_micropub_action() {
+			// support both mp-action and operation parameter names
+			// Set to Create if there is no url set.
+			if ( ! isset( $_POST['mp-url'] ) && isset( $_POST['url'] ) ) {
+				$_POST['mp-url'] = $_POST['url'];
+			}
+			if ( ! isset( $_POST['mp-action'] ) ) {
+				$_POST['mp-action'] = isset( $_POST['action'] ) ? $_POST['action'] : isset( $_POST['operation'] ) ? $_POST['operation'] : isset( $_POST['mp-url'] ) ? 'edit' : 'create';
+			}
+
 		}
 
 		/**
@@ -177,6 +221,13 @@ if ( ! class_exists( 'Micropub' ) ) :
 		 * NULL if the token only matched the site URL and no specific user.
 		 */
 		private static function authorize() {
+			// Bypass Micropub auth with WordPress auth.
+			if ( MICROPUB_LOCAL_AUTH ) {
+				if ( ! is_user_logged_in() ) {
+					auth_redirect();
+				}
+				return wp_get_current_user();
+			}
 			// find the access token
 			$headers = getallheaders();
 			if ( isset( $headers['Authorization'] ) ) {
@@ -231,24 +282,6 @@ if ( ! class_exists( 'Micropub' ) ) :
 				return null;
 		}
 
-		private static function return_query($user_id) {
-			header( 'Content-type: application/x-www-form-urlencoded' );
-			switch ( $_GET['q'] ) {
-				case 'syndicate-to':
-					// Fallback
-				case 'mp-syndicate-to':
-					status_header( 200 );
-					// return empty syndication target with filter
-					$syndication = apply_filters( 'micropub_syndicate-to', array(), $user_id );
-					if ( ! empty( $syndication ) ) {
-						echo 'syndicate-to[]=' . implode( '&syndicate-to[]=', $syndication );
-					}
-				break;
-				default:
-					Micropub::error( 400, 'unknown query ' . $_GET['q'] );
-			}
-		}
-
 		private static function handle_authorize_error($code, $msg) {
 			$home = untrailingslashit( home_url() );
 			if ( 'http://localhost' === $home ) {
@@ -280,8 +313,8 @@ if ( ! class_exists( 'Micropub' ) ) :
 			if ( isset( $_POST['edit-of'] ) ) {
 				$args['ID'] = url_to_postid( $_POST['edit-of'] );
 			}
-			if ( isset( $_POST['url'] ) ) {
-				$args['ID'] = url_to_postid( $_POST['url'] );
+			if ( isset( $_POST['mp-url'] ) ) {
+				$args['ID'] = url_to_postid( $_POST['mp-url'] );
 			}
 			// perform these functions only for creates
 			if ( ! isset( $args['ID'] ) ) {
@@ -313,25 +346,19 @@ if ( ! class_exists( 'Micropub' ) ) :
 					}
 				}
 			}
-			// If the theme declares it supports microformats2 do not mark up content.
-			if ( current_theme_supports( 'microformats2' ) ) {
-				if ( isset( $_POST['content'] ) ) {
-					$args['post_content'] = $_POST['content'];
-				} else if ( isset( $_POST['summary'] ) ) {
-					$args['post_content'] = $_POST['summary'];
-				}
-			} // Else markup the content before passing it through.
-			else {
-				$args['post_content'] = Micropub::generate_post_content();
+			if ( isset( $_POST['content'] ) ) {
+				$args['post_content'] = $_POST['content'];
+			} else if ( isset( $_POST['summary'] ) ) {
+				$args['post_content'] = $_POST['summary'];
 			}
 			return $args;
 		}
 
 		/**
-		 * Generates and returns a post_content string suitable for wp_insert_post()
+		 * Filters content to generate marked up post content for wp_insert_post()
 		 * and friends.
 		 */
-		private static function generate_post_content() {
+		public static function generate_post_content($args) {
 			$verbs = array(
 			'like' => 'Likes',
 				   'repost' => 'Reposted',
@@ -369,13 +396,14 @@ if ( ! class_exists( 'Micropub' ) ) :
 				$lines[] = "\n[gallery size=full columns=1]";
 			}
 
-			return implode( "\n", $lines );
+			$args['post_content'] = implode( "\n", $lines );
+			return $args;
 		}
 
 		/**
 		 * Generates and returns a string h-event.
 		 */
-		private static function generate_event() {
+		public static function generate_event() {
 			$lines[] = '<div class="h-event">';
 
 			if ( isset( $_POST['name'] ) ) {
@@ -415,17 +443,18 @@ if ( ! class_exists( 'Micropub' ) ) :
 		}
 
 		/**
-		 * Postprocesses a post that has been created or updated. Useful for changes
-		 * that require the post id, e.g. uploading media and adding post metadata.
+		 * Handles the uploading of files.
 		 */
-		private static function postprocess($post_id) {
+		public static function default_file_handler($post_id) {
 			if ( isset( $_FILES['photo'] ) ) {
 				require_once( ABSPATH . 'wp-admin/includes/image.php' );
 				require_once( ABSPATH . 'wp-admin/includes/file.php' );
 				require_once( ABSPATH . 'wp-admin/includes/media.php' );
 				Micropub::check_error( media_handle_upload( 'photo', $post_id ) );
 			}
+		}
 
+		public static function geoset($post_id ) {
 			if ( isset( $_POST['location'] ) && 'geo:' === substr( $_POST['location'], 0, 4 ) ) {
 				// Geo URI format:
 				// http://en.wikipedia.org/wiki/Geo_URI#Example
@@ -437,17 +466,15 @@ if ( ! class_exists( 'Micropub' ) ) :
 				update_post_meta( $post_id, 'geo_latitude', trim( $coords[0] ) );
 				update_post_meta( $post_id, 'geo_longitude', trim( $coords[1] ) );
 			}
-
-			Micropub::store_mf2( $post_id );
 		}
 
 		/**
 		 * Store properties as post metadata. Details:
 		 * https://indiewebcamp.com/WordPress_Data#Microformats_data
 		 */
-		private static function store_mf2($post_id) {
+		public static function store_mf2($post_id) {
 			// Do not store reserved parameters
-			$blacklist = array( 'access_token', 'mp-action', 'action', 'url', 'cite' );
+			$blacklist = array( 'access_token', 'mp-action', 'action', 'operation', 'url', 'cite', 'location' );
 			foreach ( $_POST as $key => $value ) {
 				if ( ! is_array( $value ) ) {
 					$value = array( $value );
