@@ -2,7 +2,7 @@
 Contributors: snarfed, dshanske
 Tags: micropub
 Requires at least: 3.0.1
-Tested up to: 4.2
+Tested up to: 4.3
 Stable tag: trunk
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
@@ -23,7 +23,7 @@ that, try other clients like [OwnYourGram](http://ownyourgram.com/),
 [MobilePub](http://indiewebcamp.com/MobilePub), and
 [Teacup](https://teacup.p3k.io/).
 
-Supports create, update, and delete, but not undelete. Supports these
+Supports create, update, and delete, but not undelete. Supports automatic markup for these
 Micropub properties:
 
 * `category` maps to WordPress category if it exists, otherwise to WordPress tag
@@ -105,6 +105,7 @@ setting MICROPUB_DRAFT_MODE in wp-config.
 as by setting MICROPUB_LOCAL_AUTH in wp-config
 * Set content to summary if no content provided
 * Support querying for syndicate-to and future query options
+* Support debug logging if WP_DEBUG is set
 
 = 0.3 =
 * Use the specific WordPress user whose URL matches the access token, if

@@ -13,7 +13,7 @@ that, try other clients like [OwnYourGram](http://ownyourgram.com/),
 [MobilePub](http://indiewebcamp.com/MobilePub), and
 [Teacup](https://teacup.p3k.io/).
 
-Supports create, update, and delete, but not undelete. Supports these
+Supports create, update, and delete, but not undelete. Supports optionally marking up these
 Micropub properties:
 
 * `category` maps to WordPress category if it exists, otherwise to WordPress tag
@@ -50,6 +50,11 @@ Stores [microformats2](http://microformats.org/wiki/microformats2) properties in
 [post metadata](http://codex.wordpress.org/Function_Reference/post_meta_Function_Examples)
 with keys prefixed by `mf2_`.
 [Details here.](https://indiewebcamp.com/WordPress_Data#Microformats_data)
+
+Includes a testing framework for development, including a ruleset for compliance with
+PHP Coding Standards for WordPress. Framework is the standard WordPress testing framework.
+For more information, visit the [WordPress Core HandBook.](https://make.wordpress.org/core/handbook/testing/automated-testing/phpunit/)
+Or the tutorial [Unit Tests for WordPress](https://pippinsplugins.com/unit-tests-wordpress-plugins-introduction/)
 
 This project is placed in the public domain. You may also use it under the
 [CC0 license](http://creativecommons.org/publicdomain/zero/1.0/).
