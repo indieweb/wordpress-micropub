@@ -2,7 +2,7 @@
 Contributors: snarfed, dshanske
 Tags: micropub
 Requires at least: 3.0.1
-Tested up to: 4.2
+Tested up to: 4.5
 Stable tag: trunk
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
@@ -99,12 +99,12 @@ TODO
 * Store all properties in post meta except those in a blacklist
 * Support setting authentication and token endpoint in wp-config
   (set MICROPUB_AUTHENTICATION_ENDPOINT and MICROPUB_TOKEN_ENDPOINT)
-* Support setting all micropub posts to draft in wp-config for testing by 
-setting MICROPUB_DRAFT_MODE in wp-config.
-* Support using local auth to authenticate as opposed to Indieauth 
-as by setting MICROPUB_LOCAL_AUTH in wp-config
+* Support setting all micropub posts to draft in wp-config for testing by
+  setting MICROPUB_DRAFT_MODE in wp-config.
+* Support using local auth to authenticate as opposed to Indieauth
+  as by setting MICROPUB_LOCAL_AUTH in wp-config
 * Set content to summary if no content provided
-* Support querying for syndicate-to and future query options
+* Support querying for syndicate-to and future query options.
 
 = 0.3 =
 * Use the specific WordPress user whose URL matches the access token, if
