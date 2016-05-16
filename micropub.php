@@ -14,11 +14,12 @@
 //
 // To generate an access token for testing:
 // 1. Open this in a browser, filling in SITE:
-//   https://indieauth.com/auth?me=SITE&scope=post&client_id=indieauth&redirect_uri=https%3A%2F%2Findieauth.com%2Fsuccess
-// 2. Extract the code param from the URL.
-// 3. Run this command line, filling in CODE and SITE (which logged into IndieAuth):
+//   https://indieauth.com/auth?me=SITE&scope=post&client_id=https://wordpress.org/plugins/micropub/&redirect_uri=https%3A%2F%2Findieauth.com%2Fsuccess
+// 2. Log in.
+// 3. Extract the code param from the URL.
+// 4. Run this command line, filling in CODE and SITE (which logged into IndieAuth):
 //   curl -i -d 'code=CODE&me=SITE&client_id=indieauth&redirect_uri=https://indieauth.com/success' 'https://tokens.indieauth.com/token'
-// 4. Extract the access_token parameter from the response body.
+// 5. Extract the access_token parameter from the response body.
 
 // For debugging purposes this will bypass Micropub authentication
 // in favor of WordPress authentication
