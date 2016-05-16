@@ -1,6 +1,6 @@
 # wordpress-micropub
 
-A [Micropub](http://micropub.net/) server plugin for [WordPress](https://wordpress.org/).
+A [Micropub](http://micropub.net/) server plugin for [WordPress](https://wordpress.org/). Available in the WordPress plugin directory at [wordpress.org/plugins/micropub](https://wordpress.org/plugins/micropub/).
 
 From [micropub.net](http://micropub.net/):
 
@@ -53,3 +53,5 @@ with keys prefixed by `mf2_`.
 
 This project is placed in the public domain. You may also use it under the
 [CC0 license](http://creativecommons.org/publicdomain/zero/1.0/).
+
+To add a new release to the WordPress plugin directory, run `push.sh`.
