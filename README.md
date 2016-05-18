@@ -9,7 +9,7 @@ From [micropub.net](http://micropub.net/):
 Once you've installed and activated the plugin, try using
 [Quill](http://quill.p3k.io/) to create a new post on your site. It walks you
 through the steps and helps you troubleshoot if you run into any problems. After
-that, try other clients like [OwnYourGram](http://ownyourgram.com/),
+that, try other clients like [OwnYourGram](http://ownyourgram.com/), [OwnYourCheckin](https://ownyourcheckin.wirres.net/),
 [MobilePub](http://indiewebcamp.com/MobilePub), and
 [Teacup](https://teacup.p3k.io/).
 
