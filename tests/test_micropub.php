@@ -21,21 +21,19 @@ class MicropubTest extends WP_UnitTestCase {
         return $header;
     }
 
-    public static function setUpBeforeClass() {
-        parent::setUpBeforeClass();
-        global $wp_query;
-        $wp_query->query_vars['micropub'] = 'endpoint';
-        $MICROPUB_LOCAL_AUTH = 1;
-
-        add_filter('status_header', array('MicropubTest', 'record_status'));
-    }
-
     public function setUp() {
         parent::setUp();
+        self::$status = 0;
         $_POST = array();
         $_GET = array();
         unset($GLOBALS['post']);
-        add_filter('wp_die_handler', array($this, 'get_wp_die_handler'), 1, 1);
+
+        global $wp_query;
+        $wp_query->query_vars['micropub'] = 'endpoint';
+
+        add_filter('status_header', array('MicropubTest', 'record_status'));
+
+        wp_set_current_user(self::factory()->user->create(array('role' => 'editor')));
 
         // Suppress "Cannot modify header information - headers already sent by"
         $this->_error_level = error_reporting();
@@ -47,12 +45,9 @@ class MicropubTest extends WP_UnitTestCase {
         parent::tearDown();
     }
 
-    public function get_wp_die_handler() {
-        return array($this, 'wp_die_handler');
-    }
-
-    public function wp_die_handler($message) {
-        throw new WPDieException($message);
+    public function wp_die_handler($message, $title, $args) {
+        self::$status = $args['response'];
+        throw new WPDieException($message ? $message : '');
     }
 
     /**
@@ -71,17 +66,15 @@ class MicropubTest extends WP_UnitTestCase {
         catch (WPDieException $e) {
             // expected
             $body = ob_get_clean();
-            return $body ? $body : $e->getMessage();
+            return trim($body ? $body : $e->getMessage());
         }
 
         $this->fail('WPDieException not thrown!');
     }
 
-    function test_missing_access_token() {
-        $_GET['q'] = 'syndicate-to';
+    function test_empty_request() {
         $resp = $this->parse_query();
-        $this->assertEquals(401, self::$status);
-        $this->assertEquals('missing access token', trim($resp));
+        $this->assertEquals(400, self::$status);
+        $this->assertContains('Empty Micropub request', $resp);
     }
 }
-
