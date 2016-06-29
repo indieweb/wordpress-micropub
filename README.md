@@ -54,4 +54,34 @@ with keys prefixed by `mf2_`.
 This project is placed in the public domain. You may also use it under the
 [CC0 license](http://creativecommons.org/publicdomain/zero/1.0/).
 
+### Development
+
 To add a new release to the WordPress plugin directory, run `push.sh`.
+
+To set up your local environment to run the unit tests:
+
+1. Install [PHPUnit](https://github.com/sebastianbergmann/phpunit#installation),
+   e.g. `brew install wp-cli phpunit` with Homebrew on Mac OS X.
+1. Install and start MySQL. (You may already have it.)
+1. Run `bin/install-wp-tests.sh wordpress_micropub_test root '' localhost` to
+   download WordPress and
+   [its unit test library](https://develop.svn.wordpress.org/trunk/tests/phpunit/),
+   into `/tmp` and `./temp` by default, and create a MySQL db to test against.
+   [Background here](http://wp-cli.org/docs/plugin-unit-tests/). Feel free to
+   use a MySQL user other than `root`. You can set the `WP_CORE_DIR` and
+   `WP_TESTS_DIR` environment variables to change where WordPress and its test
+   library are installed. For example, I put them both in the repo dir.
+1. Open `wordpress-tests-lib/wp-tests-config.php` and add a slash to the end of
+   the ABSPATH value. No clue why it leaves off the slash; it doesn't work
+   without it.
+1. Run `phpunit` in the repo root dir. If you set `WP_CORE_DIR` and
+   `WP_TESTS_DIR` above, you'll need to set them for this too. You should see
+   output like this:
+
+    ```
+    Installing...
+    ...
+    1 / 1 (100%)
+    Time: 703 ms, Memory: 33.75Mb
+    OK (1 test, 3 assertions)
+    ```
