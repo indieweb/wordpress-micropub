@@ -2,7 +2,7 @@
 
 /** Unit tests for the Micropub class.
  *
- * To test:
+ * TODO:
  * token validation
  * categories/tags
  * post type rendering - reply, like, repost, event, rsvp
@@ -17,12 +17,6 @@ class MicropubTest extends WP_UnitTestCase {
      * @var string
      */
     protected static $status = 0;
-
-    /**
-     * Saved error reporting level
-     * @var int
-     */
-    protected $_error_level = 0;
 
     public static function record_status($header) {
         $matches = array();
@@ -45,15 +39,6 @@ class MicropubTest extends WP_UnitTestCase {
 
         $this->userid = self::factory()->user->create(array('role' => 'editor'));
         wp_set_current_user($this->userid);
-
-        // Suppress "Cannot modify header information - headers already sent by"
-        $this->_error_level = error_reporting();
-        error_reporting($this->_error_level & ~E_WARNING);
-    }
-
-    public function tearDown() {
-        error_reporting($this->_error_level);
-        parent::tearDown();
     }
 
     public function wp_die_handler($message, $title, $args) {
