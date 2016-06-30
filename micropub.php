@@ -95,14 +95,16 @@ class Micropub {
       if (!is_user_logged_in()) {
         auth_redirect();
       }
-      $user_id = wp_get_current_user();
+      $user_id = get_current_user_id();
     }
     else {
       $user_id = Micropub::authorize();
     }
 
+    $edit_url = isset($_POST['edit-of']) ? $_POST['edit-of'] :
+                isset($_POST['url']) ? $_POST['url'] : NULL;
     // validate micropub request params
-    if (!isset($_POST['h']) && !isset($_POST['url']) && !isset($_POST['edit-of']) && !isset($_GET['q'])) {
+    if (!isset($_POST['h']) && !$edit_url && !isset($_GET['q'])) {
       wp_die('Empty Micropub request. Either an "h", "edit-of", "url" or "q" property is required, e.g. h=entry or url=http://example.com/post/100 or q=syndicate-to', 400);
     }
     if (isset($_GET['q'])) {
@@ -119,7 +121,7 @@ class Micropub {
       $args['post_author'] = $user_id;
     }
 
-    if (!isset($_POST['edit-of']) || !isset($_POST['url']) || $_POST['action'] == 'create') {
+    if (!$edit_url || $_POST['action'] == 'create') {
       if ($user_id && !user_can($user_id, 'publish_posts')) {
         wp_die('user id ' . $user_id . ' cannot publish posts', 403);
       }
@@ -132,8 +134,8 @@ class Micropub {
       header('Location: ' . get_permalink($args['ID']));
 
     } else {
-      if ($args['ID'] == 0) {
-        wp_die($_POST['edit-of'] ?: $_POST['url'] . ' not found', 400);
+      if ($args['ID'] == 0 || !get_post($args['ID'])) {
+        wp_die($edit_url . ' not found', 400);
       }
 
       if ($_POST['action'] == 'edit' || !isset($_POST['action'])) {
@@ -329,6 +331,7 @@ class Micropub {
    * and friends.
    */
   private static function generate_post_content() {
+    $lines = [];
     $verbs = array('like' => 'Likes',
                    'repost' => 'Reposted',
                    'in-reply-to' => 'In reply to');
