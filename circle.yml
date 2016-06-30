@@ -1,0 +1,15 @@
+# CircleCI automatically reads this file from our repo and uses it for
+# configuration. Docs: https://circleci.com/docs/configuration
+dependencies:
+  cache_directories:
+    - ~/wordpress
+    - ~/wordpress-tests-lib
+  post:
+    - ./bin/install-wp-tests.sh micropub_test ubuntu '' localhost;
+    - sed -i.bak "s/wordpress' );$/wordpress\/' );/" ~/wordpress-tests-lib/wp-tests-config.php
+
+machine:
+  environment:
+    WP_CORE_DIR: $HOME/wordpress
+    WP_TESTS_DIR: $HOME/wordpress-tests-lib
+
