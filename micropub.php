@@ -331,7 +331,7 @@ class Micropub {
    * and friends.
    */
   private static function generate_post_content() {
-    $lines = [];
+    $lines = array();
     $verbs = array('like' => 'Likes',
                    'repost' => 'Reposted',
                    'in-reply-to' => 'In reply to');
