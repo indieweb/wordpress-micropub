@@ -1,4 +1,4 @@
-# wordpress-micropub
+# wordpress-micropub [![Circle CI](https://circleci.com/gh/snarfed/wordpress-micropub.svg?style=svg)](https://circleci.com/gh/snarfed/wordpress-micropub)
 
 A [Micropub](http://micropub.net/) server plugin for [WordPress](https://wordpress.org/). Available in the WordPress plugin directory at [wordpress.org/plugins/micropub](https://wordpress.org/plugins/micropub/).
 
