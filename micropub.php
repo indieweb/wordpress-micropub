@@ -61,6 +61,17 @@ class Micropub {
     add_action('send_headers', array('Micropub', 'http_header'));
     add_filter('host_meta', array('Micropub', 'jrd_links'));
     add_filter('webfinger_data', array('Micropub', 'jrd_links'));
+
+    // Add Markup to Post Content.
+    add_filter('before_micropub', array('Micropub', 'generate_post_content'));
+
+    // Store MF2 as post meta.
+    add_action('after_micropub', array('Micropub', 'store_mf2'));
+    // Sideload any provided photos.
+    add_action('after_micropub', array('Micropub', 'default_file_handler'));
+    // Store geodata in WordPress format.
+    add_action('after_micropub', array('Micropub', 'geodata'));
+
   }
 
   /**
@@ -129,7 +140,6 @@ class Micropub {
       kses_remove_filters();  // prevent sanitizing HTML tags in post_content
       $args['ID'] = Micropub::check_error(wp_insert_post($args));
       kses_init_filters();
-      Micropub::postprocess($args['ID']);
       status_header(201);
       header('Location: ' . get_permalink($args['ID']));
 
@@ -145,7 +155,6 @@ class Micropub {
         kses_remove_filters();  // prevent sanitizing HTML tags in post_content
         Micropub::check_error(wp_update_post($args));
         kses_init_filters();
-        Micropub::postprocess($args['ID']);
         status_header(200);
 
       } elseif ($_POST['action'] == 'delete') {
@@ -310,18 +319,12 @@ class Micropub {
         }
       }
     }
-    // If the theme declares it supports microformats2, pass the content through
-    if (current_theme_supports('microformats2')) {
-      if (isset($_POST['content'])) {
-        $args['post_content'] = $_POST['content'];
-      }
-      else if (isset($_POST['summary'])) {
-        $args['post_content'] = $_POST['summary'];
-      }
+    
+    if (isset($_POST['content'])) {
+      $args['post_content'] = $_POST['content'];
     }
-    // Else markup the content before passing it through
-    else {
-      $args['post_content'] = Micropub::generate_post_content();
+    else if (isset($_POST['summary'])) {
+      $args['post_content'] = $_POST['summary'];
     }
     return $args;
   }
@@ -330,7 +333,7 @@ class Micropub {
    * Generates and returns a post_content string suitable for wp_insert_post()
    * and friends.
    */
-  private static function generate_post_content() {
+  public static function generate_post_content($args) {
     $lines = [];
     $verbs = array('like' => 'Likes',
                    'repost' => 'Reposted',
@@ -367,7 +370,8 @@ class Micropub {
       $lines[] = "\n[gallery size=full columns=1]";
     }
 
-    return implode("\n", $lines);
+    $args['post_content'] = implode("\n", $lines);
+    return $args;
   }
 
   /**
@@ -413,17 +417,23 @@ class Micropub {
   }
 
   /**
-   * Postprocesses a post that has been created or updated. Useful for changes
-   * that require the post id, e.g. uploading media and adding post metadata.
+   * Handles Photo Upload.
+   *
    */
-  private static function postprocess($post_id) {
+  public static function default_file_handler($post_id) {
     if (isset($_FILES['photo'])) {
       require_once(ABSPATH . 'wp-admin/includes/image.php');
       require_once(ABSPATH . 'wp-admin/includes/file.php');
       require_once(ABSPATH . 'wp-admin/includes/media.php');
       Micropub::check_error(media_handle_upload('photo', $post_id));
     }
+  }
 
+  /**
+   * Adds geodata to post.
+   *
+   */
+  private static function geodata($post_id) {
     if (isset($_POST['location']) && substr($_POST['location'], 0, 4) == 'geo:') {
       // Geo URI format:
       // http://en.wikipedia.org/wiki/Geo_URI#Example
@@ -435,15 +445,13 @@ class Micropub {
       update_post_meta($post_id, 'geo_latitude', trim($coords[0]));
       update_post_meta($post_id, 'geo_longitude', trim($coords[1]));
     }
-
-    Micropub::store_mf2($post_id);
   }
 
   /**
    * Store properties as post metadata. Details:
    * https://indiewebcamp.com/WordPress_Data#Microformats_data
    */
-  private static function store_mf2($post_id) {
+  public static function store_mf2($post_id) {
     // Do not store access_token or other optional parameters
     $blacklist = array('access_token');
     foreach ($_POST as $key => $value) {
