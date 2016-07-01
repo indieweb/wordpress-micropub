@@ -337,7 +337,6 @@ class Micropub {
     // If the theme declares it supports microformats2 disable this.
 		if (current_theme_supports('microformats2')) {
       return $args;
-    }
     $lines = array();
     $verbs = array('like' => 'Likes',
                    'repost' => 'Reposted',
