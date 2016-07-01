@@ -70,7 +70,7 @@ class Micropub {
     // Sideload any provided photos.
     add_action('after_micropub', array('Micropub', 'default_file_handler'));
     // Store geodata in WordPress format.
-    add_action('after_micropub', array('Micropub', 'geodata'));
+    add_action('after_micropub', array('Micropub', 'store_geodata'));
 
   }
 
@@ -334,7 +334,11 @@ class Micropub {
    * and friends.
    */
   public static function generate_post_content($args) {
-    $lines = [];
+    // If the theme declares it supports microformats2 disable this.
+		if (current_theme_supports('microformats2')) {
+      return $args;
+    }
+    $lines = array();
     $verbs = array('like' => 'Likes',
                    'repost' => 'Reposted',
                    'in-reply-to' => 'In reply to');
@@ -433,7 +437,7 @@ class Micropub {
    * Adds geodata to post.
    *
    */
-  private static function geodata($post_id) {
+  private static function store_geodata($post_id) {
     if (isset($_POST['location']) && substr($_POST['location'], 0, 4) == 'geo:') {
       // Geo URI format:
       // http://en.wikipedia.org/wiki/Geo_URI#Example
