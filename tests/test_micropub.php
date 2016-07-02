@@ -108,7 +108,8 @@ class MicropubTest extends WP_UnitTestCase {
         $resp = $this->parse_query();
         $this->assertEquals(201, self::$status);
 
-        $post = wp_get_recent_posts(NULL, OBJECT)[0];
+        $posts = wp_get_recent_posts(NULL, OBJECT);
+        $post = $posts[0];
         $this->assertEquals('publish', $post->post_status);
         $this->assertEquals($this->userid, $post->post_author);
         // check that HTML in content isn't sanitized
