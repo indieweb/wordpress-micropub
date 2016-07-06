@@ -104,6 +104,7 @@ class MicropubTest extends WP_UnitTestCase {
             'summary' => 'my summary',
             'category' => 'my tag',
             'published' => '2016-01-01T12:01:23Z',
+						'location' => 'geo:42.361,-71.092;u=25000'
         );
         $resp = $this->parse_query();
         $this->assertEquals(201, self::$status);
@@ -119,6 +120,9 @@ class MicropubTest extends WP_UnitTestCase {
         $this->assertEquals('my name', $post->post_title);
         $this->assertEquals('my summary', $post->post_excerpt);
         $this->assertEquals('2016-01-01 12:01:23', $post->post_date);
+        $this->assertEquals('42.361', get_post_meta($post->ID, 'geo_latitude', true), 'Latitude Does Not Match');
+        $this->assertEquals('-71.092', get_post_meta($post->ID, 'geo_longitude', true), 'Longitude Does Not Match');
+        $this->assertEquals('my summary', get_post_meta($post->ID, 'mf2_summary', true));
     }
 
     function test_create_user_cannot_publish_posts() {

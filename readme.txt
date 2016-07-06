@@ -1,7 +1,7 @@
 === Plugin Name ===
 Contributors: snarfed, dshanske
 Tags: micropub
-Requires at least: 3.0.1
+Requires at least: 4.4
 Tested up to: 4.5
 Stable tag: trunk
 License: CC0
@@ -94,6 +94,10 @@ None yet.
 TODO
 
 == Changelog ==
+
+= 0.5 = 
+* Storage of properties now takes place during wp_insert_post
+* Post Content will not be automatically marked up if Post Kinds is enabled
 
 = 0.4 =
 * Store all properties in post meta except those in a blacklist

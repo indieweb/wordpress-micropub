@@ -5,7 +5,7 @@
  Description: <a href="https://indiewebcamp.com/micropub">Micropub</a> server.
  Author: Ryan Barrett
  Author URI: https://snarfed.org/
- Version: 0.4
+ Version: 0.5
 */
 
 // Example command line for testing:
@@ -61,7 +61,16 @@ class Micropub {
     add_action('send_headers', array('Micropub', 'http_header'));
     add_filter('host_meta', array('Micropub', 'jrd_links'));
     add_filter('webfinger_data', array('Micropub', 'jrd_links'));
-  }
+
+    // Store MF2 - set at priority 8 in order to occur before the other filters.
+    add_filter('before_micropub', array('Micropub', 'store_mf2'), 8);
+    // Postprocess
+    add_filter('before_micropub', array('Micropub', 'generate_post_content'));
+    // Store Geodata
+    add_filter('before_micropub', array('Micropub', 'store_geodata'));
+    // Sideload any provided photos.
+    add_action('after_micropub', array('Micropub', 'default_file_handler'));
+	}
 
   /**
    * Adds some query vars
@@ -115,7 +124,6 @@ class Micropub {
       $_POST['action'] = isset($_POST['operation']) ? $_POST['operation']
         : isset($_POST['url']) ? 'edit' : 'create';
     }
-
     $args = apply_filters('before_micropub', Micropub::generate_args());
     if ($user_id) {
       $args['post_author'] = $user_id;
@@ -129,7 +137,6 @@ class Micropub {
       kses_remove_filters();  // prevent sanitizing HTML tags in post_content
       $args['ID'] = Micropub::check_error(wp_insert_post($args));
       kses_init_filters();
-      Micropub::postprocess($args['ID']);
       status_header(201);
       header('Location: ' . get_permalink($args['ID']));
 
@@ -145,7 +152,6 @@ class Micropub {
         kses_remove_filters();  // prevent sanitizing HTML tags in post_content
         Micropub::check_error(wp_update_post($args));
         kses_init_filters();
-        Micropub::postprocess($args['ID']);
         status_header(200);
 
       } elseif ($_POST['action'] == 'delete') {
@@ -310,18 +316,14 @@ class Micropub {
         }
       }
     }
-    // If the theme declares it supports microformats2, pass the content through
-    if (current_theme_supports('microformats2')) {
-      if (isset($_POST['content'])) {
-        $args['post_content'] = $_POST['content'];
-      }
-      else if (isset($_POST['summary'])) {
-        $args['post_content'] = $_POST['summary'];
-      }
+    if (!isset($args['meta_input'])) {
+      $args['meta_input'] = array();
     }
-    // Else markup the content before passing it through
-    else {
-      $args['post_content'] = Micropub::generate_post_content();
+    if (isset($_POST['content'])) {
+      $args['post_content'] = $_POST['content'];
+    }
+    else if (isset($_POST['summary'])) {
+      $args['post_content'] = $_POST['summary'];
     }
     return $args;
   }
@@ -330,7 +332,16 @@ class Micropub {
    * Generates and returns a post_content string suitable for wp_insert_post()
    * and friends.
    */
-  private static function generate_post_content() {
+  public static function generate_post_content($args) {
+    // If the theme declares it supports microformats2, pass the content through
+    if (current_theme_supports('microformats2')) {
+      return $args;
+		}
+    // Disable if Kind Taxonomy is enabled. The Kind Taxonomy is used in the Post Kinds plugin.
+    // The Post Kinds plugin handles its own markup. 
+    if (taxonomy_exists('kind')) {
+      return $args;
+    }
     $lines = array();
     $verbs = array('like' => 'Likes',
                    'repost' => 'Reposted',
@@ -367,7 +378,8 @@ class Micropub {
       $lines[] = "\n[gallery size=full columns=1]";
     }
 
-    return implode("\n", $lines);
+    $args['post_content'] = implode("\n", $lines);
+		return $args;
   }
 
   /**
@@ -413,17 +425,26 @@ class Micropub {
   }
 
   /**
-   * Postprocesses a post that has been created or updated. Useful for changes
-   * that require the post id, e.g. uploading media and adding post metadata.
+   * Handles Photo Upload.
+   *
    */
-  private static function postprocess($post_id) {
+  public static function default_file_handler($post_id) {
     if (isset($_FILES['photo'])) {
       require_once(ABSPATH . 'wp-admin/includes/image.php');
       require_once(ABSPATH . 'wp-admin/includes/file.php');
       require_once(ABSPATH . 'wp-admin/includes/media.php');
       Micropub::check_error(media_handle_upload('photo', $post_id));
     }
+  }
 
+  /**
+   * Stores geodata in WordPress format
+   * 
+   */
+  public static function store_geodata($args) {
+    if (!isset($args['meta_input'])) {
+      $args['meta_input'] = array();
+    }
     if (isset($_POST['location']) && substr($_POST['location'], 0, 4) == 'geo:') {
       // Geo URI format:
       // http://en.wikipedia.org/wiki/Geo_URI#Example
@@ -432,18 +453,21 @@ class Micropub {
       $geo = explode(':', $geo);
       $geo = explode(';', $geo[0]);
       $coords = explode(',', $geo[0]);
-      update_post_meta($post_id, 'geo_latitude', trim($coords[0]));
-      update_post_meta($post_id, 'geo_longitude', trim($coords[1]));
+      $args['meta_input']['geo_latitude'] = trim($coords[0]);
+      $args['meta_input']['geo_longitude'] = trim($coords[1]);
     }
-
-    Micropub::store_mf2($post_id);
+   return $args;
   }
 
   /**
    * Store properties as post metadata. Details:
    * https://indiewebcamp.com/WordPress_Data#Microformats_data
    */
-  private static function store_mf2($post_id) {
+  public static function store_mf2($args) {
+    if (!isset($args['meta_input'])) {
+      $args['meta_input'] = array();
+    } 
+
     // Do not store access_token or other optional parameters
     $blacklist = array('access_token');
     foreach ($_POST as $key => $value) {
@@ -452,14 +476,14 @@ class Micropub {
       }
       if (!in_array($key, $blacklist)) {
         $key = 'mf2_' . $key;
-        delete_post_meta($post_id, $key);  // clear old value(s)
         foreach ($value as $val) {
           if (!empty($val)) {
-            add_post_meta($post_id, $key, $val);
+            $args['meta_input'][$key] = $val;
           }
         }
       }
     }
+   return $args;
   }
 
   private static function check_error($result) {
