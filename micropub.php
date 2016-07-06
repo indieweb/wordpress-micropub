@@ -62,7 +62,7 @@ class Micropub {
     add_filter('host_meta', array('Micropub', 'jrd_links'));
     add_filter('webfinger_data', array('Micropub', 'jrd_links'));
 
-    // Store MF2
+    // Store MF2 - set at priority 8 in order to occur before the other filters.
     add_filter('before_micropub', array('Micropub', 'store_mf2'), 8);
     // Postprocess
     add_filter('before_micropub', array('Micropub', 'generate_post_content'));
@@ -337,7 +337,8 @@ class Micropub {
     if (current_theme_supports('microformats2')) {
       return $args;
 		}
-    // Disable if Kind Taxonomy is enabled
+    // Disable if Kind Taxonomy is enabled. The Kind Taxonomy is used in the Post Kinds plugin.
+    // The Post Kinds plugin handles its own markup. 
     if (taxonomy_exists('kind')) {
       return $args;
     }
