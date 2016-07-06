@@ -95,9 +95,10 @@ TODO
 
 == Changelog ==
 
-= 0.5 = 
+= 0.5 (unreleased) =
 * Storage of properties now takes place during wp_insert_post
-* Post Content will not be automatically marked up if Post Kinds is enabled
+* Post content will not be automatically marked up if Post Kinds plugin is
+  enabled: https://wordpress.org/plugins/indieweb-post-kinds/
 
 = 0.4 =
 * Store all properties in post meta except those in a blacklist
