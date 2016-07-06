@@ -85,3 +85,11 @@ To set up your local environment to run the unit tests:
     Time: 703 ms, Memory: 33.75Mb
     OK (1 test, 3 assertions)
     ```
+
+To set up PHPCodesniffer to test changes for adherance to WordPress Coding Standards
+
+1. install [PHPCS](https://github.com/squizlabs/PHP_CodeSniffer).
+1. install and connect [WordPress-Coding-Standards](https://github.com/WordPress-Coding-Standards/WordPress-Coding-Standards)
+1. Run in command line or install a plugin for your favorite editor.
+1. To list coding standard issues in a file, run phpcs --standard=phpcs.ruleset.xml micropub.php
+1. If you want to try to automatically fix issues, run phpcbf with the same arguments as phpcs.

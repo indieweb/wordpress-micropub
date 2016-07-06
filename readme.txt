@@ -99,6 +99,7 @@ TODO
 * Storage of properties now takes place during wp_insert_post
 * Post content will not be automatically marked up if Post Kinds plugin is
   enabled: https://wordpress.org/plugins/indieweb-post-kinds/
+* Add PHP Codesniffer File to continue march toward WordPress Coding Standards
 
 = 0.4 =
 * Store all properties in post meta except those in a blacklist
