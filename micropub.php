@@ -92,9 +92,6 @@ class Micropub {
 	 * Parse the micropub request and render the document
 	 *
 	 * @param WP $wp WordPress request context
-	 *
-	 * @uses apply_filter() Calls 'before_micropub' on the default request
-	 * @uses do_action() Calls 'after_micropub' for additional postprocessing
 	 */
 	public static function parse_query( $wp ) {
 		if ( ! array_key_exists( 'micropub', $wp->query_vars ) ) {
@@ -103,7 +100,6 @@ class Micropub {
 		if ( WP_DEBUG ) {
 			error_log( 'Micropub Data: ' . serialize( $_GET ) . ' ' . serialize( $_POST ) );
 		}
-		header( 'Content-Type: text/plain; charset=' . get_option( 'blog_charset' ) );
 		// For debug purposes be able to bypass Micropub auth with WordPress auth
 		if ( MICROPUB_LOCAL_AUTH ) {
 			if ( ! is_user_logged_in() ) {
@@ -114,72 +110,12 @@ class Micropub {
 		else {
 			$user_id = Micropub::authorize();
 		}
-
-		$edit_url = isset( $_POST['edit-of'] ) ? $_POST['edit-of']
-				  : isset( $_POST['url'] ) ? $_POST['url']
-				  : NULL;
-		// validate micropub request params
-		if ( ! isset( $_POST['h'] ) && ! $edit_url && ! isset( $_GET['q'] ) ) {
-			wp_die( 'Empty Micropub request. Either an "h", "edit-of", "url" or "q" property is required, e.g. h=entry or url=http://example.com/post/100 or q=syndicate-to', 400 );
-		}
 		if ( isset( $_GET['q'] ) ) {
-			Micropub::return_query( $user_id );  // calls wp_die
+			Micropub::query_handler( $user_id );
 		}
-		// support both action= and operation= parameter names
-		if ( ! isset( $_POST['action'] ) ) {
-			$_POST['action'] = isset( $_POST['operation'] ) ? $_POST['operation']
-							 : isset( $_POST['url'] ) ? 'edit' : 'create';
+		else{
+			self::form_handler( $user_id );
 		}
-		$args = apply_filters( 'before_micropub', Micropub::generate_args() );
-		if ( $user_id ) {
-			$args['post_author'] = $user_id;
-		}
-
-		if ( ! $edit_url || $_POST['action'] == 'create' ) {
-			if ( $user_id && ! user_can( $user_id, 'publish_posts' ) ) {
-				wp_die( 'user id ' . $user_id . ' cannot publish posts', 403 );
-			}
-			$args['post_status'] = MICROPUB_DRAFT_MODE ? 'draft' : 'publish';
-			kses_remove_filters();  // prevent sanitizing HTML tags in post_content
-			$args['ID'] = Micropub::check_error( wp_insert_post( $args ) );
-			kses_init_filters();
-			status_header( 201 );
-			header( 'Location: ' . get_permalink( $args['ID'] ) );
-
-		} else {
-			if ( $args['ID'] == 0 || ! get_post( $args['ID'] ) ) {
-				wp_die( $edit_url . ' not found', 400 );
-			}
-
-			if ( $_POST['action'] == 'edit' || ! isset( $_POST['action'] ) ) {
-				if ( $user_id && ! user_can( $user_id, 'edit_posts' ) ) {
-					wp_die( 'user id ' . $user_id . ' cannot edit posts', 403 );
-				}
-				kses_remove_filters();  // prevent sanitizing HTML tags in post_content
-				Micropub::check_error( wp_update_post( $args ) );
-				kses_init_filters();
-				status_header( 200 );
-
-			} elseif ( $_POST['action'] == 'delete' ) {
-				if ( $user_id && ! user_can( $user_id, 'delete_posts' ) ) {
-					wp_die( 'user id ' . $user_id . ' cannot delete posts', 403 );
-				}
-				Micropub::check_error( wp_trash_post( $args['ID'] ) );
-				status_header( 200 );
-				// TODO: figure out how to make url_to_postid() support posts in trash
-				// here's one way:
-				// https://gist.github.com/peterwilsoncc/bb40e52cae7faa0e6efc
-				// } elseif ( $action == 'undelete' ) {
-				//   Micropub::check_error( wp_update_post( array(
-				//     'ID'           => $args['ID'],
-				//     'post_status'  => 'publish',
-				//   ) ) );
-				//   status_header( 200 );
-			} else {
-				wp_die( 'unknown action ' . $_POST['action'], 400 );
-			}
-		}
-		do_action( 'after_micropub', $args['ID'] );
 		wp_die();
 	}
 
@@ -242,7 +178,88 @@ class Micropub {
 		return NULL;
 	}
 
-	private static function return_query( $user_id ) {
+	/**
+	 * Parse the micropub request and render the document
+	 *
+	 * @param int $user_id User ID for Authorized User.
+	 *
+	 * @uses apply_filter() Calls 'before_micropub' on the default request
+	 * @uses do_action() Calls 'after_micropub' for additional postprocessing
+	 */
+	public static function form_handler( $user_id ) {
+		header( 'Content-Type: text/plain; charset=' . get_option( 'blog_charset' ) );
+		$edit_url = isset( $_POST['edit-of'] ) ? $_POST['edit-of']
+				  : isset( $_POST['url'] ) ? $_POST['url']
+				  : NULL;
+		// validate micropub request params
+		if ( ! isset( $_POST['h'] ) && ! $edit_url ) {
+			wp_die( 'Empty Micropub request. Either an "h", "edit-of", "url" or "q" property is required, e.g. h=entry or url=http://example.com/post/100 or q=syndicate-to', 400 );
+		}
+		// support both action= and operation= parameter names
+		if ( ! isset( $_POST['action'] ) ) {
+			$_POST['action'] = isset( $_POST['operation'] ) ? $_POST['operation']
+							 : isset( $_POST['url'] ) ? 'edit' : 'create';
+		}
+		$args = apply_filters( 'before_micropub', Micropub::generate_args() );
+		if ( $user_id ) {
+			$args['post_author'] = $user_id;
+		}
+
+		if ( ! $edit_url || $_POST['action'] == 'create' ) {
+			if ( $user_id && ! user_can( $user_id, 'publish_posts' ) ) {
+				wp_die( 'user id ' . $user_id . ' cannot publish posts', 403 );
+			}
+			$args['post_status'] = MICROPUB_DRAFT_MODE ? 'draft' : 'publish';
+			kses_remove_filters();  // prevent sanitizing HTML tags in post_content
+			$args['ID'] = Micropub::check_error( wp_insert_post( $args ) );
+			kses_init_filters();
+			status_header( 201 );
+			header( 'Location: ' . get_permalink( $args['ID'] ) );
+
+		} else {
+			if ( $args['ID'] == 0 || ! get_post( $args['ID'] ) ) {
+				wp_die( $edit_url . ' not found', 400 );
+			}
+
+			if ( $_POST['action'] == 'edit' || ! isset( $_POST['action'] ) ) {
+				if ( $user_id && ! user_can( $user_id, 'edit_posts' ) ) {
+					wp_die( 'user id ' . $user_id . ' cannot edit posts', 403 );
+				}
+				kses_remove_filters();  // prevent sanitizing HTML tags in post_content
+				Micropub::check_error( wp_update_post( $args ) );
+				kses_init_filters();
+				status_header( 200 );
+
+			} elseif ( $_POST['action'] == 'delete' ) {
+				if ( $user_id && ! user_can( $user_id, 'delete_posts' ) ) {
+					wp_die( 'user id ' . $user_id . ' cannot delete posts', 403 );
+				}
+				Micropub::check_error( wp_trash_post( $args['ID'] ) );
+				status_header( 200 );
+				// TODO: figure out how to make url_to_postid() support posts in trash
+				// here's one way:
+				// https://gist.github.com/peterwilsoncc/bb40e52cae7faa0e6efc
+				// } elseif ( $action == 'undelete' ) {
+				//   Micropub::check_error( wp_update_post( array(
+				//     'ID'           => $args['ID'],
+				//     'post_status'  => 'publish',
+				//   ) ) );
+				//   status_header( 200 );
+			} else {
+				wp_die( 'unknown action ' . $_POST['action'], 400 );
+			}
+		}
+		do_action( 'after_micropub', $args['ID'] );
+		wp_die();
+	}
+
+	/**
+	 * Handle queries to the micropub endpoint
+	 *
+	 * @param int $user_id Authenticated User
+	 */
+	private static function query_handler( $user_id ) {
+		header( 'Content-Type: text/plain; charset=' . get_option( 'blog_charset' ) );
 		switch( $_GET['q'] ) {
 			case 'syndicate-to':
 			// Fallback
