@@ -128,8 +128,11 @@ class Micropub {
 	private static function authorize() {
 		// find the access token
 		$headers = getallheaders();
-		if ( isset( $headers['Authorization'] ) ) {
-			$auth_header = $headers['Authorization'];
+		foreach ($headers as $k => $v) {
+			$lowheaders[strtolower($k)] = $v;
+		}
+		if ( isset( $lowheaders['authorization'] ) ) {
+			$auth_header = $lowheaders['authorization'];
 		} elseif ( isset( $_POST['access_token'] ) ) {
 			$auth_header = 'Bearer ' . $_POST['access_token'];
 		} else {
