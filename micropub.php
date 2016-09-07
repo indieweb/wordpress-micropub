@@ -120,7 +120,7 @@ class Micropub {
 	}
 
 	/**
-	 * Use tokens.indieauth.com to validate the access token.
+	 * Validate the access token at the token endpoint.
 	 *
 	 * If the token is valid, returns the user id to use as the post's author, or
 	 * NULL if the token only matched the site URL and no specific user.
@@ -136,9 +136,8 @@ class Micropub {
 			Micropub::handle_authorize_error( 401, 'missing access token' );
 		}
 
-		// verify it with tokens.indieauth.com
 		$resp = wp_remote_get(
-			'https://tokens.indieauth.com/token', array( 'headers' => array(
+			MICROPUB_TOKEN_ENDPOINT, array( 'headers' => array(
 				'Content-type' => 'application/x-www-form-urlencoded',
 				'Authorization' => $auth_header,
 			) ) );
