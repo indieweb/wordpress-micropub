@@ -75,7 +75,7 @@ These configuration options can be enabled by adding them to your wp-config.php
 
 * `define('MICROPUB_LOCAL_AUTH', '1')` - Bypasses Micropub authentication in 
 favor of WordPress authentication for testing purposes
-* `define('MICROPUB_AUTHENTICATION_ENDPOINT'`, 'https://indieauth.com/auth') 
+* `define('MICROPUB_AUTHENTICATION_ENDPOINT', 'https://indieauth.com/auth')` -
 Define a custom authentication endpoint
 * `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` - 
 Define a custom token endpoint
