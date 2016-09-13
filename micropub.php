@@ -282,7 +282,7 @@ class Micropub {
 		$home = untrailingslashit( home_url() );
 		if ( $home == 'http://localhost' ) {
 				echo 'WARNING: ' . $code . ' ' . $msg .
-					 '. Allowing only because this is localhost.\n';
+					 ". Allowing only because this is localhost.\n";
 				return;
 		}
 		wp_die( $msg, $code );
