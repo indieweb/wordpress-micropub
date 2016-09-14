@@ -521,12 +521,13 @@ class Micropub {
 	 return $args;
 	}
 
-	public static function respond( $code, $message ) {
+	public static function respond( $code, $message = '' ) {
 		status_header( $code );
 		exit( $message );
 	}
 
 	private static function check_error( $result ) {
+		$cls = get_called_class();
 		if ( ! $result ) {
 			$cls::respond( 500, 'Unknown WordPress error: ' . $result );
 		} elseif ( is_wp_error( $result ) ) {
