@@ -38,13 +38,6 @@ class MicropubTest extends WP_UnitTestCase {
 	 */
 	protected static $status = 0;
 
-	public static function record_status( $header ) {
-		$matches = array();
-		self::assertEquals( 1, preg_match( '/^HTTP\/1.1 ([0-9]+) .*/', $header, $matches ));
-		self::$status = $matches[1];
-		return $header;
-	}
-
 	public function setUp() {
 		parent::setUp();
 		self::$status = 0;
@@ -54,8 +47,6 @@ class MicropubTest extends WP_UnitTestCase {
 
 		global $wp_query;
 		$wp_query->query_vars['micropub'] = 'endpoint';
-
-		add_filter( 'status_header', array( 'MicropubTest', 'record_status' ));
 
 		$this->userid = self::factory()->user->create( array( 'role' => 'editor' ));
 		wp_set_current_user( $this->userid );
