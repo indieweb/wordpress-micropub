@@ -219,7 +219,7 @@ class Micropub {
 			}
 			$args['post_status'] = MICROPUB_DRAFT_MODE ? 'draft' : 'publish';
 			kses_remove_filters();  // prevent sanitizing HTML tags in post_content
-			$args['ID'] = $cls::check_error( wp_insert_post( $args ) );
+			$args['ID'] = $cls::check_error( wp_insert_post( $args, true ) );
 			kses_init_filters();
 			$status = 201;
 			header( 'Location: ' . get_permalink( $args['ID'] ) );
@@ -234,7 +234,7 @@ class Micropub {
 					$cls::respond( 403, 'user id ' . $user_id . ' cannot edit posts' );
 				}
 				kses_remove_filters();  // prevent sanitizing HTML tags in post_content
-				$cls::check_error( wp_update_post( $args ) );
+				$cls::check_error( wp_update_post( $args, true ) );
 				kses_init_filters();
 
 			} elseif ( $_POST['action'] == 'delete' ) {
