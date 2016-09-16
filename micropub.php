@@ -96,8 +96,6 @@ class Micropub {
 	 * @param WP $wp WordPress request context
 	 */
 	public static function parse_query( $wp ) {
-		$cls = get_called_class();
-
 		if ( ! array_key_exists( 'micropub', $wp->query_vars ) ) {
 			return;
 		}
@@ -111,10 +109,10 @@ class Micropub {
 			}
 			$user_id = get_current_user_id();
 		} else {
-			$user_id = $cls::authorize();
+			$user_id = static::authorize();
 		}
 		if ( isset( $_GET['q'] ) ) {
-			$cls::query_handler( $user_id );
+			static::query_handler( $user_id );
 		} else {
 			self::form_handler( $user_id );
 		}
@@ -127,8 +125,6 @@ class Micropub {
 	 * NULL if the token only matched the site URL and no specific user.
 	 */
 	private static function authorize() {
-		$cls = get_called_class();
-
 		// find the access token
 		$headers = getallheaders();
 		foreach ($headers as $k => $v) {
@@ -139,7 +135,7 @@ class Micropub {
 		} elseif ( isset( $_POST['access_token'] ) ) {
 			$auth_header = 'Bearer ' . $_POST['access_token'];
 		} else {
-			$cls::handle_authorize_error( 401, 'missing access token' );
+			static::handle_authorize_error( 401, 'missing access token' );
 		}
 
 		$resp = wp_remote_get(
@@ -151,11 +147,11 @@ class Micropub {
 		$body = wp_remote_retrieve_body( $resp );
 		parse_str( $body, $params );
 		if ( $code / 100 != 2 ) {
-			$cls::handle_authorize_error(
+			static::handle_authorize_error(
 				$code, 'invalid access token: ' . $body );
 		} elseif ( ! isset( $params['scope'] ) ||
 				   ! in_array( 'post', explode( ' ', $params['scope'] ) ) ) {
-			$cls::handle_authorize_error(
+			static::handle_authorize_error(
 				403, 'access token is missing post scope; got `' . $params['scope'] . '`' );
 		}
 
@@ -176,7 +172,7 @@ class Micropub {
 		// post as the default user
 		$home = untrailingslashit( home_url() );
 		if ( $home != $me ) {
-			$cls::handle_authorize_error(
+			static::handle_authorize_error(
 				401, 'access token URL ' . $me . " doesn't match site " . $home . ' or any user' );
 		}
 
@@ -192,8 +188,6 @@ class Micropub {
 	 * @uses do_action() Calls 'after_micropub' for additional postprocessing
 	 */
 	public static function form_handler( $user_id ) {
-		$cls = get_called_class();
-
 		$status = 200;
 		header( 'Content-Type: text/plain; charset=' . get_option( 'blog_charset' ) );
 		$edit_url = isset( $_POST['edit-of'] ) ? $_POST['edit-of']
@@ -201,61 +195,61 @@ class Micropub {
 				  : NULL;
 		// validate micropub request params
 		if ( ! isset( $_POST['h'] ) && ! $edit_url ) {
-			$cls::respond( 400, 'Empty Micropub request. Either an "h", "edit-of", "url" or "q" property is required, e.g. h=entry or url=http://example.com/post/100 or q=syndicate-to' );
+			static::respond( 400, 'Empty Micropub request. Either an "h", "edit-of", "url" or "q" property is required, e.g. h=entry or url=http://example.com/post/100 or q=syndicate-to' );
 		}
 		// support both action= and operation= parameter names
 		if ( ! isset( $_POST['action'] ) ) {
 			$_POST['action'] = isset( $_POST['operation'] ) ? $_POST['operation']
 							 : isset( $_POST['url'] ) ? 'edit' : 'create';
 		}
-		$args = apply_filters( 'before_micropub', $cls::generate_args() );
+		$args = apply_filters( 'before_micropub', static::generate_args() );
 		if ( $user_id ) {
 			$args['post_author'] = $user_id;
 		}
 
 		if ( ! $edit_url || $_POST['action'] == 'create' ) {
 			if ( $user_id && ! user_can( $user_id, 'publish_posts' ) ) {
-				$cls::respond( 403, 'user id ' . $user_id . ' cannot publish posts' );
+				static::respond( 403, 'user id ' . $user_id . ' cannot publish posts' );
 			}
 			$args['post_status'] = MICROPUB_DRAFT_MODE ? 'draft' : 'publish';
 			kses_remove_filters();  // prevent sanitizing HTML tags in post_content
-			$args['ID'] = $cls::check_error( wp_insert_post( $args, true ) );
+			$args['ID'] = static::check_error( wp_insert_post( $args, true ) );
 			kses_init_filters();
 			$status = 201;
 			header( 'Location: ' . get_permalink( $args['ID'] ) );
 
 		} else {
 			if ( $args['ID'] == 0 || ! get_post( $args['ID'] ) ) {
-				$cls::respond( 400, $edit_url . ' not found' );
+				static::respond( 400, $edit_url . ' not found' );
 			}
 
 			if ( $_POST['action'] == 'edit' || ! isset( $_POST['action'] ) ) {
 				if ( $user_id && ! user_can( $user_id, 'edit_posts' ) ) {
-					$cls::respond( 403, 'user id ' . $user_id . ' cannot edit posts' );
+					static::respond( 403, 'user id ' . $user_id . ' cannot edit posts' );
 				}
 				kses_remove_filters();  // prevent sanitizing HTML tags in post_content
-				$cls::check_error( wp_update_post( $args, true ) );
+				static::check_error( wp_update_post( $args, true ) );
 				kses_init_filters();
 
 			} elseif ( $_POST['action'] == 'delete' ) {
 				if ( $user_id && ! user_can( $user_id, 'delete_posts' ) ) {
-					$cls::respond( 403, 'user id ' . $user_id . ' cannot delete posts' );
+					static::respond( 403, 'user id ' . $user_id . ' cannot delete posts' );
 				}
-				$cls::check_error( wp_trash_post( $args['ID'] ) );
+				static::check_error( wp_trash_post( $args['ID'] ) );
 				// TODO: figure out how to make url_to_postid() support posts in trash
 				// here's one way:
 				// https://gist.github.com/peterwilsoncc/bb40e52cae7faa0e6efc
 				// } elseif ( $action == 'undelete' ) {
-				//   $cls::check_error( wp_update_post( array(
+				//   static::check_error( wp_update_post( array(
 				//     'ID'           => $args['ID'],
 				//     'post_status'  => 'publish',
 				//   ) ) );
 			} else {
-				$cls::respond( 400, 'unknown action ' . $_POST['action'] );
+				static::respond( 400, 'unknown action ' . $_POST['action'] );
 			}
 		}
 		do_action( 'after_micropub', $args['ID'] );
-		$cls::respond( $status );
+		static::respond( $status );
 	}
 
 	/**
@@ -264,8 +258,6 @@ class Micropub {
 	 * @param int $user_id Authenticated User
 	 */
 	private static function query_handler( $user_id ) {
-		$cls = get_called_class();
-
 		header( 'Content-Type: text/plain; charset=' . get_option( 'blog_charset' ) );
 		switch( $_GET['q'] ) {
 			case 'syndicate-to':
@@ -279,9 +271,9 @@ class Micropub {
 					$syndication = '';
 				}
 				header( 'Content-type: application/x-www-form-urlencoded' );
-				$cls::respond( 200, $syndication );
+				static::respond( 200, $syndication );
 			default:
-				$cls::respond( 400, 'unknown query ' . $_GET['q'] );
+				static::respond( 400, 'unknown query ' . $_GET['q'] );
 		}
 	}
 
@@ -292,7 +284,7 @@ class Micropub {
 					 ". Allowing only because this is localhost.\n";
 				return;
 		}
-		$cls::respond( $code, $msg );
+		static::respond( $code, $msg );
 	}
 
 	/**
@@ -363,8 +355,6 @@ class Micropub {
 	 * and friends.
 	 */
 	public static function generate_post_content( $args ) {
-		$cls = get_called_class();
-
 		// If the theme declares it supports microformats2, pass the content through
 		if ( current_theme_supports( 'microformats2' ) ) {
 			return $args;
@@ -402,7 +392,7 @@ class Micropub {
 			$lines[] = '<div class="e-content">';
 			$lines[] = $_POST['content'];
 			if ( isset( $_POST['h'] ) && $_POST['h'] == 'event' ) {
-				$lines[] = $cls::generate_event();
+				$lines[] = static::generate_event();
 			}
 			$lines[] = '</div>';
 		}
@@ -463,13 +453,11 @@ class Micropub {
 	 *
 	 */
 	public static function default_file_handler( $post_id ) {
-		$cls = get_called_class();
-
 		if ( isset( $_FILES['photo'] ) ) {
 			require_once( ABSPATH . 'wp-admin/includes/image.php' );
 			require_once( ABSPATH . 'wp-admin/includes/file.php' );
 			require_once( ABSPATH . 'wp-admin/includes/media.php' );
-			$cls::check_error( media_handle_upload( 'photo', $post_id ) );
+			static::check_error( media_handle_upload( 'photo', $post_id ) );
 		}
 	}
 
@@ -527,11 +515,10 @@ class Micropub {
 	}
 
 	private static function check_error( $result ) {
-		$cls = get_called_class();
 		if ( ! $result ) {
-			$cls::respond( 500, 'Unknown WordPress error: ' . $result );
+			static::respond( 500, 'Unknown WordPress error: ' . $result );
 		} elseif ( is_wp_error( $result ) ) {
-			$cls::respond( 500, $result->get_error_message() );
+			static::respond( 500, $result->get_error_message() );
 		}
 		return $result;
 	}
