@@ -121,6 +121,23 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( 'my summary', get_post_meta( $post->ID, 'mf2_summary', true ));
 	}
 
+	function test_create_content_html()
+	{
+		$_POST = [
+			'h' => 'entry',
+			'content' => ['html' => '<h1>HTML content!</h1><p>coolio.</p>'],
+			'name' => 'HTML content test'
+		];
+		$this->parse_query();
+		$this->assertEquals( 201, Recorder::$status );
+
+		$posts = wp_get_recent_posts( NULL, OBJECT );
+		$post = $posts[0];
+		$this->assertEquals( 'HTML content test', $post->post_title );
+		// check that HTML in content isn't sanitized
+		$this->assertEquals( "<div class=\"e-content\">\n<h1>HTML content!</h1><p>coolio.</p>\n</div>", $post->post_content );
+	}
+
 	function test_create_user_cannot_publish_posts() {
 		get_user_by( 'ID', $this->userid )->remove_role( 'editor' );
 		$_POST = array( 'h' => 'entry', 'content' => 'x' );
