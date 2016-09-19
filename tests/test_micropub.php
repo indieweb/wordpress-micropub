@@ -123,11 +123,11 @@ class MicropubTest extends WP_UnitTestCase {
 
 	function test_create_content_html()
 	{
-		$_POST = [
+		$_POST = array(
 			'h' => 'entry',
-			'content' => ['html' => '<h1>HTML content!</h1><p>coolio.</p>'],
+			'content' => array('html' => '<h1>HTML content!</h1><p>coolio.</p>'),
 			'name' => 'HTML content test'
-		];
+		);
 		$this->parse_query();
 		$this->assertEquals( 201, Recorder::$status );
 
