@@ -344,7 +344,7 @@ class Micropub {
 		if ( isset( $_POST['content']['html'] ) ) {
 			$args['post_content'] = $_POST['content']['html'];
 		} else if ( isset( $_POST['content'] ) ) {
-			$args['post_content'] = $_POST['content'];
+			$args['post_content'] = htmlspecialchars($_POST['content']);
 		}
 		elseif ( isset( $_POST['summary'] ) ) {
 			$args['post_content'] = $_POST['summary'];
@@ -395,7 +395,7 @@ class Micropub {
 			if (isset($_POST['content']['html'])) {
 				$lines[] = $_POST['content']['html'];
 			} else {
-				$lines[] = $_POST['content'];
+				$lines[] = htmlspecialchars($_POST['content']);
 			}
 			if ( isset( $_POST['h'] ) && $_POST['h'] == 'event' ) {
 				$lines[] = static::generate_event();

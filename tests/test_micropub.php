@@ -110,8 +110,8 @@ class MicropubTest extends WP_UnitTestCase {
 		$post = $posts[0];
 		$this->assertEquals( 'publish', $post->post_status );
 		$this->assertEquals( $this->userid, $post->post_author );
-		// check that HTML in content isn't sanitized
-		$this->assertEquals( "<div class=\"e-content\">\nmy<br>content\n</div>", $post->post_content );
+		// check that HTML in content is sanitized
+		$this->assertEquals( "<div class=\"e-content\">\nmy&lt;br&gt;content\n</div>", $post->post_content );
 		$this->assertEquals( 'my_slug', $post->post_name );
 		$this->assertEquals( 'my name', $post->post_title );
 		$this->assertEquals( 'my summary', $post->post_excerpt );
@@ -154,7 +154,7 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( 200, Recorder::$status );
 
 		$post = get_post( $post_id );
-		$this->assertEquals( "<div class=\"e-content\">\nnew<br>content\n</div>",
+		$this->assertEquals( "<div class=\"e-content\">\nnew&lt;br&gt;content\n</div>",
 							$post->post_content );
 	}
 
