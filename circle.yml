@@ -4,6 +4,8 @@ dependencies:
   cache_directories:
     - ~/wordpress
     - ~/wordpress-tests-lib
+  pre:
+    - sudo apt-get update; sudo apt-get install subversion
   post:
     - ./bin/install-wp-tests.sh micropub_test ubuntu '' localhost;
     - sed -i.bak "s/wordpress' );$/wordpress\/' );/" ~/wordpress-tests-lib/wp-tests-config.php
