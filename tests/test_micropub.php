@@ -110,8 +110,8 @@ class MicropubTest extends WP_UnitTestCase {
 		$post = $posts[0];
 		$this->assertEquals( 'publish', $post->post_status );
 		$this->assertEquals( $this->userid, $post->post_author );
-		// check that HTML in content isn't sanitized
-		$this->assertEquals( "<div class=\"e-content\">\nmy<br>content\n</div>", $post->post_content );
+		// check that HTML in content is sanitized
+		$this->assertEquals( "<div class=\"e-content\">\nmy&lt;br&gt;content\n</div>", $post->post_content );
 		$this->assertEquals( 'my_slug', $post->post_name );
 		$this->assertEquals( 'my name', $post->post_title );
 		$this->assertEquals( 'my summary', $post->post_excerpt );
@@ -119,6 +119,23 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ), 'Latitude Does Not Match' );
 		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ), 'Longitude Does Not Match' );
 		$this->assertEquals( 'my summary', get_post_meta( $post->ID, 'mf2_summary', true ));
+	}
+
+	function test_create_content_html()
+	{
+		$_POST = array(
+			'h' => 'entry',
+			'content' => array('html' => '<h1>HTML content!</h1><p>coolio.</p>'),
+			'name' => 'HTML content test'
+		);
+		$this->parse_query();
+		$this->assertEquals( 201, Recorder::$status );
+
+		$posts = wp_get_recent_posts( NULL, OBJECT );
+		$post = $posts[0];
+		$this->assertEquals( 'HTML content test', $post->post_title );
+		// check that HTML in content isn't sanitized
+		$this->assertEquals( "<div class=\"e-content\">\n<h1>HTML content!</h1><p>coolio.</p>\n</div>", $post->post_content );
 	}
 
 	function test_create_user_cannot_publish_posts() {
@@ -137,7 +154,7 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( 200, Recorder::$status );
 
 		$post = get_post( $post_id );
-		$this->assertEquals( "<div class=\"e-content\">\nnew<br>content\n</div>",
+		$this->assertEquals( "<div class=\"e-content\">\nnew&lt;br&gt;content\n</div>",
 							$post->post_content );
 	}
 
