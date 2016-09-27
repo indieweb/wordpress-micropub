@@ -138,6 +138,22 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( "<div class=\"e-content\">\n<h1>HTML content!</h1><p>coolio.</p>\n</div>", $post->post_content );
 	}
 
+	function test_create_like()
+	{
+		// shouldn't require name or content
+		$_POST = array(
+			'h' => 'entry',
+			'like-of' => 'http://target',
+		);
+		$this->parse_query();
+		$this->assertEquals( 201, Recorder::$status );
+
+		$posts = wp_get_recent_posts( NULL, OBJECT );
+		$post = $posts[0];
+		$this->assertEquals( '', $post->post_title );
+		$this->assertEquals( '<p>Likes <a class="u-like-of" href="http://target">http://target</a>.</p>', $post->post_content );
+	}
+
 	function test_create_user_cannot_publish_posts() {
 		get_user_by( 'ID', $this->userid )->remove_role( 'editor' );
 		$_POST = array( 'h' => 'entry', 'content' => 'x' );
