@@ -61,9 +61,9 @@ To add a new release to the WordPress plugin directory, run `push.sh`.
 To set up your local environment to run the unit tests:
 
 1. Install [PHPUnit](https://github.com/sebastianbergmann/phpunit#installation),
-   e.g. `brew install wp-cli phpunit` with Homebrew on Mac OS X.
+   e.g. `brew install homebrew/php/wp-cli phpunit` with Homebrew on Mac OS X.
 1. Install and start MySQL. (You may already have it.)
-1. Run `bin/install-wp-tests.sh wordpress_micropub_test root '' localhost` to
+1. Run `./bin/install-wp-tests.sh wordpress_micropub_test root '' localhost` to
    download WordPress and
    [its unit test library](https://develop.svn.wordpress.org/trunk/tests/phpunit/),
    into `/tmp` and `./temp` by default, and create a MySQL db to test against.
