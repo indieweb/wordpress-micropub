@@ -73,14 +73,24 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertContains( 'Empty Micropub request', Recorder::$body );
 	}
 
-	function test_q_syndicate_to_empty() {
+	function test_bad_query() {
+		$_GET['q'] = 'not_real';
+		$this->parse_query();
+		$this->assertEquals( 400, Recorder::$status );
+		$this->assertEquals(array( 'error' => 'invalid_request',
+								   'error_description' => 'unknown query not_real' ),
+							json_decode( Recorder::$body, true ));
+	}
+
+	function test_query_syndicate_to_empty() {
 		$_GET['q'] = 'syndicate-to';
 		$this->parse_query();
 		$this->assertEquals( 200, Recorder::$status );
-		$this->assertEquals( '', Recorder::$body );
+		$this->assertEquals( array( 'syndicate-to' => array() ),
+							 json_decode( Recorder::$body, true ));
 	}
 
-	function test_q_syndicate_to() {
+	function test_query_syndicate_to() {
 		function syndicate_to() {
 			return array( 'abc', 'xyz' );
 		}
@@ -89,7 +99,8 @@ class MicropubTest extends WP_UnitTestCase {
 		$_GET['q'] = 'syndicate-to';
 		$this->parse_query();
 		$this->assertEquals( 200, Recorder::$status );
-		$this->assertEquals( 'syndicate-to[]=abc&syndicate-to[]=xyz', Recorder::$body );
+		$this->assertEquals( array( 'syndicate-to' => array( 'abc', 'xyz' )),
+							 json_decode( Recorder::$body, true ));
 	}
 
 	function test_create() {

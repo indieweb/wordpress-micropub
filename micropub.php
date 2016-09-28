@@ -258,23 +258,22 @@ class Micropub {
 	 * @param int $user_id Authenticated User
 	 */
 	private static function query_handler( $user_id ) {
-		header( 'Content-Type: text/plain; charset=' . get_option( 'blog_charset' ) );
+		header( 'Content-type: application/json; charset=' . get_option( 'blog_charset' ) );
+		$status = 200;
+		$resp = array();
+
 		switch( $_GET['q'] ) {
 			case 'syndicate-to':
-			// Fallback
 			case 'mp-syndicate-to':
 				// return empty syndication target with filter
-				$syndication = apply_filters( 'micropub_syndicate-to', array(), $user_id );
-				if ( ! empty( $syndication ) ) {
-					$syndication = 'syndicate-to[]=' . implode( '&syndicate-to[]=', $syndication );
-				} else {
-					$syndication = '';
-				}
-				header( 'Content-type: application/x-www-form-urlencoded' );
-				static::respond( 200, $syndication );
+				$resp['syndicate-to'] = apply_filters( 'micropub_syndicate-to', array(), $user_id );
+				break;
 			default:
-				static::respond( 400, 'unknown query ' . $_GET['q'] );
+				$status = 400;
+				$resp['error'] = 'invalid_request';
+				$resp['error_description'] = 'unknown query ' . $_GET['q'];
 		}
+		static::respond( $status, json_encode( $resp ));
 	}
 
 	private static function handle_authorize_error( $code, $msg ) {
