@@ -67,6 +67,30 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->fail( 'WPDieException not thrown!' );
 	}
 
+	// Post properties that match insert_post below
+	protected static $properties = array(
+		'h' => 'entry',
+		'content' => 'my<br>content',
+		'slug' => 'my_slug',
+		'name' => 'my name',
+		'summary' => 'my summary',
+		'category' => 'my tag',
+		'published' => '2016-01-01T12:01:23Z',
+		'location' => 'geo:42.361,-71.092;u=25000',
+	);
+
+	// Creates a WordPress post with data that matches $properties above
+	protected static function insert_post() {
+		return wp_insert_post( array(
+			'slug' => 'my_slug',
+			'title' => 'my name',
+			'post_content' => 'my<br>content',
+			'category' => 'my tag',
+			'published' => '2016-01-01T12:01:23Z',
+			'location' => 'geo:42.361,-71.092;u=25000',
+		));
+	}
+
 	function test_empty_request() {
 		$this->parse_query();
 		$this->assertEquals( 400, Recorder::$status );
@@ -104,16 +128,7 @@ class MicropubTest extends WP_UnitTestCase {
 	}
 
 	function test_create() {
-		$_POST = array(
-			'h' => 'entry',
-			'content' => 'my<br>content',
-			'slug' => 'my_slug',
-			'name' => 'my name',
-			'summary' => 'my summary',
-			'category' => 'my tag',
-			'published' => '2016-01-01T12:01:23Z',
-			'location' => 'geo:42.361,-71.092;u=25000',
-		);
+		$_POST = self::$properties;
 		$this->parse_query();
 		$this->assertEquals( 201, Recorder::$status );
 
@@ -174,7 +189,7 @@ class MicropubTest extends WP_UnitTestCase {
 	}
 
 	function test_edit() {
-		$post_id = wp_insert_post( array( 'post_content' => 'xyz' ));
+		$post_id = self::insert_post();
 
 		$_POST = array( 'url' => '/?p=' . $post_id, 'content' => 'new<br>content' );
 		$this->parse_query();
@@ -193,7 +208,7 @@ class MicropubTest extends WP_UnitTestCase {
 	}
 
 	function test_edit_user_cannot_edit_posts() {
-		$post_id = wp_insert_post( array( 'post_content' => 'xyz' ));
+		$post_id = self::insert_post();
 		get_user_by( 'ID', $this->userid )->remove_role( 'editor' );
 		$_POST = array( 'url' => '/?p=' . $post_id, 'content' => 'x' );
 		$this->parse_query();
@@ -202,7 +217,7 @@ class MicropubTest extends WP_UnitTestCase {
 	}
 
 	function test_delete() {
-		$post_id = wp_insert_post( array( 'post_content' => 'xyz' ));
+		$post_id = self::insert_post();
 
 		$_POST = array( 'action' => 'delete', 'url' => '/?p=' . $post_id );
 		$this->parse_query();
@@ -220,7 +235,7 @@ class MicropubTest extends WP_UnitTestCase {
 	}
 
 	function test_delete_user_cannot_delete_posts() {
-		$post_id = wp_insert_post( array( 'post_content' => 'xyz' ));
+		$post_id = self::insert_post();
 		get_user_by( 'ID', $this->userid )->remove_role( 'editor' );
 		$_POST = array( 'action' => 'delete', 'url' => '/?p=' . $post_id );
 		$this->parse_query();
@@ -229,7 +244,7 @@ class MicropubTest extends WP_UnitTestCase {
 	}
 
 	function test_unknown_action() {
-		$post_id = wp_insert_post( array( 'post_content' => 'xyz' ));
+		$post_id = self::insert_post();
 		$_POST = array( 'action' => 'foo', 'url' => '/?p=' . $post_id );
 		$this->parse_query();
 		$this->assertEquals( 400, Recorder::$status );
