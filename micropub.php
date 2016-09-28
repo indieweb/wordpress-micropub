@@ -263,6 +263,7 @@ class Micropub {
 		$resp = array();
 
 		switch( $_GET['q'] ) {
+			case 'config':
 			case 'syndicate-to':
 			case 'mp-syndicate-to':
 				// return empty syndication target with filter
