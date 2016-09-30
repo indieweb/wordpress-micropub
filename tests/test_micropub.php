@@ -68,6 +68,27 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->fail( 'WPDieException not thrown!' );
 	}
 
+	/**
+	 * Run parse_query and check the result.
+	 *
+	 * If $response is an array, it's compared to the JSON response verbatim. If
+	 * it's a string, it's checked against the 'error_description' response
+	 * field as a substring.
+	 */
+	function check( $status, $response = NULL ) {
+		$this->parse_query( $_GET ? 'GET' : 'POST' );
+		$this->assertEquals( $status, Recorder::$status, Recorder::$body );
+
+		$resp = json_decode( Recorder::$body, true );
+		if ( is_array( $response ) ) {
+			$this->assertEquals( $response, $resp );
+		} elseif ( is_string( $response ) ) {
+			$this->assertContains( $response, $resp['error_description'] );
+		} else {
+			$this->assertSame( NULL, $response );
+		}
+	}
+
 	// Post properties that match insert_post below
 	protected static $properties = array(
 		'h' => 'entry',
@@ -94,19 +115,13 @@ class MicropubTest extends WP_UnitTestCase {
 
 	function test_bad_query() {
 		$_GET['q'] = 'not_real';
-		$this->parse_query( 'GET' );
-		$this->assertEquals( 400, Recorder::$status );
-		$this->assertEquals(array( 'error' => 'invalid_request',
-								   'error_description' => 'unknown query not_real' ),
-							json_decode( Recorder::$body, true ));
+		$this->check( 400, array( 'error' => 'invalid_request',
+								  'error_description' => 'unknown query not_real' ));
 	}
 
 	function test_query_syndicate_to_empty() {
 		$_GET['q'] = 'syndicate-to';
-		$this->parse_query( 'GET' );
-		$this->assertEquals( 200, Recorder::$status );
-		$this->assertEquals( array( 'syndicate-to' => array() ),
-							 json_decode( Recorder::$body, true ));
+		$this->check( 200, array( 'syndicate-to' => array() ));
 	}
 
 	function test_query_syndicate_to() {
@@ -116,16 +131,12 @@ class MicropubTest extends WP_UnitTestCase {
 		add_filter( 'micropub_syndicate-to', 'syndicate_to' );
 
 		$_GET['q'] = 'syndicate-to';
-		$this->parse_query( 'GET' );
-		$this->assertEquals( 200, Recorder::$status );
-		$this->assertEquals( array( 'syndicate-to' => array( 'abc', 'xyz' )),
-							 json_decode( Recorder::$body, true ));
+		$this->check( 200, array( 'syndicate-to' => array( 'abc', 'xyz' )));
 	}
 
 	function test_create() {
 		$_POST = self::$properties;
-		$this->parse_query();
-		$this->assertEquals( 201, Recorder::$status, Recorder::$body );
+		$this->check( 201 );
 
 		$posts = wp_get_recent_posts( NULL, OBJECT );
 		$post = $posts[0];
@@ -149,8 +160,7 @@ class MicropubTest extends WP_UnitTestCase {
 			'content' => array('html' => '<h1>HTML content!</h1><p>coolio.</p>'),
 			'name' => 'HTML content test'
 		);
-		$this->parse_query();
-		$this->assertEquals( 201, Recorder::$status );
+		$this->check( 201 );
 
 		$posts = wp_get_recent_posts( NULL, OBJECT );
 		$post = $posts[0];
@@ -163,8 +173,7 @@ class MicropubTest extends WP_UnitTestCase {
 	{
 		// shouldn't require name or content
 		$_POST = array('like-of' => 'http://target');
-		$this->parse_query();
-		$this->assertEquals( 201, Recorder::$status, Recorder::$body );
+		$this->check( 201 );
 
 		$posts = wp_get_recent_posts( NULL, OBJECT );
 		$post = $posts[0];
@@ -175,19 +184,14 @@ class MicropubTest extends WP_UnitTestCase {
 	function test_create_user_cannot_publish_posts() {
 		get_user_by( 'ID', $this->userid )->remove_role( 'editor' );
 		$_POST = array( 'h' => 'entry', 'content' => 'x' );
-		$this->parse_query();
-		$this->assertEquals( 403, Recorder::$status );
-		$this->assertContains(
-			'cannot publish posts',
-			json_decode( Recorder::$body, true )['error_description'] );
+		$this->check( 403, 'cannot publish posts' );
 	}
 
 	function test_edit() {
 		$post_id = self::insert_post();
 
 		$_POST = array( 'url' => '/?p=' . $post_id, 'content' => 'new<br>content' );
-		$this->parse_query();
-		$this->assertEquals( 200, Recorder::$status );
+		$this->check( 200 );
 
 		$post = get_post( $post_id );
 		$this->assertEquals( "<div class=\"e-content\">\nnew&lt;br&gt;content\n</div>",
@@ -196,30 +200,21 @@ class MicropubTest extends WP_UnitTestCase {
 
 	function test_edit_post_not_found() {
 		$_POST = array( 'url' => '/?p=999', 'content' => 'unused' );
-		$this->parse_query();
-		$this->assertEquals( 400, Recorder::$status );
-		$this->assertContains(
-			'not found',
-			json_decode( Recorder::$body, true )['error_description'] );
+		$this->check( 400, '/?p=999 not found' );
 	}
 
 	function test_edit_user_cannot_edit_posts() {
 		$post_id = self::insert_post();
 		get_user_by( 'ID', $this->userid )->remove_role( 'editor' );
 		$_POST = array( 'url' => '/?p=' . $post_id, 'content' => 'x' );
-		$this->parse_query();
-		$this->assertEquals( 403, Recorder::$status );
-		$this->assertContains(
-			'cannot edit posts',
-			json_decode( Recorder::$body, true )['error_description'] );
+		$this->check( 403, 'cannot edit posts' );
 	}
 
 	function test_delete() {
 		$post_id = self::insert_post();
 
 		$_POST = array( 'action' => 'delete', 'url' => '/?p=' . $post_id );
-		$this->parse_query();
-		$this->assertEquals( 200, Recorder::$status );
+		$this->check( 200 );
 
 		$post = get_post( $post_id );
 		$this->assertEquals( 'trash', $post->post_status );
@@ -227,31 +222,20 @@ class MicropubTest extends WP_UnitTestCase {
 
 	function test_delete_post_not_found() {
 		$_POST = array( 'action' => 'delete', 'url' => '/?p=999' );
-		$this->parse_query();
-		$this->assertEquals( 400, Recorder::$status );
-		$this->assertEquals( array( 'error' => 'invalid_request',
-									'error_description' => '/?p=999 not found' ),
-							 json_decode( Recorder::$body, true ));
+		$this->check( 400, array( 'error' => 'invalid_request',
+								  'error_description' => '/?p=999 not found' ));
 	}
 
 	function test_delete_user_cannot_delete_posts() {
 		$post_id = self::insert_post();
 		get_user_by( 'ID', $this->userid )->remove_role( 'editor' );
 		$_POST = array( 'action' => 'delete', 'url' => '/?p=' . $post_id );
-		$this->parse_query();
-		$this->assertEquals( 403, Recorder::$status );
-		$this->assertContains(
-			'cannot delete posts',
-			json_decode( Recorder::$body, true )['error_description'] );
+		$this->check( 403, 'cannot delete posts' );
 	}
 
 	function test_unknown_action() {
 		$post_id = self::insert_post();
 		$_POST = array( 'action' => 'foo', 'url' => '/?p=' . $post_id );
-		$this->parse_query();
-		$this->assertEquals( 400, Recorder::$status );
-		$this->assertContains(
-			'unknown action',
-			json_decode( Recorder::$body, true )['error_description'] );
+		$this->check( 400, 'unknown action' );
 	}
 }
