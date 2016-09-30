@@ -195,7 +195,7 @@ class Micropub {
 				  : NULL;
 		// validate micropub request params
 		if ( ! isset( $_POST['h'] ) && ! $edit_url ) {
-			static::respond( 400, 'Empty Micropub request. Either an "h", "edit-of", "url" or "q" property is required, e.g. h=entry or url=http://example.com/post/100 or q=syndicate-to' );
+			static::error( 400, 'Empty Micropub request. Either an "h", "edit-of", "url" or "q" property is required, e.g. h=entry or url=http://example.com/post/100 or q=syndicate-to' );
 		}
 		// support both action= and operation= parameter names
 		if ( ! isset( $_POST['action'] ) ) {
@@ -209,7 +209,7 @@ class Micropub {
 
 		if ( ! $edit_url || $_POST['action'] == 'create' ) {
 			if ( $user_id && ! user_can( $user_id, 'publish_posts' ) ) {
-				static::respond( 403, 'user id ' . $user_id . ' cannot publish posts' );
+				static::error( 403, 'user id ' . $user_id . ' cannot publish posts' );
 			}
 			$args['post_status'] = MICROPUB_DRAFT_MODE ? 'draft' : 'publish';
 			kses_remove_filters();  // prevent sanitizing HTML tags in post_content
@@ -220,12 +220,12 @@ class Micropub {
 
 		} else {
 			if ( $args['ID'] == 0 || ! get_post( $args['ID'] ) ) {
-				static::respond( 400, $edit_url . ' not found' );
+				static::error( 400, $edit_url . ' not found' );
 			}
 
 			if ( $_POST['action'] == 'edit' || ! isset( $_POST['action'] ) ) {
 				if ( $user_id && ! user_can( $user_id, 'edit_posts' ) ) {
-					static::respond( 403, 'user id ' . $user_id . ' cannot edit posts' );
+					static::error( 403, 'user id ' . $user_id . ' cannot edit posts' );
 				}
 				kses_remove_filters();  // prevent sanitizing HTML tags in post_content
 				static::check_error( wp_update_post( $args, true ) );
@@ -233,7 +233,7 @@ class Micropub {
 
 			} elseif ( $_POST['action'] == 'delete' ) {
 				if ( $user_id && ! user_can( $user_id, 'delete_posts' ) ) {
-					static::respond( 403, 'user id ' . $user_id . ' cannot delete posts' );
+					static::error( 403, 'user id ' . $user_id . ' cannot delete posts' );
 				}
 				static::check_error( wp_trash_post( $args['ID'] ) );
 				// TODO: figure out how to make url_to_postid() support posts in trash
@@ -245,7 +245,7 @@ class Micropub {
 				//     'post_status'  => 'publish',
 				//   ) ) );
 			} else {
-				static::respond( 400, 'unknown action ' . $_POST['action'] );
+				static::error( 400, 'unknown action ' . $_POST['action'] );
 			}
 		}
 		do_action( 'after_micropub', $args['ID'] );
@@ -280,8 +280,8 @@ class Micropub {
 	private static function handle_authorize_error( $code, $msg ) {
 		$home = untrailingslashit( home_url() );
 		if ( $home == 'http://localhost' ) {
-				echo 'WARNING: ' . $code . ' ' . $msg .
-					 ". Allowing only because this is localhost.\n";
+				error_log( 'WARNING: ' . $code . ' ' . $msg .
+						   ". Allowing only because this is localhost.\n" );
 				return;
 		}
 		static::respond( $code, $msg );
@@ -359,6 +359,7 @@ class Micropub {
 	public static function generate_post_content( $args ) {
 		// If the theme declares it supports microformats2, pass the content through
 		if ( current_theme_supports( 'microformats2' ) ) {
+			error_log( 'skipping!' );
 			return $args;
 		}
 		// Disable if the Post Kinds' plugin's Taxonomy is enabled, since it handles
@@ -515,6 +516,15 @@ class Micropub {
 	 return $args;
 	}
 
+	public static function error( $code, $message ) {
+		static::respond( $code, json_encode( array(
+			'error' => ($code == 403) ? 'forbidden' :
+					   ($code == 401) ? 'insufficient_scope' :
+					   'invalid_request',
+			'error_description' =>  $message,
+		)));
+	}
+
 	public static function respond( $code, $message = '' ) {
 		status_header( $code );
 		exit( $message );
@@ -522,9 +532,9 @@ class Micropub {
 
 	private static function check_error( $result ) {
 		if ( ! $result ) {
-			static::respond( 500, 'Unknown WordPress error: ' . $result );
+			static::error( 400, $result );
 		} elseif ( is_wp_error( $result ) ) {
-			static::respond( 500, $result->get_error_message() );
+			static::error( 400, $result->get_error_message());
 		}
 		return $result;
 	}
