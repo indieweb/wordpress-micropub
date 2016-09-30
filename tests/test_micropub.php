@@ -56,8 +56,9 @@ class MicropubTest extends WP_UnitTestCase {
 	 * Helper that runs Micropub::parse_query. Based on
 	 * WP_Ajax_UnitTestCase::_handleAjax.
 	 */
-	function parse_query() {
+	function parse_query( $method = 'POST' ) {
 		global $wp_query;
+		$_SERVER['REQUEST_METHOD'] = $method;
 		try {
 			do_action( 'parse_query', $wp_query );
 		}
@@ -91,17 +92,9 @@ class MicropubTest extends WP_UnitTestCase {
 		));
 	}
 
-	function test_empty_request() {
-		$this->parse_query();
-		$this->assertEquals( 400, Recorder::$status );
-		$this->assertContains(
-			'Empty Micropub request',
-			json_decode( Recorder::$body, true )['error_description'] );
-	}
-
 	function test_bad_query() {
 		$_GET['q'] = 'not_real';
-		$this->parse_query();
+		$this->parse_query( 'GET' );
 		$this->assertEquals( 400, Recorder::$status );
 		$this->assertEquals(array( 'error' => 'invalid_request',
 								   'error_description' => 'unknown query not_real' ),
@@ -110,7 +103,7 @@ class MicropubTest extends WP_UnitTestCase {
 
 	function test_query_syndicate_to_empty() {
 		$_GET['q'] = 'syndicate-to';
-		$this->parse_query();
+		$this->parse_query( 'GET' );
 		$this->assertEquals( 200, Recorder::$status );
 		$this->assertEquals( array( 'syndicate-to' => array() ),
 							 json_decode( Recorder::$body, true ));
@@ -123,7 +116,7 @@ class MicropubTest extends WP_UnitTestCase {
 		add_filter( 'micropub_syndicate-to', 'syndicate_to' );
 
 		$_GET['q'] = 'syndicate-to';
-		$this->parse_query();
+		$this->parse_query( 'GET' );
 		$this->assertEquals( 200, Recorder::$status );
 		$this->assertEquals( array( 'syndicate-to' => array( 'abc', 'xyz' )),
 							 json_decode( Recorder::$body, true ));
@@ -132,7 +125,7 @@ class MicropubTest extends WP_UnitTestCase {
 	function test_create() {
 		$_POST = self::$properties;
 		$this->parse_query();
-		$this->assertEquals( 201, Recorder::$status );
+		$this->assertEquals( 201, Recorder::$status, Recorder::$body );
 
 		$posts = wp_get_recent_posts( NULL, OBJECT );
 		$post = $posts[0];
@@ -169,28 +162,9 @@ class MicropubTest extends WP_UnitTestCase {
 	function test_create_like()
 	{
 		// shouldn't require name or content
-		$_POST = array(
-			'h' => 'entry',
-			'like-of' => 'http://target',
-		);
+		$_POST = array('like-of' => 'http://target');
 		$this->parse_query();
-		$this->assertEquals( 201, Recorder::$status );
-
-		$posts = wp_get_recent_posts( NULL, OBJECT );
-		$post = $posts[0];
-		$this->assertEquals( '', $post->post_title );
-		$this->assertEquals( '<p>Likes <a class="u-like-of" href="http://target">http://target</a>.</p>', $post->post_content );
-	}
-
-	function test_create_like_theme_supports_mf2()
-	{
-		// shouldn't require name or content
-		$_POST = array(
-			'h' => 'entry',
-			'like-of' => 'http://target',
-		);
-		$this->parse_query();
-		$this->assertEquals( 201, Recorder::$status );
+		$this->assertEquals( 201, Recorder::$status, Recorder::$body );
 
 		$posts = wp_get_recent_posts( NULL, OBJECT );
 		$post = $posts[0];

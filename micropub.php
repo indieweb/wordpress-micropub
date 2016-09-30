@@ -111,10 +111,12 @@ class Micropub {
 		} else {
 			$user_id = static::authorize();
 		}
-		if ( isset( $_GET['q'] ) ) {
+		if ( $_SERVER['REQUEST_METHOD'] == 'GET' && isset( $_GET['q'] ) ) {
 			static::query_handler( $user_id );
-		} else {
+		} elseif ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
 			self::form_handler( $user_id );
+		} else {
+			static::error( 400, 'Unknown Micropub request' );
 		}
 	}
 
@@ -193,10 +195,6 @@ class Micropub {
 		$edit_url = isset( $_POST['edit-of'] ) ? $_POST['edit-of']
 				  : isset( $_POST['url'] ) ? $_POST['url']
 				  : NULL;
-		// validate micropub request params
-		if ( ! isset( $_POST['h'] ) && ! $edit_url ) {
-			static::error( 400, 'Empty Micropub request. Either an "h", "edit-of", "url" or "q" property is required, e.g. h=entry or url=http://example.com/post/100 or q=syndicate-to' );
-		}
 		// support both action= and operation= parameter names
 		if ( ! isset( $_POST['action'] ) ) {
 			$_POST['action'] = isset( $_POST['operation'] ) ? $_POST['operation']
@@ -357,16 +355,13 @@ class Micropub {
 	 * and friends.
 	 */
 	public static function generate_post_content( $args ) {
-		// If the theme declares it supports microformats2, pass the content through
-		if ( current_theme_supports( 'microformats2' ) ) {
-			error_log( 'skipping!' );
+		if ( $args['post_content'] &&
+			 ( current_theme_supports( 'microformats2' ) ||
+			   // Post Kinds: https://wordpress.org/plugins/indieweb-post-kinds/
+			   taxonomy_exists( 'kind' ))) {
 			return $args;
 		}
-		// Disable if the Post Kinds' plugin's Taxonomy is enabled, since it handles
-		// its own markup. https://wordpress.org/plugins/indieweb-post-kinds/
-		if ( taxonomy_exists( 'kind' ) ) {
-			return $args;
-		}
+
 		$lines = array();
 		$verbs = array(
 			'like' => 'Likes',
