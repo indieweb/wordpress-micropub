@@ -106,11 +106,11 @@ class MicropubTest extends WP_UnitTestCase {
 	// Creates a WordPress post with data that matches $properties above
 	protected static function insert_post() {
 		return wp_insert_post( array(
-			'slug' => 'my_slug',
-			'title' => 'my name',
+			'post_name' => 'my_slug',
+			'post_title' => 'my name',
 			'post_content' => 'my<br>content',
 			'category' => 'my tag',
-			'published' => '2016-01-01T12:01:23Z',
+			'post_date' => '2016-01-01 12:01:23',
 			'location' => 'geo:42.361,-71.092;u=25000',
 		));
 	}
@@ -220,13 +220,18 @@ class MicropubTest extends WP_UnitTestCase {
 
 	function test_edit() {
 		$post_id = self::insert_post();
+		$this->assertEquals( '2016-01-01 12:01:23', get_post($post_id)->post_date );
 
 		$_POST = array( 'url' => '/?p=' . $post_id, 'content' => 'new<br>content' );
 		$this->check( 200 );
 
 		$post = get_post( $post_id );
 		$this->assertEquals( "<div class=\"e-content\">\nnew&lt;br&gt;content\n</div>",
-							$post->post_content );
+							 $post->post_content );
+
+		// check that published date is preserved
+		// https://github.com/snarfed/wordpress-micropub/issues/16
+		$this->assertEquals( '2016-01-01 12:01:23', $post->post_date );
 	}
 
 	function test_edit_post_not_found() {

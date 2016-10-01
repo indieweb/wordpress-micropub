@@ -305,11 +305,15 @@ class Micropub {
 			}
 		}
 		// these are transformed or looked up
-		if ( isset( $_POST['edit-of'] ) ) {
-			$args['ID'] = url_to_postid( $_POST['edit-of'] );
-		}
-		if ( isset( $_POST['url'] ) ) {
-			$args['ID'] = url_to_postid( $_POST['url'] );
+		$url = $_POST['url'] ?: $_POST['edit-of'];
+		if ( $url ) {
+			$args['ID'] = url_to_postid( $url );
+			$post = get_post( $args['ID'] );
+			// preserve published date explicitly, otherwise wp_update_post sets
+			// it to the current time
+			$args['post_date'] = $post->post_date;
+			$args['post_date_gmt'] = $post->post_date_gmt;
+			$args['edit_date'] = true;
 		}
 		// perform these functions only for creates
 		if ( ! isset( $args['ID'] ) ) {
