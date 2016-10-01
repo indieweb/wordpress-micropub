@@ -12,7 +12,7 @@
 
 class Recorder extends Micropub {
 	public static $status;
-	public static $body;
+	public static $response;
 
 	public static function init() {
 		remove_filter( 'query_vars', array( 'Micropub', 'query_var' ) );
@@ -22,9 +22,9 @@ class Recorder extends Micropub {
 		parent::init();
 	}
 
-	public static function respond( $status, $message ) {
+	public static function respond( $status, $response ) {
 		self::$status = $status;
-		self::$body = $message;
+		self::$response = $response;
 		throw new WPDieException('from respond');
 	}
 }
@@ -75,18 +75,20 @@ class MicropubTest extends WP_UnitTestCase {
 	 * it's a string, it's checked against the 'error_description' response
 	 * field as a substring.
 	 */
-	function check( $status, $response = NULL ) {
+	function check( $status, $expected = NULL ) {
 		$this->parse_query( $_GET ? 'GET' : 'POST' );
-		$this->assertEquals( $status, Recorder::$status, Recorder::$body );
+		$encoded = json_encode( Recorder::$response, true );
 
-		$resp = json_decode( Recorder::$body, true );
-		if ( is_array( $response ) ) {
-			$this->assertEquals( $response, $resp );
-		} elseif ( is_string( $response ) ) {
-			$this->assertContains( $response, $resp['error_description'] );
+		$this->assertEquals( $status, Recorder::$status, $encoded );
+		if ( is_array( $expected )) {
+			$this->assertEquals( $expected, Recorder::$response, $encoded );
+		} elseif ( is_string( $expected ) ) {
+			$this->assertContains( $expected, Recorder::$response['error_description'], $encoded );
 		} else {
-			$this->assertSame( NULL, $response );
+			$this->assertSame( NULL, $expected );
 		}
+
+		
 	}
 
 	// Post properties that match insert_post below
@@ -134,11 +136,38 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->check( 200, array( 'syndicate-to' => array( 'abc', 'xyz' )));
 	}
 
+	function test_query_post() {
+		$_POST = self::$properties;
+		$this->check( 201 );
+
+		$posts = wp_get_recent_posts( NULL, OBJECT );
+		$this->assertEquals( 1, count( $posts ));
+
+		$_GET = array(
+			'q' => 'source',
+			'url' => 'http://example.org/?p=' . $posts[0]->ID,
+		);
+		$this->check( 200, array('properties' => self::$properties ));
+	}
+
+	function test_query_post_not_found() {
+		$_GET = array(
+			'q' => 'source',
+			'url' => 'http:/localhost/doesnt/exist',
+		);
+
+		$this->check( 400, array(
+			'error' => 'invalid_request',
+			'error_description' => 'not found: http:/localhost/doesnt/exist',
+		));
+	}
+
 	function test_create() {
 		$_POST = self::$properties;
 		$this->check( 201 );
 
 		$posts = wp_get_recent_posts( NULL, OBJECT );
+		$this->assertEquals( 1, count( $posts ));
 		$post = $posts[0];
 		$this->assertEquals( 'publish', $post->post_status );
 		$this->assertEquals( $this->userid, $post->post_author );
@@ -163,6 +192,7 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->check( 201 );
 
 		$posts = wp_get_recent_posts( NULL, OBJECT );
+		$this->assertEquals( 1, count( $posts ));
 		$post = $posts[0];
 		$this->assertEquals( 'HTML content test', $post->post_title );
 		// check that HTML in content isn't sanitized
@@ -176,6 +206,7 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->check( 201 );
 
 		$posts = wp_get_recent_posts( NULL, OBJECT );
+		$this->assertEquals( 1, count( $posts ));
 		$post = $posts[0];
 		$this->assertEquals( '', $post->post_title );
 		$this->assertEquals( '<p>Likes <a class="u-like-of" href="http://target">http://target</a>.</p>', $post->post_content );

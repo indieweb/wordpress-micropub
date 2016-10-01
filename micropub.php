@@ -256,31 +256,33 @@ class Micropub {
 	 * @param int $user_id Authenticated User
 	 */
 	private static function query_handler( $user_id ) {
-		header( 'Content-type: application/json; charset=' . get_option( 'blog_charset' ) );
-		$status = 200;
-		$resp = array();
-
 		switch( $_GET['q'] ) {
 			case 'config':
 			case 'syndicate-to':
 			case 'mp-syndicate-to':
 				// return empty syndication target with filter
-				$resp['syndicate-to'] = apply_filters( 'micropub_syndicate-to', array(), $user_id );
+				$syndicate_tos = apply_filters( 'micropub_syndicate-to', array(), $user_id );
+				static::respond( 200, array( 'syndicate-to' => $syndicate_tos ));
+				break;
+			case 'source':
+				$post_id = url_to_postid( $_GET['url'] );
+				if ( $post_id ) {
+					static::respond( 200, array('properties' => static::get_mf2( $post_id )));
+				} else {
+					static::error( 400, 'not found: ' . $_GET['url'] );
+				}
 				break;
 			default:
-				$status = 400;
-				$resp['error'] = 'invalid_request';
-				$resp['error_description'] = 'unknown query ' . $_GET['q'];
+				static::error( 400, 'unknown query ' . $_GET['q'] );
 		}
-		static::respond( $status, json_encode( $resp ));
 	}
 
 	private static function handle_authorize_error( $code, $msg ) {
 		$home = untrailingslashit( home_url() );
 		if ( $home == 'http://localhost' ) {
-				error_log( 'WARNING: ' . $code . ' ' . $msg .
-						   ". Allowing only because this is localhost.\n" );
-				return;
+			error_log( 'WARNING: ' . $code . ' ' . $msg .
+					   ". Allowing only because this is localhost.\n" );
+			return;
 		}
 		static::respond( $code, $msg );
 	}
@@ -494,7 +496,7 @@ class Micropub {
 		}
 
 		// Do not store access_token or other optional parameters
-		$blacklist = array( 'access_token' );
+		$blacklist = array( 'access_token', 'action' );
 		foreach ( $_POST as $key => $value ) {
 			if ( ! is_array( $value ) ) {
 				$value = array( $value );
@@ -508,28 +510,46 @@ class Micropub {
 				}
 			}
 		}
-	 return $args;
+		return $args;
+	}
+
+	/**
+	 * Returns the mf2 properties for a post.
+	 */
+	public static function get_mf2( $post_id ) {
+		$props = array(  // defaults
+			'h' => 'entry',
+		);
+
+		foreach ( get_post_meta($post_id) as $field => $val ) {
+			if ( substr( $field, 0, 4 ) == 'mf2_' ) {
+				$props[substr( $field, 4 )] = $val[0];
+			}
+		}
+
+		return $props;
 	}
 
 	public static function error( $code, $message ) {
-		static::respond( $code, json_encode( array(
+		static::respond( $code, array(
 			'error' => ($code == 403) ? 'forbidden' :
 					   ($code == 401) ? 'insufficient_scope' :
 					   'invalid_request',
-			'error_description' =>  $message,
-		)));
+			'error_description' => $message,
+		));
 	}
 
-	public static function respond( $code, $message = '' ) {
+	public static function respond( $code, $resp = NULL ) {
 		status_header( $code );
-		exit( $message );
+		header( 'Content-type: application/json; charset=' . get_option( 'blog_charset' ));
+		exit( $resp ? json_encode( $resp ) : '' );
 	}
 
 	private static function check_error( $result ) {
 		if ( ! $result ) {
 			static::error( 400, $result );
 		} elseif ( is_wp_error( $result ) ) {
-			static::error( 400, $result->get_error_message());
+			static::error( 400, $result->get_error_message() );
 		}
 		return $result;
 	}
