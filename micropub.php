@@ -406,7 +406,8 @@ class Micropub {
 		}
 
 		// TODO: generate my own markup so i can include u-photo
-		if ( isset( $_FILES['photo'] ) ) {
+		if ( isset( $_FILES['photo'] ) || isset( $_FILES['video'] ) ||
+			 isset( $_FILES['audio'] )) {
 			$lines[] = "\n[gallery size=full columns=1]";
 		}
 
@@ -461,13 +462,15 @@ class Micropub {
 	 *
 	 */
 	public static function default_file_handler( $post_id ) {
-		if ( isset( $_FILES['photo'] ) ) {
-			require_once( ABSPATH . 'wp-admin/includes/image.php' );
-			require_once( ABSPATH . 'wp-admin/includes/file.php' );
-			require_once( ABSPATH . 'wp-admin/includes/media.php' );
-			static::check_error( media_handle_upload(
-				'photo', $post_id, array(),
-				array( 'action' => 'allow_file_outside_uploads_dir' )));
+		foreach ( array( 'photo', 'video', 'audio' ) as $field ) {
+			if ( isset( $_FILES[$field] ) ) {
+				require_once( ABSPATH . 'wp-admin/includes/image.php' );
+				require_once( ABSPATH . 'wp-admin/includes/file.php' );
+				require_once( ABSPATH . 'wp-admin/includes/media.php' );
+				static::check_error( media_handle_upload(
+					$field, $post_id, array(),
+					array( 'action' => 'allow_file_outside_uploads_dir' )));
+			}
 		}
 	}
 

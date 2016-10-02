@@ -196,15 +196,27 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( "<div class=\"e-content\">\n<h1>HTML content!</h1><p>coolio.</p>\n</div>", $post->post_content );
 	}
 
-	function test_create_with_photo()
+	function test_create_with_photo() {
+		$this->_test_create_with_upload('photo', 'image', 'jpg');
+	}
+
+	function test_create_with_video() {
+		$this->_test_create_with_upload('video', 'video', 'mp4');
+	}
+
+	function test_create_with_audio() {
+		$this->_test_create_with_upload('audio', 'audio', 'mp3');
+	}
+
+	function _test_create_with_upload($mf2_type, $wp_type, $extension)
 	{
 		$filename = tempnam( sys_get_temp_dir(), 'micropub_test' );
 		$file = fopen( $filename, 'w' );
-		fwrite( $file, 'fake image contents' );
+		fwrite( $file, 'fake file contents' );
 		fclose( $file );
 
-		$_FILES = array( 'photo' => array(
-			'name' => 'micropub_test.jpg',
+		$_FILES = array( $mf2_type => array(
+			'name' => 'micropub_test.' . $extension,
 			'tmp_name' => $filename,
 			'size' => 19,
 		));
@@ -216,7 +228,7 @@ class MicropubTest extends WP_UnitTestCase {
 		$post = $posts[0];
 		$this->assertEquals( "\n[gallery size=full columns=1]", $post->post_content );
 
-		$media = get_attached_media( 'image', $post->ID );
+		$media = get_attached_media( $wp_type, $post->ID );
 		$this->assertEquals( 1, count( $media ));
 		$this->assertEquals( 'attachment', current( $media )->post_type);
 	}
