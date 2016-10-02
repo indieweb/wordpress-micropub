@@ -465,7 +465,9 @@ class Micropub {
 			require_once( ABSPATH . 'wp-admin/includes/image.php' );
 			require_once( ABSPATH . 'wp-admin/includes/file.php' );
 			require_once( ABSPATH . 'wp-admin/includes/media.php' );
-			static::check_error( media_handle_upload( 'photo', $post_id ) );
+			static::check_error( media_handle_upload(
+				'photo', $post_id, array(),
+				array( 'action' => 'allow_file_outside_uploads_dir' )));
 		}
 	}
 

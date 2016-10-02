@@ -6,8 +6,6 @@
  * token validation
  * categories/tags
  * post type rendering - reply, like, repost, event, rsvp
- * storing mf2 in postmeta
- * photo upload
  */
 
 class Recorder extends Micropub {
@@ -43,6 +41,7 @@ class MicropubTest extends WP_UnitTestCase {
 		self::$status = 0;
 		$_POST = array();
 		$_GET = array();
+		$_FILES = array();
 		unset( $GLOBALS['post'] );
 
 		global $wp_query;
@@ -87,8 +86,6 @@ class MicropubTest extends WP_UnitTestCase {
 		} else {
 			$this->assertSame( NULL, $expected );
 		}
-
-		
 	}
 
 	// Post properties that match insert_post below
@@ -197,6 +194,31 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( 'HTML content test', $post->post_title );
 		// check that HTML in content isn't sanitized
 		$this->assertEquals( "<div class=\"e-content\">\n<h1>HTML content!</h1><p>coolio.</p>\n</div>", $post->post_content );
+	}
+
+	function test_create_with_photo()
+	{
+		$filename = tempnam( sys_get_temp_dir(), 'micropub_test' );
+		$file = fopen( $filename, 'w' );
+		fwrite( $file, 'fake image contents' );
+		fclose( $file );
+
+		$_FILES = array( 'photo' => array(
+			'name' => 'micropub_test.jpg',
+			'tmp_name' => $filename,
+			'size' => 19,
+		));
+		$_POST['action'] = 'allow_file_outside_uploads_dir';
+		$this->check( 201 );
+
+		$posts = wp_get_recent_posts( NULL, OBJECT );
+		$this->assertEquals( 1, count( $posts ));
+		$post = $posts[0];
+		$this->assertEquals( "\n[gallery size=full columns=1]", $post->post_content );
+
+		$media = get_attached_media( 'image', $post->ID );
+		$this->assertEquals( 1, count( $media ));
+		$this->assertEquals( 'attachment', current( $media )->post_type);
 	}
 
 	function test_create_like()
