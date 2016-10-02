@@ -94,6 +94,15 @@ class MicropubTest extends WP_UnitTestCase {
 		}
 	}
 
+	function check_create() {
+		$this->check( 201 );
+		$posts = wp_get_recent_posts( NULL, OBJECT );
+		$this->assertEquals( 1, count( $posts ));
+		$post = $posts[0];
+		$this->assertEquals( get_permalink( $post ), Recorder::$headers['Location'] );
+		return $post;
+	}
+
 	// Post properties that match insert_post below
 	protected static $properties = array(
 		'h' => 'entry',
@@ -141,14 +150,11 @@ class MicropubTest extends WP_UnitTestCase {
 
 	function test_query_post() {
 		$_POST = self::$properties;
-		$this->check( 201 );
-
-		$posts = wp_get_recent_posts( NULL, OBJECT );
-		$this->assertEquals( 1, count( $posts ));
+		$post = $this->check_create();
 
 		$_GET = array(
 			'q' => 'source',
-			'url' => 'http://example.org/?p=' . $posts[0]->ID,
+			'url' => 'http://example.org/?p=' . $post->ID,
 		);
 		$this->check( 200, array('properties' => self::$properties ));
 	}
@@ -167,12 +173,8 @@ class MicropubTest extends WP_UnitTestCase {
 
 	function test_create() {
 		$_POST = self::$properties;
-		$this->check( 201 );
+		$post = $this->check_create();
 
-		$posts = wp_get_recent_posts( NULL, OBJECT );
-		$this->assertEquals( 1, count( $posts ));
-		$post = $posts[0];
-		$this->assertEquals( get_permalink( $post ), Recorder::$headers['Location'] );
 		$this->assertEquals( 'publish', $post->post_status );
 		$this->assertEquals( $this->userid, $post->post_author );
 		// check that HTML in content is sanitized
@@ -193,12 +195,8 @@ class MicropubTest extends WP_UnitTestCase {
 			'content' => array('html' => '<h1>HTML content!</h1><p>coolio.</p>'),
 			'name' => 'HTML content test'
 		);
-		$this->check( 201 );
+		$post = $this->check_create();
 
-		$posts = wp_get_recent_posts( NULL, OBJECT );
-		$this->assertEquals( 1, count( $posts ));
-		$post = $posts[0];
-		$this->assertEquals( get_permalink( $post ), Recorder::$headers['Location'] );
 		$this->assertEquals( 'HTML content test', $post->post_title );
 		// check that HTML in content isn't sanitized
 		$this->assertEquals( "<div class=\"e-content\">\n<h1>HTML content!</h1><p>coolio.</p>\n</div>", $post->post_content );
@@ -229,11 +227,8 @@ class MicropubTest extends WP_UnitTestCase {
 			'size' => 19,
 		));
 		$_POST['action'] = 'allow_file_outside_uploads_dir';
-		$this->check( 201 );
+		$post = $this->check_create();
 
-		$posts = wp_get_recent_posts( NULL, OBJECT );
-		$this->assertEquals( 1, count( $posts ));
-		$post = $posts[0];
 		$this->assertEquals( get_permalink( $post ), Recorder::$headers['Location'] );
 		$this->assertEquals( "\n[gallery size=full columns=1]", $post->post_content );
 
@@ -246,11 +241,8 @@ class MicropubTest extends WP_UnitTestCase {
 	{
 		// shouldn't require name or content
 		$_POST = array('like-of' => 'http://target');
-		$this->check( 201 );
+		$post = $this->check_create();
 
-		$posts = wp_get_recent_posts( NULL, OBJECT );
-		$this->assertEquals( 1, count( $posts ));
-		$post = $posts[0];
 		$this->assertEquals( '', $post->post_title );
 		$this->assertEquals( '<p>Likes <a class="u-like-of" href="http://target">http://target</a>.</p>', $post->post_content );
 	}
