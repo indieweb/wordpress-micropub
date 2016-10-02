@@ -11,6 +11,7 @@
 class Recorder extends Micropub {
 	public static $status;
 	public static $response;
+	public static $headers = array();
 
 	public static function init() {
 		remove_filter( 'query_vars', array( 'Micropub', 'query_var' ) );
@@ -25,8 +26,13 @@ class Recorder extends Micropub {
 		self::$response = $response;
 		throw new WPDieException('from respond');
 	}
+
+	public static function header( $header, $value ) {
+		self::$headers[$header] = $value;
+	}
 }
 Recorder::init();
+
 
 class MicropubTest extends WP_UnitTestCase {
 
@@ -166,6 +172,7 @@ class MicropubTest extends WP_UnitTestCase {
 		$posts = wp_get_recent_posts( NULL, OBJECT );
 		$this->assertEquals( 1, count( $posts ));
 		$post = $posts[0];
+		$this->assertEquals( get_permalink( $post ), Recorder::$headers['Location'] );
 		$this->assertEquals( 'publish', $post->post_status );
 		$this->assertEquals( $this->userid, $post->post_author );
 		// check that HTML in content is sanitized
@@ -191,6 +198,7 @@ class MicropubTest extends WP_UnitTestCase {
 		$posts = wp_get_recent_posts( NULL, OBJECT );
 		$this->assertEquals( 1, count( $posts ));
 		$post = $posts[0];
+		$this->assertEquals( get_permalink( $post ), Recorder::$headers['Location'] );
 		$this->assertEquals( 'HTML content test', $post->post_title );
 		// check that HTML in content isn't sanitized
 		$this->assertEquals( "<div class=\"e-content\">\n<h1>HTML content!</h1><p>coolio.</p>\n</div>", $post->post_content );
@@ -226,6 +234,7 @@ class MicropubTest extends WP_UnitTestCase {
 		$posts = wp_get_recent_posts( NULL, OBJECT );
 		$this->assertEquals( 1, count( $posts ));
 		$post = $posts[0];
+		$this->assertEquals( get_permalink( $post ), Recorder::$headers['Location'] );
 		$this->assertEquals( "\n[gallery size=full columns=1]", $post->post_content );
 
 		$media = get_attached_media( $wp_type, $post->ID );

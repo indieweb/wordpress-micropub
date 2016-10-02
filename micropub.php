@@ -142,7 +142,7 @@ class Micropub {
 
 		$resp = wp_remote_get(
 			MICROPUB_TOKEN_ENDPOINT, array( 'headers' => array(
-				'Content-type' => 'application/x-www-form-urlencoded',
+				'Content-Type' => 'application/x-www-form-urlencoded',
 				'Authorization' => $auth_header,
 			) ) );
 		$code = wp_remote_retrieve_response_code( $resp );
@@ -191,7 +191,8 @@ class Micropub {
 	 */
 	public static function form_handler( $user_id ) {
 		$status = 200;
-		header( 'Content-Type: text/plain; charset=' . get_option( 'blog_charset' ) );
+		static::header( 'Content-Type',
+						'text/plain; charset=' . get_option( 'blog_charset' ) );
 		$edit_url = isset( $_POST['edit-of'] ) ? $_POST['edit-of']
 				  : isset( $_POST['url'] ) ? $_POST['url']
 				  : NULL;
@@ -214,7 +215,7 @@ class Micropub {
 			$args['ID'] = static::check_error( wp_insert_post( $args, true ) );
 			kses_init_filters();
 			$status = 201;
-			header( 'Location: ' . get_permalink( $args['ID'] ) );
+			static::header( 'Location', get_permalink( $args['ID'] ) );
 
 		} else {
 			if ( $args['ID'] == 0 || ! get_post( $args['ID'] ) ) {
@@ -550,8 +551,13 @@ class Micropub {
 
 	public static function respond( $code, $resp = NULL ) {
 		status_header( $code );
-		header( 'Content-type: application/json; charset=' . get_option( 'blog_charset' ));
+		static::header( 'Content-Type',
+						'application/json; charset=' . get_option( 'blog_charset' ));
 		exit( $resp ? json_encode( $resp ) : '' );
+	}
+
+	public static function header( $header, $value ) {
+		header( $header . ': ' . $value );
 	}
 
 	private static function check_error( $result ) {
@@ -576,9 +582,9 @@ class Micropub {
 	 * The micropub autodicovery http-header
 	 */
 	public static function http_header() {
-		header( 'Link: <' . site_url( '?micropub=endpoint' ) . '>; rel="micropub"', false );
-		header( 'Link: <' . MICROPUB_AUTHENTICATION_ENDPOINT . '>; rel="authorization_endpoint"', false );
-		header( 'Link: <' . MICROPUB_TOKEN_ENDPOINT . '>; rel="token_endpoint"', false );
+		static::header( 'Link', '<' . site_url( '?micropub=endpoint' ) . '>; rel="micropub"', false );
+		static::header( 'Link', '<' . MICROPUB_AUTHENTICATION_ENDPOINT . '>; rel="authorization_endpoint"', false );
+		static::header( 'Link', '<' . MICROPUB_TOKEN_ENDPOINT . '>; rel="token_endpoint"', false );
 	}
 
 	/**
