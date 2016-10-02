@@ -369,21 +369,20 @@ class Micropub {
 			return $args;
 		}
 
-		$lines = array();
 		$verbs = array(
-			'like' => 'Likes',
-			'repost' => 'Reposted',
+			'like-of' => 'Likes',
+			'repost-of' => 'Reposted',
 			'in-reply-to' => 'In reply to',
 		);
+		$lines = array();
 
 		// interactions
-		foreach ( array( 'like', 'repost', 'in-reply-to' ) as $cls ) {
-			$val = isset( $_POST[ $cls ] ) ? $_POST[ $cls ]
-				 : ( isset( $_POST[ $cls . '-of' ] ) ? $_POST[ $cls . '-of' ]
-				 : NULL );
+		foreach ( array_keys( $verbs ) as $prop ) {
+			$val = $_POST[ $prop ];
 			if ( $val ) {
-				$lines[] = '<p>' . $verbs[ $cls ] .
-					' <a class="u-' . $cls . '-of" href="' . $val . '">' . $val . '</a>.</p>';
+				$lines[] = '<p>' . $verbs[ $prop ] .
+						   ' <a class="u-' . $prop . '" href="' .
+						   $val . '">' . $val . '</a>.</p>';
 			}
 		}
 
@@ -392,16 +391,18 @@ class Micropub {
 				'">' . $_POST['rsvp'] . '</data>.</p>';
 		}
 
-		// content, event
+		// event
+		if ( isset( $_POST['h'] ) && $_POST['h'] == 'event' ) {
+			$lines[] = static::generate_event();
+		}
+
+		// content
 		if ( isset( $_POST['content'] ) ) {
 			$lines[] = '<div class="e-content">';
 			if (isset($_POST['content']['html'])) {
 				$lines[] = $_POST['content']['html'];
 			} else {
 				$lines[] = htmlspecialchars($_POST['content']);
-			}
-			if ( isset( $_POST['h'] ) && $_POST['h'] == 'event' ) {
-				$lines[] = static::generate_event();
 			}
 			$lines[] = '</div>';
 		}

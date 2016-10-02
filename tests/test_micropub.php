@@ -237,14 +237,73 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( 'attachment', current( $media )->post_type);
 	}
 
+	function test_create_reply()
+	{
+		$_POST = array('in-reply-to' => 'http://target');
+		$post = $this->check_create();
+		$this->assertEquals( '', $post->post_title );
+		$this->assertEquals( '<p>In reply to <a class="u-in-reply-to" href="http://target">http://target</a>.</p>', $post->post_content );
+	}
+
 	function test_create_like()
 	{
-		// shouldn't require name or content
 		$_POST = array('like-of' => 'http://target');
 		$post = $this->check_create();
-
 		$this->assertEquals( '', $post->post_title );
 		$this->assertEquals( '<p>Likes <a class="u-like-of" href="http://target">http://target</a>.</p>', $post->post_content );
+	}
+
+	function test_create_repost()
+	{
+		$_POST = array('repost-of' => 'http://target');
+		$post = $this->check_create();
+		$this->assertEquals( '', $post->post_title );
+		$this->assertEquals( '<p>Reposted <a class="u-repost-of" href="http://target">http://target</a>.</p>', $post->post_content );
+	}
+
+	function test_create_event()
+	{
+		$_POST = array(
+			'h' => 'event',
+			'name' => 'My Event',
+			'start' => '2013-06-30 12:00:00',
+			'end' => '2013-06-31 18:00:00',
+			'location' => 'http://a/place',
+			'description' => 'some stuff',
+		);
+		$post = $this->check_create();
+		$this->assertEquals( 'event', get_post_meta( $post->ID, 'mf2_h', true ));
+		$this->assertEquals( '2013-06-30 12:00:00', get_post_meta( $post->ID, 'mf2_start', true ));
+		$this->assertEquals( '2013-06-31 18:00:00', get_post_meta( $post->ID, 'mf2_end', true ));
+		$this->assertEquals( 'My Event', $post->post_title );
+		$this->assertEquals( <<<EOF
+<div class="h-event">
+<h1 class="p-name">My Event</h1>
+<p>
+<time class="dt-start" datetime="2013-06-30 12:00:00">2013-06-30 12:00:00</time>
+to
+<time class="dt-end" datetime="2013-06-31 18:00:00">2013-06-31 18:00:00</time>
+at <a class="p-location" href="http://a/place">http://a/place</a>.
+</p>
+<p class="p-description">some stuff</p>
+</div>
+EOF
+, $post->post_content);
+	}
+
+	function test_create_rsvp()
+	{
+		$_POST = array(
+			'rsvp' => 'maybe',
+			'in-reply-to' => 'http://target'
+		);
+		$post = $this->check_create();
+		$this->assertEquals( 'maybe', get_post_meta( $post->ID, 'mf2_rsvp', true ));
+		$this->assertEquals( <<<EOF
+<p>In reply to <a class="u-in-reply-to" href="http://target">http://target</a>.</p>
+<p>RSVPs <data class="p-rsvp" value="maybe">maybe</data>.</p>
+EOF
+, $post->post_content);
 	}
 
 	function test_create_user_cannot_publish_posts() {
