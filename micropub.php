@@ -235,14 +235,24 @@ class Micropub {
 					static::error( 403, 'user id ' . $user_id . ' cannot delete posts' );
 				}
 				static::check_error( wp_trash_post( $args['ID'] ) );
-				// TODO: figure out how to make url_to_postid() support posts in trash
-				// here's one way:
+			} elseif ( $_POST['action'] == 'undelete' ) {
+				if ( $user_id && ! user_can( $user_id, 'publish_posts' ) ) {
+					static::error( 403, 'user id ' . $user_id . ' cannot undelete posts' );
+				}
+				$found = false;
+				// url_to_postid() doesn't support posts in trash, so look for
+				// it ourselves, manually.
+				// here's another, more complicated way that customizes WP_Query:
 				// https://gist.github.com/peterwilsoncc/bb40e52cae7faa0e6efc
-				// } elseif ( $action == 'undelete' ) {
-				//   static::check_error( wp_update_post( array(
-				//     'ID'           => $args['ID'],
-				//     'post_status'  => 'publish',
-				//   ) ) );
+				foreach ( get_posts( array( 'post_status' => 'trash' ) ) as $post ) {
+					if ( get_permalink ( $post ) == $_POST['url'] ) {
+						wp_publish_post( $post->ID );
+						$found = true;
+					}
+				}
+				if ( ! $found ) {
+					static::error( 400, 'deleted post ' . $_POST['url'] . ' not found' );
+				}
 			} else {
 				static::error( 400, 'unknown action ' . $_POST['action'] );
 			}

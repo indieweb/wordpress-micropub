@@ -5,7 +5,6 @@
  * TODO:
  * token validation
  * categories/tags
- * post type rendering - reply, like, repost, event, rsvp
  */
 
 class Recorder extends Micropub {
@@ -361,6 +360,40 @@ EOF
 		get_user_by( 'ID', $this->userid )->remove_role( 'editor' );
 		$_POST = array( 'action' => 'delete', 'url' => '/?p=' . $post_id );
 		$this->check( 403, 'cannot delete posts' );
+	}
+
+	function test_undelete() {
+		$post_id = self::insert_post();
+		wp_trash_post( $post_id );
+		$this->assertEquals( 'trash', get_post( $post_id )->post_status );
+
+		$_POST = array(
+			'action' => 'undelete',
+			'url' => 'http://example.org/?p=' . $post_id,
+		);
+		$this->check( 200 );
+		$this->assertEquals( 'publish', get_post( $post_id )->post_status );
+	}
+
+	function test_undelete_post_not_found() {
+		$_POST = array(
+			'action' => 'undelete',
+			'url' => 'http://example.org/?p=999',
+		);
+		$this->check( 400, array(
+			'error' => 'invalid_request',
+			'error_description' => 'http://example.org/?p=999 not found',
+		));
+	}
+
+	function test_undelete_user_cannot_undelete_posts() {
+		$post_id = self::insert_post();
+		get_user_by( 'ID', $this->userid )->remove_role( 'editor' );
+		$_POST = array(
+			'action' => 'undelete',
+			'url' => 'http://example.org/?p=' . $post_id,
+		);
+		$this->check( 403, 'cannot undelete posts' );
 	}
 
 	function test_unknown_action() {
