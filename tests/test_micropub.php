@@ -311,11 +311,11 @@ EOF
 		$this->check( 403, 'cannot publish posts' );
 	}
 
-	function test_edit() {
+	function test_update() {
 		$post_id = self::insert_post();
 		$this->assertEquals( '2016-01-01 12:01:23', get_post($post_id)->post_date );
 
-		$_POST = array( 'url' => '/?p=' . $post_id, 'content' => 'new<br>content' );
+		$_POST = array( 'url' => 'http://example.org/?p=' . $post_id, 'content' => 'new<br>content' );
 		$this->check( 200 );
 
 		$post = get_post( $post_id );
@@ -327,22 +327,22 @@ EOF
 		$this->assertEquals( '2016-01-01 12:01:23', $post->post_date );
 	}
 
-	function test_edit_post_not_found() {
-		$_POST = array( 'url' => '/?p=999', 'content' => 'unused' );
-		$this->check( 400, '/?p=999 not found' );
+	function test_update_post_not_found() {
+		$_POST = array( 'url' => 'http://example.org/?p=999', 'content' => 'unused' );
+		$this->check( 400, 'http://example.org/?p=999 not found' );
 	}
 
-	function test_edit_user_cannot_edit_posts() {
+	function test_update_user_cannot_edit_posts() {
 		$post_id = self::insert_post();
 		get_user_by( 'ID', $this->userid )->remove_role( 'editor' );
-		$_POST = array( 'url' => '/?p=' . $post_id, 'content' => 'x' );
+		$_POST = array( 'url' => 'http://example.org/?p=' . $post_id, 'content' => 'x' );
 		$this->check( 403, 'cannot edit posts' );
 	}
 
 	function test_delete() {
 		$post_id = self::insert_post();
 
-		$_POST = array( 'action' => 'delete', 'url' => '/?p=' . $post_id );
+		$_POST = array( 'action' => 'delete', 'url' => 'http://example.org/?p=' . $post_id );
 		$this->check( 200 );
 
 		$post = get_post( $post_id );
@@ -350,15 +350,20 @@ EOF
 	}
 
 	function test_delete_post_not_found() {
-		$_POST = array( 'action' => 'delete', 'url' => '/?p=999' );
-		$this->check( 400, array( 'error' => 'invalid_request',
-								  'error_description' => '/?p=999 not found' ));
+		$_POST = array( 'action' => 'delete', 'url' => 'http://example.org/?p=999' );
+		$this->check( 400, array(
+			'error' => 'invalid_request',
+			'error_description' => 'http://example.org/?p=999 not found',
+		));
 	}
 
 	function test_delete_user_cannot_delete_posts() {
 		$post_id = self::insert_post();
 		get_user_by( 'ID', $this->userid )->remove_role( 'editor' );
-		$_POST = array( 'action' => 'delete', 'url' => '/?p=' . $post_id );
+		$_POST = array(
+			'action' => 'delete',
+			'url' => 'http://example.org/?p=' . $post_id,
+		);
 		$this->check( 403, 'cannot delete posts' );
 	}
 
@@ -398,7 +403,10 @@ EOF
 
 	function test_unknown_action() {
 		$post_id = self::insert_post();
-		$_POST = array( 'action' => 'foo', 'url' => '/?p=' . $post_id );
+		$_POST = array(
+			'action' => 'foo',
+			'url' => 'http://example.org/?p=' . $post_id,
+		);
 		$this->check( 400, 'unknown action' );
 	}
 }

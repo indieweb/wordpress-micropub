@@ -49,6 +49,8 @@ add_action( 'init', array( 'Micropub', 'init' ) );
  * Micropub Plugin Class
  */
 class Micropub {
+	protected static $headers;
+
 	/**
 	 * Initialize the plugin.
 	 */
@@ -99,6 +101,7 @@ class Micropub {
 		if ( ! array_key_exists( 'micropub', $wp->query_vars ) ) {
 			return;
 		}
+
 		if ( WP_DEBUG ) {
 			error_log( 'Micropub Data: ' . serialize( $_GET ) . ' ' . serialize( $_POST ) );
 		}
@@ -128,22 +131,16 @@ class Micropub {
 	 */
 	private static function authorize() {
 		// find the access token
-		$headers = getallheaders();
-		foreach ($headers as $k => $v) {
-			$lowheaders[strtolower($k)] = $v;
-		}
-		if ( isset( $lowheaders['authorization'] ) ) {
-			$auth_header = $lowheaders['authorization'];
-		} elseif ( isset( $_POST['access_token'] ) ) {
-			$auth_header = 'Bearer ' . $_POST['access_token'];
-		} else {
+		$auth = get_header( 'authorization' );
+		$token = $_POST['access_token'];
+		if ( ! $auth_header && ! $token) {
 			static::handle_authorize_error( 401, 'missing access token' );
 		}
 
 		$resp = wp_remote_get(
 			MICROPUB_TOKEN_ENDPOINT, array( 'headers' => array(
 				'Content-Type' => 'application/x-www-form-urlencoded',
-				'Authorization' => $auth_header,
+				'Authorization' => $auth ?: 'Bearer ' . $token,
 			) ) );
 		$code = wp_remote_retrieve_response_code( $resp );
 		$body = wp_remote_retrieve_body( $resp );
@@ -606,7 +603,15 @@ class Micropub {
 		$array['links'][] = array( 'rel' => 'authorization_endpoint', 'href' => MICROPUB_AUTHENTICATION_ENDPOINT );
 		$array['links'][] = array( 'rel' => 'token_endpoint', 'href' => MICROPUB_TOKEN_ENDPOINT );
 	}
+
+	protected static function get_header( $name ) {
+		if ( ! static::$headers ) {
+			static::$headers = getallheaders();
+		}
+		return $headers[ strtolower( $name ) ];
+	}
 }
+
 
 // blatantly stolen from https://github.com/idno/Known/blob/master/Idno/Pages/File/View.php#L25
 if ( ! function_exists( 'getallheaders' ) ) {
