@@ -3,11 +3,25 @@
  Plugin Name: Micropub
  Plugin URI: https://github.com/snarfed/wordpress-micropub
  Description: <a href="https://indiewebcamp.com/micropub">Micropub</a> server.
+ Protocol spec: <a href="https://www.w3.org/TR/micropub/">w3.org/TR/micropub</a>
  Author: Ryan Barrett
  Author URI: https://snarfed.org/
  Version: 0.5
 */
 
+/*
+ * New filters:
+ *
+ * before_micropub: Called before handling a create, update, or delete Micropub
+ *   request. Not called for queries or if there's an error.
+ *
+ *   Arguments: $args, assoc array of arguments passed to wp_insert_post or
+ *     wp_update_post. For deletes and undeletes, args['ID'] contains the post
+ *     id to be (un)deleted.
+ *
+ * after_micropub: Same as before_micropub, but called after the request is
+ *   handled.
+ */
 // Example command line for testing:
 // curl -i -H 'Authorization: Bearer ...' -F h=entry -F name=foo -F content=bar \
 //   -F photo=@gallery/snarfed.gif 'http://localhost/w/?micropub=endpoint'
@@ -49,7 +63,12 @@ add_action( 'init', array( 'Micropub', 'init' ) );
  * Micropub Plugin Class
  */
 class Micropub {
-	protected static $headers;
+	// associative array
+	public static $request_headers;
+
+    // associative array, read from JSON or form-encoded input. populated by
+    // load_input().
+	protected static $input;
 
 	/**
 	 * Initialize the plugin.
@@ -70,12 +89,8 @@ class Micropub {
 		add_filter( 'host_meta', array( $cls, 'jrd_links' ) );
 		add_filter( 'webfinger_data', array( $cls, 'jrd_links' ) );
 
-		// Store MF2. Run at higher priority so the MF2 is available to other
-		// functions that run on this filter.
-		add_filter( 'before_micropub', array( $cls, 'store_mf2' ), 8 );
-		// Postprocess
+		add_filter( 'before_micropub', array( $cls, 'store_mf2' ) );
 		add_filter( 'before_micropub', array( $cls, 'generate_post_content' ) );
-		// Store Geodata
 		add_filter( 'before_micropub', array( $cls, 'store_geodata' ) );
 		// Sideload any provided photos.
 		add_action( 'after_micropub', array( $cls, 'default_file_handler' ) );
@@ -102,9 +117,12 @@ class Micropub {
 			return;
 		}
 
+		static::load_input();
 		if ( WP_DEBUG ) {
-			error_log( 'Micropub Data: ' . serialize( $_GET ) . ' ' . serialize( $_POST ) );
+			error_log( 'Micropub Data: ' . serialize( $_GET ) . ' ' .
+					   serialize( static::$input ) );
 		}
+
 		// For debug purposes be able to bypass Micropub auth with WordPress auth
 		if ( MICROPUB_LOCAL_AUTH ) {
 			if ( ! is_user_logged_in() ) {
@@ -114,10 +132,11 @@ class Micropub {
 		} else {
 			$user_id = static::authorize();
 		}
+
 		if ( $_SERVER['REQUEST_METHOD'] == 'GET' && isset( $_GET['q'] ) ) {
 			static::query_handler( $user_id );
 		} elseif ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
-			self::form_handler( $user_id );
+			self::post_handler( $user_id );
 		} else {
 			static::error( 400, 'Unknown Micropub request' );
 		}
@@ -131,7 +150,7 @@ class Micropub {
 	 */
 	private static function authorize() {
 		// find the access token
-		$auth = get_header( 'authorization' );
+		$auth = $this->get_header( 'authorization' );
 		$token = $_POST['access_token'];
 		if ( ! $auth_header && ! $token) {
 			static::handle_authorize_error( 401, 'missing access token' );
@@ -186,74 +205,63 @@ class Micropub {
 	 * @uses apply_filter() Calls 'before_micropub' on the default request
 	 * @uses do_action() Calls 'after_micropub' for additional postprocessing
 	 */
-	public static function form_handler( $user_id ) {
+	public static function post_handler( $user_id ) {
 		$status = 200;
-		static::header( 'Content-Type',
-						'text/plain; charset=' . get_option( 'blog_charset' ) );
-		$edit_url = isset( $_POST['edit-of'] ) ? $_POST['edit-of']
-				  : isset( $_POST['url'] ) ? $_POST['url']
-				  : NULL;
-		// support both action= and operation= parameter names
-		if ( ! isset( $_POST['action'] ) ) {
-			$_POST['action'] = isset( $_POST['operation'] ) ? $_POST['operation']
-							 : isset( $_POST['url'] ) ? 'edit' : 'create';
-		}
-		$args = apply_filters( 'before_micropub', static::generate_args() );
-		if ( $user_id ) {
-			$args['post_author'] = $user_id;
-		}
+		$action = static::$input['action'];
+		$url = static::$input['url'];
 
-		if ( ! $edit_url || $_POST['action'] == 'create' ) {
-			if ( $user_id && ! user_can( $user_id, 'publish_posts' ) ) {
+		// create
+		if ( ! $url || $action == 'create' ) {
+			if ( ! user_can( $user_id, 'publish_posts' ) ) {
 				static::error( 403, 'user id ' . $user_id . ' cannot publish posts' );
 			}
-			$args['post_status'] = MICROPUB_DRAFT_MODE ? 'draft' : 'publish';
-			kses_remove_filters();  // prevent sanitizing HTML tags in post_content
-			$args['ID'] = static::check_error( wp_insert_post( $args, true ) );
-			kses_init_filters();
+			$args = static::create( $user_id );
 			$status = 201;
 			static::header( 'Location', get_permalink( $args['ID'] ) );
 
+		// update
+		} elseif ( $action == 'update' || ! isset( $action ) ) {
+			if ( $user_id && ! user_can( $user_id, 'edit_posts' ) ) {
+				static::error( 403, 'user id ' . $user_id . ' cannot edit posts' );
+			}
+			$args = static::update();
+
+		// delete
+		} elseif ( $action == 'delete' ) {
+			if ( $user_id && ! user_can( $user_id, 'delete_posts' ) ) {
+				static::error( 403, 'user id ' . $user_id . ' cannot delete posts' );
+			}
+			$post = get_post( url_to_postid( $url ) );
+			if ( ! $post ) {
+				static::error( 400, $url . ' not found' );
+			}
+			static::check_error( wp_trash_post( $post->ID ) );
+
+		// undelete
+		} elseif ( $action == 'undelete' ) {
+			if ( $user_id && ! user_can( $user_id, 'publish_posts' ) ) {
+				static::error( 403, 'user id ' . $user_id . ' cannot undelete posts' );
+			}
+			$found = false;
+			// url_to_postid() doesn't support posts in trash, so look for
+			// it ourselves, manually.
+			// here's another, more complicated way that customizes WP_Query:
+			// https://gist.github.com/peterwilsoncc/bb40e52cae7faa0e6efc
+			foreach ( get_posts( array( 'post_status' => 'trash' ) ) as $post ) {
+				if ( get_permalink ( $post ) == $url ) {
+					wp_publish_post( $post->ID );
+					$found = true;
+				}
+			}
+			if ( ! $found ) {
+				static::error( 400, 'deleted post ' . $url . ' not found' );
+			}
+
+		// unknown action
 		} else {
-			if ( $args['ID'] == 0 || ! get_post( $args['ID'] ) ) {
-				static::error( 400, $edit_url . ' not found' );
-			}
-
-			if ( $_POST['action'] == 'edit' || ! isset( $_POST['action'] ) ) {
-				if ( $user_id && ! user_can( $user_id, 'edit_posts' ) ) {
-					static::error( 403, 'user id ' . $user_id . ' cannot edit posts' );
-				}
-				kses_remove_filters();  // prevent sanitizing HTML tags in post_content
-				static::check_error( wp_update_post( $args, true ) );
-				kses_init_filters();
-
-			} elseif ( $_POST['action'] == 'delete' ) {
-				if ( $user_id && ! user_can( $user_id, 'delete_posts' ) ) {
-					static::error( 403, 'user id ' . $user_id . ' cannot delete posts' );
-				}
-				static::check_error( wp_trash_post( $args['ID'] ) );
-			} elseif ( $_POST['action'] == 'undelete' ) {
-				if ( $user_id && ! user_can( $user_id, 'publish_posts' ) ) {
-					static::error( 403, 'user id ' . $user_id . ' cannot undelete posts' );
-				}
-				$found = false;
-				// url_to_postid() doesn't support posts in trash, so look for
-				// it ourselves, manually.
-				// here's another, more complicated way that customizes WP_Query:
-				// https://gist.github.com/peterwilsoncc/bb40e52cae7faa0e6efc
-				foreach ( get_posts( array( 'post_status' => 'trash' ) ) as $post ) {
-					if ( get_permalink ( $post ) == $_POST['url'] ) {
-						wp_publish_post( $post->ID );
-						$found = true;
-					}
-				}
-				if ( ! $found ) {
-					static::error( 400, 'deleted post ' . $_POST['url'] . ' not found' );
-				}
-			} else {
-				static::error( 400, 'unknown action ' . $_POST['action'] );
-			}
+			static::error( 400, 'unknown action ' . $action );
 		}
+
 		do_action( 'after_micropub', $args['ID'] );
 		static::respond( $status );
 	}
@@ -285,6 +293,55 @@ class Micropub {
 		}
 	}
 
+	/*
+	 * Handle a create request.
+	 */
+	private static function create( $user_id ) {
+		$args = apply_filters( 'before_micropub', static::mp_to_wp( static::$input ) );
+		if ( $user_id ) {
+			$args['post_author'] = $user_id;
+		}
+		$args['post_status'] = MICROPUB_DRAFT_MODE ? 'draft' : 'publish';
+		kses_remove_filters();  // prevent sanitizing HTML tags in post_content
+		$args['ID'] = static::check_error( wp_insert_post( $args, true ) );
+		kses_init_filters();
+		return $args;
+	}
+
+	/*
+	 * Handle an update request.
+	 *
+	 * This really needs a db transaction! But we can't assume the underlying
+	 * MySQL db is InnoDB and supports transactions. :(
+	 */
+	private static function update() {
+		$args = get_post( url_to_postid( static::$input['url'] ), ARRAY_A );
+		if ( ! $args ) {
+			static::error( 400, static::$input['url'] . ' not found' );
+		}
+
+		foreach ( static::mp_to_wp( static::$input['update'] ) as $name => $val ) {
+			$args[ $name ] = $val[0];
+		}
+
+		// TODO
+		// $add = static::mp_to_wp( static::$input['add'] );
+
+		// TODO: support removing individual values. (ie when $input['remove']
+		// is an associative array mapping field names to values to remove.)
+		foreach ( static::mp_to_wp( static::$input['remove'] ) as $_ => $name ) {
+			$args[ $name ] = NULL;
+		}
+
+		// 
+		$args = apply_filters( 'before_micropub', $args );
+
+		kses_remove_filters();
+		static::check_error( wp_update_post( $args, true ) );
+		kses_init_filters();
+		return $args;
+	}
+
 	private static function handle_authorize_error( $code, $msg ) {
 		$home = untrailingslashit( home_url() );
 		if ( $home == 'http://localhost' ) {
@@ -296,27 +353,31 @@ class Micropub {
 	}
 
 	/**
-	 * Generate args for WordPress wp_insert_post() and friends.
+	 * Converts Micropub create, update, or delete request to args for WordPress
+	 * wp_insert_post() or wp_update_post().
+	 *
+	 * For updates, reads the existing post and starts with its data:
+	 *  'replace' properties are replaced
+	 *  'add' properties are added. the new value in $args will contain both the
+	 *    existing and new values.
+	 *  'delete' properties are set to NULL
+	 *
+	 * Uses $input, so load_input() must be called before this.
 	 */
-	private static function generate_args() {
-		// these can be passed through untouched
-		$mp_to_wp = array(
-			'slug'     => 'post_name',
-			'name'     => 'post_title',
-			'summary'  => 'post_excerpt',
-		);
-
+	private static function mp_to_wp( $props ) {
 		$args = array();
-		foreach ( $_POST as $param => $value ) {
-			if ( isset( $mp_to_wp[ $param ] ) ) {
-				$args[ $mp_to_wp[ $param ] ] = $value;
+
+		foreach ( array( 'slug' => 'post_name',
+						 'name' => 'post_title',
+						 'summary'  => 'post_excerpt',
+		          ) as $mf2 => $wp ) {
+			if ( $props[ $mf2 ] ) {
+				$args[ $wp ] = $props[ $mf2 ];
 			}
 		}
+
 		// these are transformed or looked up
-		$url = $_POST['url'] ?: $_POST['edit-of'];
 		if ( $url ) {
-			$args['ID'] = url_to_postid( $url );
-			$post = get_post( $args['ID'] );
 			// preserve published date explicitly, otherwise wp_update_post sets
 			// it to the current time
 			$args['post_date'] = $post->post_date;
@@ -333,18 +394,18 @@ class Micropub {
 			$args['post_name'] = sanitize_title( $args['post_name'] );
 		}
 
-		if ( isset( $_POST['published'] ) ) {
-			$args['post_date'] = iso8601_to_datetime( $_POST['published'] );
+		if ( isset( $props['published'] ) ) {
+			$args['post_date'] = iso8601_to_datetime( $props['published'] );
 			$args['post_date_gmt'] = get_gmt_from_date( $args['post_date'] );
 		}
 
 		// Map micropub categories to WordPress categories if they exist, otherwise
 		// to WordPress tags.
-		if ( isset( $_POST['category'] ) ) {
-			if ( empty( $_POST['category'] ) ) {
-				$_POST['category'] = array();
+		if ( isset( $props['category'] ) ) {
+			if ( empty( $props['category'] ) ) {
+				$props['category'] = array();
 			}
-			foreach ( $_POST['category'] as $mp_cat ) {
+			foreach ( $props['category'] as $mp_cat ) {
 				$wp_cat = get_category_by_slug( $mp_cat );
 				if ( $wp_cat ) {
 					$args['post_category'][] = $wp_cat->term_id;
@@ -353,14 +414,15 @@ class Micropub {
 				}
 			}
 		}
-		if ( isset( $_POST['content']['html'] ) ) {
-			$args['post_content'] = $_POST['content']['html'];
-		} else if ( isset( $_POST['content'] ) ) {
-			$args['post_content'] = htmlspecialchars($_POST['content']);
+		if ( isset( $props['content']['html'] ) ) {
+			$args['post_content'] = $props['content']['html'];
+		} else if ( isset( $props['content'] ) ) {
+			$args['post_content'] = htmlspecialchars($props['content']);
 		}
-		elseif ( isset( $_POST['summary'] ) ) {
-			$args['post_content'] = $_POST['summary'];
+		elseif ( isset( $props['summary'] ) ) {
+			$args['post_content'] = $props['summary'];
 		}
+
 		return $args;
 	}
 
@@ -376,6 +438,7 @@ class Micropub {
 			return $args;
 		}
 
+		$props = static::$input;
 		$verbs = array(
 			'like-of' => 'Likes',
 			'repost-of' => 'Reposted',
@@ -385,7 +448,7 @@ class Micropub {
 
 		// interactions
 		foreach ( array_keys( $verbs ) as $prop ) {
-			$val = $_POST[ $prop ];
+			$val = $props[ $prop ];
 			if ( $val ) {
 				$lines[] = '<p>' . $verbs[ $prop ] .
 						   ' <a class="u-' . $prop . '" href="' .
@@ -393,23 +456,23 @@ class Micropub {
 			}
 		}
 
-		if ( isset( $_POST['rsvp'] ) ) {
-			$lines[] = '<p>RSVPs <data class="p-rsvp" value="' . $_POST['rsvp'] .
-				'">' . $_POST['rsvp'] . '</data>.</p>';
+		if ( isset( $props['rsvp'] ) ) {
+			$lines[] = '<p>RSVPs <data class="p-rsvp" value="' . $props['rsvp'] .
+				'">' . $props['rsvp'] . '</data>.</p>';
 		}
 
 		// event
-		if ( isset( $_POST['h'] ) && $_POST['h'] == 'event' ) {
+		if ( isset( $props['h'] ) && $props['h'] == 'event' ) {
 			$lines[] = static::generate_event();
 		}
 
 		// content
-		if ( isset( $_POST['content'] ) ) {
+		if ( isset( $props['content'] ) ) {
 			$lines[] = '<div class="e-content">';
-			if (isset($_POST['content']['html'])) {
-				$lines[] = $_POST['content']['html'];
+			if (isset($props['content']['html'])) {
+				$lines[] = $props['content']['html'];
 			} else {
-				$lines[] = htmlspecialchars($_POST['content']);
+				$lines[] = htmlspecialchars($props['content']);
 			}
 			$lines[] = '</div>';
 		}
@@ -428,38 +491,39 @@ class Micropub {
 	 * Generates and returns a string h-event.
 	 */
 	private static function generate_event() {
+		$props = static::$input;
 		$lines[] = '<div class="h-event">';
 
-		if ( isset( $_POST['name'] ) ) {
-			$lines[] = '<h1 class="p-name">' . $_POST['name'] . '</h1>';
+		if ( isset( $props['name'] ) ) {
+			$lines[] = '<h1 class="p-name">' . $props['name'] . '</h1>';
 		}
 
 		$lines[] = '<p>';
 		$times = array();
 		foreach ( array( 'start', 'end' ) as $cls ) {
-			if ( isset( $_POST[ $cls ] ) ) {
-				$datetime = iso8601_to_datetime( $_POST[ $cls ] );
+			if ( isset( $props[ $cls ] ) ) {
+				$datetime = iso8601_to_datetime( $props[ $cls ] );
 				$times[] = '<time class="dt-' . $cls . '" datetime="' .
-						 $_POST[ $cls ] . '">' . $datetime . '</time>';
+						 $props[ $cls ] . '">' . $datetime . '</time>';
 			}
 		}
 		$lines[] = implode( "\nto\n", $times );
 
-		if ( isset( $_POST['location'] ) && substr( $_POST['location'], 0, 4 ) != 'geo:' ) {
-			$lines[] = 'at <a class="p-location" href="' . $_POST['location'] . '">' .
-				$_POST['location'] . '</a>';
+		if ( isset( $props['location'] ) && substr( $props['location'], 0, 4 ) != 'geo:' ) {
+			$lines[] = 'at <a class="p-location" href="' . $props['location'] . '">' .
+				$props['location'] . '</a>';
 		}
 
 		end( $lines );
 		$lines[key( $lines )] .= '.';
 		$lines[] = '</p>';
 
-		if ( isset( $_POST['summary'] ) ) {
-			$lines[] = '<p class="p-summary">' . urldecode( $_POST['summary'] ) . '</p>';
+		if ( isset( $props['summary'] ) ) {
+			$lines[] = '<p class="p-summary">' . urldecode( $props['summary'] ) . '</p>';
 		}
 
-		if ( isset( $_POST['description'] ) ) {
-			$lines[] = '<p class="p-description">' . urldecode( $_POST['description'] ) . '</p>';
+		if ( isset( $props['description'] ) ) {
+			$lines[] = '<p class="p-description">' . urldecode( $props['description'] ) . '</p>';
 		}
 
 		$lines[] = '</div>';
@@ -485,28 +549,33 @@ class Micropub {
 
 	/**
 	 * Stores geodata in WordPress format
+	 *
+	 * Uses $input, so load_input() must be called before this.
 	 */
 	public static function store_geodata( $args ) {
 		if ( ! isset( $args['meta_input'] ) ) {
 			$args['meta_input'] = array();
 		}
-		if ( isset( $_POST['location'] ) && substr( $_POST['location'], 0, 4 ) == 'geo:' ) {
+		if ( isset( static::$input['location'] ) &&
+			 substr( static::$input['location'], 0, 4 ) == 'geo:' ) {
 			// Geo URI format:
 			// http://en.wikipedia.org/wiki/Geo_URI#Example
 			// https://indiewebcamp.com/micropub##location
-			$geo = str_replace( 'geo:', '', urldecode( $_POST['location'] ) );
+			$geo = str_replace( 'geo:', '', urldecode( static::$input['location'] ) );
 			$geo = explode( ':', $geo );
 			$geo = explode( ';', $geo[0] );
 			$coords = explode( ',', $geo[0] );
 			$args['meta_input']['geo_latitude'] = trim( $coords[0] );
 			$args['meta_input']['geo_longitude'] = trim( $coords[1] );
 		}
-	 return $args;
+		return $args;
 	}
 
 	/**
 	 * Store properties as post metadata. Details:
 	 * https://indiewebcamp.com/WordPress_Data#Microformats_data
+	 *
+	 * Uses $input, so load_input() must be called before this.
 	 */
 	public static function store_mf2( $args ) {
 		if ( ! isset( $args['meta_input'] ) ) {
@@ -515,7 +584,7 @@ class Micropub {
 
 		// Do not store access_token or other optional parameters
 		$blacklist = array( 'access_token', 'action' );
-		foreach ( $_POST as $key => $value ) {
+		foreach ( static::$input as $key => $value ) {
 			if ( ! is_array( $value ) ) {
 				$value = array( $value );
 			}
@@ -604,11 +673,27 @@ class Micropub {
 		$array['links'][] = array( 'rel' => 'token_endpoint', 'href' => MICROPUB_TOKEN_ENDPOINT );
 	}
 
-	protected static function get_header( $name ) {
-		if ( ! static::$headers ) {
-			static::$headers = getallheaders();
+	protected static function load_input() {
+		$content_type = explode( ';', static::get_header( 'Content-Type' ))[0];
+		if ( $content_type  == 'application/json' ) {
+			static::$input = json_decode( static::read_input(), true );
+		} elseif ( ! $content_type ||
+				   $content_type  == 'application/x-www-form-urlencoded' ) {
+			static::$input = $_POST;
+		} else {
+			static::error( 400, 'unsupported content type ' . $content_type );
 		}
-		return $headers[ strtolower( $name ) ];
+	}
+
+	protected static function read_input() {
+			return file_get_contents( 'php://input' );
+	}
+
+	protected static function get_header( $name ) {
+		if ( ! static::$request_headers ) {
+			static::$request_headers = getallheaders();
+		}
+		return static::$request_headers[ strtolower( $name ) ];
 	}
 }
 
