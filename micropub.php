@@ -279,7 +279,7 @@ class Micropub {
 			case 'mp-syndicate-to':
 				// return empty syndication target with filter
 				$syndicate_tos = apply_filters( 'micropub_syndicate-to', array(), $user_id );
-				static::respond( 200, array( 'syndicate-to' => $syndicate_tos ));
+				static::respond( 200, array( 'syndicate-to' => $syndicate_tos ) );
 				break;
 			case 'source':
 				$post_id = url_to_postid( $_GET['url'] );
@@ -459,7 +459,7 @@ class Micropub {
 		if ( $args['post_content'] &&
 			 ( current_theme_supports( 'microformats2' ) ||
 			   // Post Kinds: https://wordpress.org/plugins/indieweb-post-kinds/
-			   taxonomy_exists( 'kind' ))) {
+			   taxonomy_exists( 'kind' ) ) ) {
 			return $args;
 		}
 
@@ -507,7 +507,7 @@ class Micropub {
 
 		// TODO: generate my own markup so i can include u-photo
 		if ( isset( $_FILES['photo'] ) || isset( $_FILES['video'] ) ||
-			 isset( $_FILES['audio'] )) {
+			 isset( $_FILES['audio'] ) ) {
 			$lines[] = "\n[gallery size=full columns=1]";
 		}
 
@@ -565,13 +565,13 @@ class Micropub {
 	 */
 	public static function default_file_handler( $post_id ) {
 		foreach ( array( 'photo', 'video', 'audio' ) as $field ) {
-			if ( isset( $_FILES[$field] ) ) {
+			if ( isset( $_FILES[ $field ] ) ) {
 				require_once( ABSPATH . 'wp-admin/includes/image.php' );
 				require_once( ABSPATH . 'wp-admin/includes/file.php' );
 				require_once( ABSPATH . 'wp-admin/includes/media.php' );
 				static::check_error( media_handle_upload(
 					$field, $post_id, array(),
-					array( 'action' => 'allow_file_outside_uploads_dir' )));
+					array( 'action' => 'allow_file_outside_uploads_dir' ) ) );
 			}
 		}
 	}
@@ -649,13 +649,13 @@ class Micropub {
 					   ($code == 401) ? 'insufficient_scope' :
 					   'invalid_request',
 			'error_description' => $message,
-		));
+		) );
 	}
 
 	public static function respond( $code, $resp = NULL ) {
 		status_header( $code );
 		static::header( 'Content-Type',
-						'application/json; charset=' . get_option( 'blog_charset' ));
+						'application/json; charset=' . get_option( 'blog_charset' ) );
 		exit( $resp ? json_encode( $resp ) : '' );
 	}
 
@@ -700,7 +700,7 @@ class Micropub {
 	}
 
 	protected static function load_input() {
-		$content_type = explode( ';', static::get_header( 'Content-Type' ))[0];
+		$content_type = explode( ';', static::get_header( 'Content-Type' ) )[0];
 		if ( $content_type  == 'application/json' ) {
 			static::$input = json_decode( static::read_input(), true );
 		} elseif ( ! $content_type ||

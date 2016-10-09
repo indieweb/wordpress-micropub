@@ -32,7 +32,7 @@ class Recorder extends Micropub {
 	}
 
 	protected static function read_input() {
-		return static::$input;
+		return json_encode( static::$input );
 	}
 }
 Recorder::init();
@@ -59,7 +59,7 @@ class MicropubTest extends WP_UnitTestCase {
 		global $wp_query;
 		$wp_query->query_vars['micropub'] = 'endpoint';
 
-		$this->userid = self::factory()->user->create( array( 'role' => 'editor' ));
+		$this->userid = self::factory()->user->create( array( 'role' => 'editor' ) );
 		wp_set_current_user( $this->userid );
 	}
 
@@ -91,7 +91,7 @@ class MicropubTest extends WP_UnitTestCase {
 		$encoded = json_encode( Recorder::$response, true );
 
 		$this->assertEquals( $status, Recorder::$status, $encoded );
-		if ( is_array( $expected )) {
+		if ( is_array( $expected ) ) {
 			$this->assertEquals( $expected, Recorder::$response, $encoded );
 		} elseif ( is_string( $expected ) ) {
 			$this->assertContains( $expected, Recorder::$response['error_description'], $encoded );
@@ -103,7 +103,7 @@ class MicropubTest extends WP_UnitTestCase {
 	function check_create() {
 		$this->check( 201 );
 		$posts = wp_get_recent_posts( NULL, OBJECT );
-		$this->assertEquals( 1, count( $posts ));
+		$this->assertEquals( 1, count( $posts ) );
 		$post = $posts[0];
 		$this->assertEquals( get_permalink( $post ),
 							 Recorder::$response_headers['Location'] );
@@ -145,18 +145,18 @@ class MicropubTest extends WP_UnitTestCase {
 			'tags_input' => array( 'tag1', 'tag4' ),
 			'post_date' => '2016-01-01 12:01:23',
 			'location' => 'geo:42.361,-71.092;u=25000',
-		));
+		) );
 	}
 
 	function test_bad_query() {
 		$_GET['q'] = 'not_real';
 		$this->check( 400, array( 'error' => 'invalid_request',
-								  'error_description' => 'unknown query not_real' ));
+								  'error_description' => 'unknown query not_real' ) );
 	}
 
 	function test_query_syndicate_to_empty() {
 		$_GET['q'] = 'syndicate-to';
-		$this->check( 200, array( 'syndicate-to' => array() ));
+		$this->check( 200, array( 'syndicate-to' => array() ) );
 	}
 
 	function test_query_syndicate_to() {
@@ -166,7 +166,7 @@ class MicropubTest extends WP_UnitTestCase {
 		add_filter( 'micropub_syndicate-to', 'syndicate_to' );
 
 		$_GET['q'] = 'syndicate-to';
-		$this->check( 200, array( 'syndicate-to' => array( 'abc', 'xyz' )));
+		$this->check( 200, array( 'syndicate-to' => array( 'abc', 'xyz' ) ) );
 	}
 
 	function test_query_post() {
@@ -189,10 +189,22 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->check( 400, array(
 			'error' => 'invalid_request',
 			'error_description' => 'not found: http:/localhost/doesnt/exist',
-		));
+		) );
 	}
 
-	function test_create() {
+	function test_create_basic_post() {
+		Recorder::$request_headers = array( 'content-type' => 'application/x-www-form-urlencoded' );
+		$_POST = self::$post;
+		self::check_create_basic();
+	}
+
+	function test_create_basic_json() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$input = static::$mf2;
+		self::check_create_basic();
+	}
+
+	function check_create_basic() {
 		$_POST = self::$post;
 		$post = $this->check_create();
 
@@ -212,15 +224,28 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( array( 'my summary' ), $mf2['properties']['summary'] );
 	}
 
-	function test_create_content_html()
-	{
+	function test_create_content_html_post() {
 		$_POST = array(
 			'h' => 'entry',
 			'content' => array( array( 'html' => '<h1>HTML content!</h1><p>coolio.</p>' ) ),
 			'name' => 'HTML content test',
 		);
-		$post = $this->check_create();
+		self::check_create_content_html();
+	}
 
+	function test_create_content_html_json() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$input = array(
+			'type' => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array( array( 'html' => '<h1>HTML content!</h1><p>coolio.</p>' ) ),
+				'name' => array( 'HTML content test' ),
+			) );
+		self::check_create_content_html();
+	}
+
+	function check_create_content_html() {
+		$post = $this->check_create();
 		$this->assertEquals( 'HTML content test', $post->post_title );
 		// check that HTML in content isn't sanitized
 		$this->assertEquals( "<div class=\"e-content\">\n<h1>HTML content!</h1><p>coolio.</p>\n</div>", $post->post_content );
@@ -238,8 +263,7 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->_test_create_with_upload('audio', 'audio', 'mp3');
 	}
 
-	function _test_create_with_upload( $mf2_type, $wp_type, $extension )
-	{
+	function _test_create_with_upload( $mf2_type, $wp_type, $extension ) {
 		$filename = tempnam( sys_get_temp_dir(), 'micropub_test' );
 		$file = fopen( $filename, 'w' );
 		fwrite( $file, 'fake file contents' );
@@ -249,7 +273,7 @@ class MicropubTest extends WP_UnitTestCase {
 			'name' => 'micropub_test.' . $extension,
 			'tmp_name' => $filename,
 			'size' => 19,
-		));
+		) );
 		$_POST['action'] = 'allow_file_outside_uploads_dir';
 		$post = $this->check_create();
 
@@ -258,36 +282,66 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( "\n[gallery size=full columns=1]", $post->post_content );
 
 		$media = get_attached_media( $wp_type, $post->ID );
-		$this->assertEquals( 1, count( $media ));
+		$this->assertEquals( 1, count( $media ) );
 		$this->assertEquals( 'attachment', current( $media )->post_type);
 	}
 
-	function test_create_reply()
-	{
-		$_POST = array('in-reply-to' => 'http://target');
-		$post = $this->check_create();
-		$this->assertEquals( '', $post->post_title );
-		$this->assertEquals( '<p>In reply to <a class="u-in-reply-to" href="http://target">http://target</a>.</p>', $post->post_content );
+	function test_create_reply_post() {
+		$this->_test_create_interaction_post(
+			'in-reply-to', '<p>In reply to <a class="u-in-reply-to" href="http://target">http://target</a>.</p>' );
 	}
 
-	function test_create_like()
-	{
-		$_POST = array('like-of' => 'http://target');
-		$post = $this->check_create();
-		$this->assertEquals( '', $post->post_title );
-		$this->assertEquals( '<p>Likes <a class="u-like-of" href="http://target">http://target</a>.</p>', $post->post_content );
+	function test_create_reply_json() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		$this->_test_create_interaction_json(
+			'in-reply-to', '<p>In reply to <a class="u-in-reply-to" href="http://target">http://target</a>.</p>' );
 	}
 
-	function test_create_repost()
-	{
-		$_POST = array('repost-of' => 'http://target');
-		$post = $this->check_create();
-		$this->assertEquals( '', $post->post_title );
-		$this->assertEquals( '<p>Reposted <a class="u-repost-of" href="http://target">http://target</a>.</p>', $post->post_content );
+	function test_create_like_post() {
+		$this->_test_create_interaction_post(
+			'like-of', '<p>Likes <a class="u-like-of" href="http://target">http://target</a>.</p>' );
 	}
 
-	function test_create_event()
-	{
+	function test_create_like_json() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		$this->_test_create_interaction_json(
+			'like-of', '<p>Likes <a class="u-like-of" href="http://target">http://target</a>.</p>' );
+	}
+
+	function test_create_repost_post() {
+		$this->_test_create_interaction_post(
+			'repost-of', '<p>Reposted <a class="u-repost-of" href="http://target">http://target</a>.</p>' );
+	}
+
+	function test_create_repost_json() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		$this->_test_create_interaction_json(
+			'repost-of', '<p>Reposted <a class="u-repost-of" href="http://target">http://target</a>.</p>' );
+	}
+
+	function _test_create_interaction_post( $property, $content ) {
+		$_POST = array( $property => 'http://target' );
+		$post = $this->check_create_interaction( $property, $content );
+	}
+
+	function _test_create_interaction_json( $property, $content ) {
+		Recorder::$input = array(
+			'properties' => array(
+				$property => array( 'http://target' ),
+			) );
+		$post = $this->check_create_interaction( $property, $content );
+	}
+
+	function check_create_interaction( $property, $content ) {
+		$post = $this->check_create();
+		$this->assertEquals( '', $post->post_title );
+		$this->assertEquals( $content, $post->post_content );
+		$this->assertEquals(
+			array( 'properties' => array( $property => array( 'http://target' ) ) ),
+			Micropub::get_mf2( $post->ID ) );
+	}
+
+	function test_create_event_post() 	{
 		$_POST = array(
 			'h' => 'event',
 			'name' => 'My Event',
@@ -296,6 +350,24 @@ class MicropubTest extends WP_UnitTestCase {
 			'location' => 'http://a/place',
 			'description' => 'some stuff',
 		);
+		$this->check_create_event();
+	}
+
+	function test_create_event_json() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$input = array(
+			'type' => array( 'h-event' ),
+			'properties' => array(
+				'name' => array( 'My Event' ),
+				'start' => array( '2013-06-30 12:00:00' ),
+				'end' => array( '2013-06-31 18:00:00' ),
+				'location' => array( 'http://a/place' ),
+				'description' => array( 'some stuff' ),
+			) );
+		$this->check_create_event();
+	}
+
+	function check_create_event() {
 		$post = $this->check_create();
 		$this->assertEquals( 'My Event', $post->post_title );
 		$this->assertEquals( <<<EOF
@@ -318,14 +390,27 @@ EOF
 		$this->assertEquals( array( '2013-06-31 18:00:00' ), $mf2['properties']['end'] );
 	}
 
-	function test_create_rsvp()
-	{
+	function test_create_rsvp_post() {
 		$_POST = array(
 			'rsvp' => 'maybe',
 			'in-reply-to' => 'http://target'
 		);
-		$post = $this->check_create();
+		$this->check_create_rsvp();
+	}
 
+	function test_create_rsvp_json() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$input = array(
+			'type' => array( 'h-entry' ),
+			'properties' => array(
+				'rsvp' => array( 'maybe' ),
+				'in-reply-to' => array( 'http://target' ),
+			) );
+		$this->check_create_rsvp();
+	}
+
+	function check_create_rsvp() {
+		$post = $this->check_create();
 		$mf2 = Micropub::get_mf2( $post->ID );
 		$this->assertEquals( array( 'maybe' ), $mf2['properties']['rsvp'] );
 		$this->assertEquals( <<<EOF
@@ -346,13 +431,13 @@ EOF
 		$this->assertEquals( '2016-01-01 12:01:23', get_post( $post_id )->post_date );
 
 		Recorder::$request_headers = array( 'content-type' => 'application/json' );
-		Recorder::$input = json_encode( array(
+		Recorder::$input = array(
 			'action' => 'update',
 			'url' => 'http://example.org/?p=' . $post_id,
 			'replace' => array( 'content' => array( 'new<br>content' ) ),
 			'add' => array( 'category' => array( 'add tag' ) ),
 			'delete' => array( 'location', array( 'summary' ) ),
-		) );
+		);
 		$this->check( 200 );
 
 		$post = get_post( $post_id );
@@ -386,21 +471,21 @@ EOF
 	function test_add_property_not_category() {
 		$post_id = self::insert_post();
 		Recorder::$request_headers = array( 'content-type' => 'application/json' );
-		Recorder::$input = json_encode( array(
+		Recorder::$input = array(
 			'action' => 'update',
 			'url' => 'http://example.org/?p=' . $post_id,
 			'add' => array( 'content' => array( 'foo' ) ),
-		) );
+		);
 		$this->check( 400, 'can only add to category; other properties not supported' );
 	}
 
 	function test_update_post_not_found() {
 		Recorder::$request_headers = array( 'content-type' => 'application/json' );
-		Recorder::$input = json_encode( array(
+		Recorder::$input = array(
 			'action' => 'update',
 			'url' => 'http://example.org/?p=999',
 			'replace' => array( 'content' => array( 'unused' ) ),
-		) );
+	    );
 		$this->check( 400, 'http://example.org/?p=999 not found' );
 	}
 
@@ -409,11 +494,11 @@ EOF
 		get_user_by( 'ID', $this->userid )->remove_role( 'editor' );
 
 		Recorder::$request_headers = array( 'content-type' => 'application/json' );
-		Recorder::$input = json_encode( array(
+		Recorder::$input = array(
 			'action' => 'update',
 			'url' => 'http://example.org/?p=' . $post_id,
 			'replace' => array( 'content' => array( 'unused' ) ),
-		) );
+		);
 		$this->check( 403, 'cannot edit posts' );
 	}
 
@@ -432,7 +517,7 @@ EOF
 		$this->check( 400, array(
 			'error' => 'invalid_request',
 			'error_description' => 'http://example.org/?p=999 not found',
-		));
+		) );
 	}
 
 	function test_delete_user_cannot_delete_posts() {
@@ -466,7 +551,7 @@ EOF
 		$this->check( 400, array(
 			'error' => 'invalid_request',
 			'error_description' => 'deleted post http://example.org/?p=999 not found',
-		));
+		) );
 	}
 
 	function test_undelete_user_cannot_undelete_posts() {
