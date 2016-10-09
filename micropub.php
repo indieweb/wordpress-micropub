@@ -22,6 +22,7 @@
  * after_micropub: Same as before_micropub, but called after the request is
  *   handled.
  */
+
 // Example command line for testing:
 // curl -i -H 'Authorization: Bearer ...' -F h=entry -F name=foo -F content=bar \
 //   -F photo=@gallery/snarfed.gif 'http://localhost/w/?micropub=endpoint'
@@ -220,7 +221,7 @@ class Micropub {
 			static::header( 'Location', get_permalink( $args['ID'] ) );
 
 		// update
-		} elseif ( $action == 'update' || ! isset( $action ) ) {
+		} elseif ( $action == 'update' || ! $action ) {
 			if ( $user_id && ! user_can( $user_id, 'edit_posts' ) ) {
 				static::error( 403, 'user id ' . $user_id . ' cannot edit posts' );
 			}
@@ -283,7 +284,7 @@ class Micropub {
 			case 'source':
 				$post_id = url_to_postid( $_GET['url'] );
 				if ( $post_id ) {
-					static::respond( 200, array('properties' => static::get_mf2( $post_id )));
+					static::respond( 200, static::get_mf2( $post_id ) );
 				} else {
 					static::error( 400, 'not found: ' . $_GET['url'] );
 				}
@@ -315,27 +316,57 @@ class Micropub {
 	 * MySQL db is InnoDB and supports transactions. :(
 	 */
 	private static function update() {
-		$args = get_post( url_to_postid( static::$input['url'] ), ARRAY_A );
+		$post_id = url_to_postid( static::$input['url'] );
+		$args = get_post( $post_id, ARRAY_A );
 		if ( ! $args ) {
 			static::error( 400, static::$input['url'] . ' not found' );
 		}
 
-		foreach ( static::mp_to_wp( static::$input['update'] ) as $name => $val ) {
-			$args[ $name ] = $val[0];
+		if ( static::$input['add'] &&
+			 array_keys( static::$input['add'] ) != array( 'category' ) ) {
+			static::error( 400, 'can only add to category; other properties not supported' );
 		}
 
-		// TODO
-		// $add = static::mp_to_wp( static::$input['add'] );
+		// add
+		$add = static::$input['add'];
+		if ( $add ) {
+			$add_args = static::mp_to_wp( array( 'properties' => $add ) );
+			if ( $add_args['tags_input'] ) {
+				// i tried wp_add_post_tags here, but it didn't work
+				$args['tags_input'] = array_merge($args['tags_input'] ?: array(),
+												  $add_args['tags_input']);
+			}
+			if ( $add_args['post_category'] ) {
+				// i tried wp_set_post_categories here, but it didn't work
+				$args['post_category'] = array_merge($args['post_category'] ?: array(),
+													 $add_args['post_category']);
+			}
+		}
 
-		// TODO: support removing individual values. (ie when $input['remove']
+		// replace
+		$replace = static::$input['replace'];
+		if ( $replace ) {
+			foreach ( static::mp_to_wp( array( 'properties' => $replace ) )
+					  as $name => $val ) {
+				$args[ $name ] = $val;
+			}
+		}
+
+		// TODO: support removing individual values. (ie when $input['delete']
 		// is an associative array mapping field names to values to remove.)
-		foreach ( static::mp_to_wp( static::$input['remove'] ) as $_ => $name ) {
-			$args[ $name ] = NULL;
+		$delete = static::$input['delete'];
+		if ( $delete ) {
+			foreach ( static::mp_to_wp( array( 'properties' => $delete ) )
+					  as $_ => $name ) {
+				$args[ $name ] = NULL;
+			}
 		}
 
-		// 
-		$args = apply_filters( 'before_micropub', $args );
+		// tell wordpress to preserve published date explicitly, otherwise
+		// wp_update_post sets it to the current time
+		$args['edit_date'] = true;
 
+		$args = apply_filters( 'before_micropub', $args );
 		kses_remove_filters();
 		static::check_error( wp_update_post( $args, true ) );
 		kses_init_filters();
@@ -364,7 +395,8 @@ class Micropub {
 	 *
 	 * Uses $input, so load_input() must be called before this.
 	 */
-	private static function mp_to_wp( $props ) {
+	private static function mp_to_wp( $mf2 ) {
+		$props = $mf2['properties'];
 		$args = array();
 
 		foreach ( array( 'slug' => 'post_name',
@@ -372,18 +404,10 @@ class Micropub {
 						 'summary'  => 'post_excerpt',
 		          ) as $mf2 => $wp ) {
 			if ( $props[ $mf2 ] ) {
-				$args[ $wp ] = $props[ $mf2 ];
+				$args[ $wp ] = $props[ $mf2 ][0];
 			}
 		}
 
-		// these are transformed or looked up
-		if ( $url ) {
-			// preserve published date explicitly, otherwise wp_update_post sets
-			// it to the current time
-			$args['post_date'] = $post->post_date;
-			$args['post_date_gmt'] = $post->post_date_gmt;
-			$args['edit_date'] = true;
-		}
 		// perform these functions only for creates
 		if ( ! isset( $args['ID'] ) ) {
 			if ( isset( $args['post_title'] ) && ! isset( $args['post_name'] ) ) {
@@ -395,16 +419,15 @@ class Micropub {
 		}
 
 		if ( isset( $props['published'] ) ) {
-			$args['post_date'] = iso8601_to_datetime( $props['published'] );
-			$args['post_date_gmt'] = get_gmt_from_date( $args['post_date'] );
+			$args['post_date'] = iso8601_to_datetime( $props['published'][0] );
+			$args['post_date_gmt'] = get_gmt_from_date( $args['post_date'][0] );
 		}
 
 		// Map micropub categories to WordPress categories if they exist, otherwise
 		// to WordPress tags.
-		if ( isset( $props['category'] ) ) {
-			if ( empty( $props['category'] ) ) {
-				$props['category'] = array();
-			}
+		if ( $props['category'] ) {
+			$args['post_category'] = array();
+			$args['tags_input'] = array();
 			foreach ( $props['category'] as $mp_cat ) {
 				$wp_cat = get_category_by_slug( $mp_cat );
 				if ( $wp_cat ) {
@@ -414,12 +437,14 @@ class Micropub {
 				}
 			}
 		}
-		if ( isset( $props['content']['html'] ) ) {
-			$args['post_content'] = $props['content']['html'];
-		} else if ( isset( $props['content'] ) ) {
-			$args['post_content'] = htmlspecialchars($props['content']);
-		}
-		elseif ( isset( $props['summary'] ) ) {
+
+		$content = $props['content'][0];
+		if ( is_array( $content ) ) {
+			$args['post_content'] = $content['html'] ?:
+								    htmlspecialchars( $content['value'] );
+		} elseif ( $content ) {
+			$args['post_content'] = htmlspecialchars( $content );
+		} elseif ( isset( $props['summary'] ) ) {
 			$args['post_content'] = $props['summary'];
 		}
 
@@ -438,7 +463,9 @@ class Micropub {
 			return $args;
 		}
 
-		$props = static::$input;
+		$mf2 = static::$input;
+		$props = static::$input['replace'] ?: $mf2['properties'];
+
 		$verbs = array(
 			'like-of' => 'Likes',
 			'repost-of' => 'Reposted',
@@ -448,7 +475,7 @@ class Micropub {
 
 		// interactions
 		foreach ( array_keys( $verbs ) as $prop ) {
-			$val = $props[ $prop ];
+			$val = $props[ $prop ][0];
 			if ( $val ) {
 				$lines[] = '<p>' . $verbs[ $prop ] .
 						   ' <a class="u-' . $prop . '" href="' .
@@ -457,22 +484,23 @@ class Micropub {
 		}
 
 		if ( isset( $props['rsvp'] ) ) {
-			$lines[] = '<p>RSVPs <data class="p-rsvp" value="' . $props['rsvp'] .
-				'">' . $props['rsvp'] . '</data>.</p>';
+			$lines[] = '<p>RSVPs <data class="p-rsvp" value="' . $props['rsvp'][0] .
+				'">' . $props['rsvp'][0] . '</data>.</p>';
 		}
 
 		// event
-		if ( isset( $props['h'] ) && $props['h'] == 'event' ) {
+		if ( $mf2['type'] == array( 'h-event' ) ) {
 			$lines[] = static::generate_event();
 		}
 
 		// content
-		if ( isset( $props['content'] ) ) {
+		$content = $props['content'][0];
+		if ( $content ) {
 			$lines[] = '<div class="e-content">';
-			if (isset($props['content']['html'])) {
-				$lines[] = $props['content']['html'];
+			if ( is_array( $content ) ) {
+				$lines[] = $content['html'] ?: htmlspecialchars( $content['value'] );
 			} else {
-				$lines[] = htmlspecialchars($props['content']);
+				$lines[] = htmlspecialchars( $content );
 			}
 			$lines[] = '</div>';
 		}
@@ -491,27 +519,28 @@ class Micropub {
 	 * Generates and returns a string h-event.
 	 */
 	private static function generate_event() {
-		$props = static::$input;
+		$mf2 = static::$input;
+		$props = static::$input['replace'] ?: $mf2['properties'];
 		$lines[] = '<div class="h-event">';
 
 		if ( isset( $props['name'] ) ) {
-			$lines[] = '<h1 class="p-name">' . $props['name'] . '</h1>';
+			$lines[] = '<h1 class="p-name">' . $props['name'][0] . '</h1>';
 		}
 
 		$lines[] = '<p>';
 		$times = array();
 		foreach ( array( 'start', 'end' ) as $cls ) {
-			if ( isset( $props[ $cls ] ) ) {
-				$datetime = iso8601_to_datetime( $props[ $cls ] );
+			if ( isset( $props[ $cls ][0] ) ) {
+				$datetime = iso8601_to_datetime( $props[ $cls ][0] );
 				$times[] = '<time class="dt-' . $cls . '" datetime="' .
-						 $props[ $cls ] . '">' . $datetime . '</time>';
+						 $props[ $cls ][0] . '">' . $datetime . '</time>';
 			}
 		}
 		$lines[] = implode( "\nto\n", $times );
 
-		if ( isset( $props['location'] ) && substr( $props['location'], 0, 4 ) != 'geo:' ) {
-			$lines[] = 'at <a class="p-location" href="' . $props['location'] . '">' .
-				$props['location'] . '</a>';
+		if ( isset( $props['location'] ) && substr( $props['location'][0], 0, 4 ) != 'geo:' ) {
+			$lines[] = 'at <a class="p-location" href="' . $props['location'][0] . '">' .
+				$props['location'][0] . '</a>';
 		}
 
 		end( $lines );
@@ -519,11 +548,11 @@ class Micropub {
 		$lines[] = '</p>';
 
 		if ( isset( $props['summary'] ) ) {
-			$lines[] = '<p class="p-summary">' . urldecode( $props['summary'] ) . '</p>';
+			$lines[] = '<p class="p-summary">' . urldecode( $props['summary'][0] ) . '</p>';
 		}
 
 		if ( isset( $props['description'] ) ) {
-			$lines[] = '<p class="p-description">' . urldecode( $props['description'] ) . '</p>';
+			$lines[] = '<p class="p-description">' . urldecode( $props['description'][0] ) . '</p>';
 		}
 
 		$lines[] = '</div>';
@@ -556,13 +585,14 @@ class Micropub {
 		if ( ! isset( $args['meta_input'] ) ) {
 			$args['meta_input'] = array();
 		}
-		if ( isset( static::$input['location'] ) &&
-			 substr( static::$input['location'], 0, 4 ) == 'geo:' ) {
+		$location = static::$input['properties']['location'][0];
+		if ( $location && substr( $location, 0, 4 ) == 'geo:' ) {
 			// Geo URI format:
 			// http://en.wikipedia.org/wiki/Geo_URI#Example
 			// https://indiewebcamp.com/micropub##location
-			$geo = str_replace( 'geo:', '', urldecode( static::$input['location'] ) );
-			$geo = explode( ':', $geo );
+			//
+			// e.g. geo:37.786971,-122.399677;u=35
+			$geo = explode( ':', substr( urldecode( $location ), 4 ) );
 			$geo = explode( ';', $geo[0] );
 			$coords = explode( ',', $geo[0] );
 			$args['meta_input']['geo_latitude'] = trim( $coords[0] );
@@ -582,21 +612,16 @@ class Micropub {
 			$args['meta_input'] = array();
 		}
 
-		// Do not store access_token or other optional parameters
-		$blacklist = array( 'access_token', 'action' );
-		foreach ( static::$input as $key => $value ) {
-			if ( ! is_array( $value ) ) {
-				$value = array( $value );
-			}
-			if ( ! in_array( $key, $blacklist ) ) {
-				$key = 'mf2_' . $key;
-				foreach ( $value as $val ) {
-					if ( ! empty( $val ) ) {
-						$args['meta_input'][ $key ] = $val;
-					}
-				}
-			}
+		$type = static::$input['type'];
+		if ( $type ) {
+			$args['meta_input'][ 'mf2_type' ] = $type;
 		}
+
+		foreach ( static::$input['replace'] ?: static::$input['properties']
+				  as $key => $val ) {
+			$args['meta_input'][ 'mf2_' . $key ] = $val;
+		}
+		// TODO: add, delete
 		return $args;
 	}
 
@@ -604,17 +629,18 @@ class Micropub {
 	 * Returns the mf2 properties for a post.
 	 */
 	public static function get_mf2( $post_id ) {
-		$props = array(  // defaults
-			'h' => 'entry',
-		);
+		$mf2 = array();
 
 		foreach ( get_post_meta($post_id) as $field => $val ) {
-			if ( substr( $field, 0, 4 ) == 'mf2_' ) {
-				$props[substr( $field, 4 )] = $val[0];
+			$val = unserialize( $val[0] );
+			if ( $field == 'mf2_type' ) {
+				$mf2['type'] = $val;
+			} elseif ( substr( $field, 0, 4 ) == 'mf2_' ) {
+				$mf2['properties'][ substr( $field, 4 ) ] = $val;
 			}
 		}
 
-		return $props;
+		return $mf2;
 	}
 
 	public static function error( $code, $message ) {
@@ -679,7 +705,17 @@ class Micropub {
 			static::$input = json_decode( static::read_input(), true );
 		} elseif ( ! $content_type ||
 				   $content_type  == 'application/x-www-form-urlencoded' ) {
-			static::$input = $_POST;
+			static::$input = array( 'properties' => array() );
+			foreach ( $_POST as $key => $val ) {
+				if ( $key == 'action' || $key == 'url' ) {
+					static::$input[ $key ] = $val;
+				} elseif ( $key == 'h' ) {
+					static::$input['type'] = array( 'h-' . $val );
+				} else {
+					static::$input['properties'][ $key ] =
+						is_array( $val ) ? $val : array( $val );
+				}
+			}
 		} else {
 			static::error( 400, 'unsupported content type ' . $content_type );
 		}

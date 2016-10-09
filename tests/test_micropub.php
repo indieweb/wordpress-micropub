@@ -110,16 +110,30 @@ class MicropubTest extends WP_UnitTestCase {
 		return $post;
 	}
 
-	// Post properties that match insert_post below
-	protected static $properties = array(
+	// POST args
+	protected static $post = array(
 		'h' => 'entry',
 		'content' => 'my<br>content',
 		'slug' => 'my_slug',
 		'name' => 'my name',
 		'summary' => 'my summary',
-		'category' => 'my tag',
+		'category' => array( 'tag1', 'tag4' ),
 		'published' => '2016-01-01T12:01:23Z',
 		'location' => 'geo:42.361,-71.092;u=25000',
+	);
+
+	// JSON mf2 input
+	protected static $mf2 = array(
+		'type' => array( 'h-entry' ),
+		'properties' => array(
+			'content' => array( 'my<br>content' ),
+			'slug' => array( 'my_slug' ),
+			'name' => array( 'my name' ),
+			'summary' => array( 'my summary' ),
+			'category' => array( 'tag1', 'tag4' ),
+			'published' => array( '2016-01-01T12:01:23Z' ),
+			'location' => array( 'geo:42.361,-71.092;u=25000' ),
+		),
 	);
 
 	// Creates a WordPress post with data that matches $properties above
@@ -128,7 +142,7 @@ class MicropubTest extends WP_UnitTestCase {
 			'post_name' => 'my_slug',
 			'post_title' => 'my name',
 			'post_content' => 'my<br>content',
-			'category' => 'my tag',
+			'tags_input' => array( 'tag1', 'tag4' ),
 			'post_date' => '2016-01-01 12:01:23',
 			'location' => 'geo:42.361,-71.092;u=25000',
 		));
@@ -156,14 +170,14 @@ class MicropubTest extends WP_UnitTestCase {
 	}
 
 	function test_query_post() {
-		$_POST = self::$properties;
+		$_POST = self::$post;
 		$post = $this->check_create();
 
 		$_GET = array(
 			'q' => 'source',
 			'url' => 'http://example.org/?p=' . $post->ID,
 		);
-		$this->check( 200, array('properties' => self::$properties ));
+		$this->check( 200, self::$mf2 );
 	}
 
 	function test_query_post_not_found() {
@@ -179,7 +193,7 @@ class MicropubTest extends WP_UnitTestCase {
 	}
 
 	function test_create() {
-		$_POST = self::$properties;
+		$_POST = self::$post;
 		$post = $this->check_create();
 
 		$this->assertEquals( 'publish', $post->post_status );
@@ -190,16 +204,19 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( 'my name', $post->post_title );
 		$this->assertEquals( 'my summary', $post->post_excerpt );
 		$this->assertEquals( '2016-01-01 12:01:23', $post->post_date );
-		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ), 'Latitude Does Not Match' );
-		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ), 'Longitude Does Not Match' );
-		$this->assertEquals( 'my summary', get_post_meta( $post->ID, 'mf2_summary', true ));
+
+		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ) );
+		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ) );
+
+		$mf2 = Micropub::get_mf2( $post->ID );
+		$this->assertEquals( array( 'my summary' ), $mf2['properties']['summary'] );
 	}
 
 	function test_create_content_html()
 	{
 		$_POST = array(
 			'h' => 'entry',
-			'content' => array('html' => '<h1>HTML content!</h1><p>coolio.</p>'),
+			'content' => array( array( 'html' => '<h1>HTML content!</h1><p>coolio.</p>' ) ),
 			'name' => 'HTML content test',
 		);
 		$post = $this->check_create();
@@ -280,9 +297,6 @@ class MicropubTest extends WP_UnitTestCase {
 			'description' => 'some stuff',
 		);
 		$post = $this->check_create();
-		$this->assertEquals( 'event', get_post_meta( $post->ID, 'mf2_h', true ));
-		$this->assertEquals( '2013-06-30 12:00:00', get_post_meta( $post->ID, 'mf2_start', true ));
-		$this->assertEquals( '2013-06-31 18:00:00', get_post_meta( $post->ID, 'mf2_end', true ));
 		$this->assertEquals( 'My Event', $post->post_title );
 		$this->assertEquals( <<<EOF
 <div class="h-event">
@@ -297,6 +311,11 @@ at <a class="p-location" href="http://a/place">http://a/place</a>.
 </div>
 EOF
 , $post->post_content);
+
+		$mf2 = Micropub::get_mf2( $post->ID );
+		$this->assertEquals( array( 'h-event' ), $mf2['type'] );
+		$this->assertEquals( array( '2013-06-30 12:00:00' ), $mf2['properties']['start'] );
+		$this->assertEquals( array( '2013-06-31 18:00:00' ), $mf2['properties']['end'] );
 	}
 
 	function test_create_rsvp()
@@ -306,7 +325,9 @@ EOF
 			'in-reply-to' => 'http://target'
 		);
 		$post = $this->check_create();
-		$this->assertEquals( 'maybe', get_post_meta( $post->ID, 'mf2_rsvp', true ));
+
+		$mf2 = Micropub::get_mf2( $post->ID );
+		$this->assertEquals( array( 'maybe' ), $mf2['properties']['rsvp'] );
 		$this->assertEquals( <<<EOF
 <p>In reply to <a class="u-in-reply-to" href="http://target">http://target</a>.</p>
 <p>RSVPs <data class="p-rsvp" value="maybe">maybe</data>.</p>
@@ -320,30 +341,58 @@ EOF
 		$this->check( 403, 'cannot publish posts' );
 	}
 
-	// update isn't working yet
-// 	function test_update() {
-// 		$post_id = self::insert_post();
-// 		$this->assertEquals( '2016-01-01 12:01:23', get_post( $post_id )->post_date );
+	function test_update() {
+		$post_id = self::insert_post();
+		$this->assertEquals( '2016-01-01 12:01:23', get_post( $post_id )->post_date );
 
-// 		Recorder::$request_headers = array( 'content-type' => 'application/json' );
-// 		Recorder::$input = json_encode( array(
-// 			'action' => 'update',
-// 			'url' => 'http://example.org/?p=' . $post_id,
-// 			'replace' => array( 'content' => array( 'new<br>content' ) ),
-// 		) );
-// 		$this->check( 200 );
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$input = json_encode( array(
+			'action' => 'update',
+			'url' => 'http://example.org/?p=' . $post_id,
+			'replace' => array( 'content' => array( 'new<br>content' ) ),
+			'add' => array( 'category' => array( 'add tag' ) ),
+			'delete' => array( 'location', array( 'summary' ) ),
+		) );
+		$this->check( 200 );
 
-// 		$post = get_post( $post_id );
-// 		$this->assertEquals( <<<EOF
-// <div class="e-content">
-// new&lt;br&gt;content
-// </div>
-// EOF
-// , $post->post_content );
-// 		// check that published date is preserved
-// 		// https://github.com/snarfed/wordpress-micropub/issues/16
-// 		$this->assertEquals( '2016-01-01 12:01:23', $post->post_date );
-// 	}
+		$post = get_post( $post_id );
+
+		// updated
+		$this->assertEquals( <<<EOF
+<div class="e-content">
+new&lt;br&gt;content
+</div>
+EOF
+, $post->post_content );
+
+		// added
+		$tags = wp_get_post_tags( $post->ID );
+		$this->assertEquals( 3, count( $tags ) );
+		$this->assertEquals( 'add tag', $tags[0]->name );
+		$this->assertEquals( 'tag1', $tags[1]->name );
+		$this->assertEquals( 'tag4', $tags[2]->name );
+
+		// removed
+		$this->assertEquals( '', $post->post_excerpt );
+		$meta = get_post_meta( $post->ID );
+		$this->assertNull( $meta['geo_latitude'] );
+		$this->assertNull( $meta['geo_longitude'] );
+
+		// check that published date is preserved
+		// https://github.com/snarfed/wordpress-micropub/issues/16
+		$this->assertEquals( '2016-01-01 12:01:23', $post->post_date );
+	}
+
+	function test_add_property_not_category() {
+		$post_id = self::insert_post();
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$input = json_encode( array(
+			'action' => 'update',
+			'url' => 'http://example.org/?p=' . $post_id,
+			'add' => array( 'content' => array( 'foo' ) ),
+		) );
+		$this->check( 400, 'can only add to category; other properties not supported' );
+	}
 
 	function test_update_post_not_found() {
 		Recorder::$request_headers = array( 'content-type' => 'application/json' );
