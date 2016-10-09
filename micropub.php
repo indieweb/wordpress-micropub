@@ -356,8 +356,8 @@ class Micropub {
 		// is an associative array mapping field names to values to remove.)
 		$delete = static::$input['delete'];
 		if ( $delete ) {
-			foreach ( static::mp_to_wp( array( 'properties' => $delete ) )
-					  as $_ => $name ) {
+			foreach ( static::mp_to_wp( array( 'properties' => array_flip( $delete ) ) )
+					  as $name => $_ ) {
 				$args[ $name ] = NULL;
 			}
 		}
@@ -506,8 +506,7 @@ class Micropub {
 		}
 
 		// TODO: generate my own markup so i can include u-photo
-		if ( isset( $_FILES['photo'] ) || isset( $_FILES['video'] ) ||
-			 isset( $_FILES['audio'] ) ) {
+		if ( isset( $_FILES['photo'] ) || isset( $_FILES['video'] ) || isset( $_FILES['audio'] ) ) {
 			$lines[] = "\n[gallery size=full columns=1]";
 		}
 
@@ -569,9 +568,12 @@ class Micropub {
 				require_once( ABSPATH . 'wp-admin/includes/image.php' );
 				require_once( ABSPATH . 'wp-admin/includes/file.php' );
 				require_once( ABSPATH . 'wp-admin/includes/media.php' );
-				static::check_error( media_handle_upload(
+				$att_id = static::check_error( media_handle_upload(
 					$field, $post_id, array(),
 					array( 'action' => 'allow_file_outside_uploads_dir' ) ) );
+				add_post_meta( $post_id, 'mf2_' . $field,
+							   array( wp_get_attachment_url( $att_id ) ),
+							   true );
 			}
 		}
 	}
@@ -582,21 +584,23 @@ class Micropub {
 	 * Uses $input, so load_input() must be called before this.
 	 */
 	public static function store_geodata( $args ) {
-		if ( ! isset( $args['meta_input'] ) ) {
-			$args['meta_input'] = array();
-		}
 		$location = static::$input['properties']['location'][0];
-		if ( $location && substr( $location, 0, 4 ) == 'geo:' ) {
-			// Geo URI format:
-			// http://en.wikipedia.org/wiki/Geo_URI#Example
-			// https://indiewebcamp.com/micropub##location
-			//
-			// e.g. geo:37.786971,-122.399677;u=35
-			$geo = explode( ':', substr( urldecode( $location ), 4 ) );
-			$geo = explode( ';', $geo[0] );
-			$coords = explode( ',', $geo[0] );
-			$args['meta_input']['geo_latitude'] = trim( $coords[0] );
-			$args['meta_input']['geo_longitude'] = trim( $coords[1] );
+		if ( $location ) {
+			if ( ! isset( $args['meta_input'] ) ) {
+				$args['meta_input'] = array();
+			}
+			if ( $location && substr( $location, 0, 4 ) == 'geo:' ) {
+				// Geo URI format:
+				// http://en.wikipedia.org/wiki/Geo_URI#Example
+				// https://indiewebcamp.com/micropub##location
+				//
+				// e.g. geo:37.786971,-122.399677;u=35
+				$geo = explode( ':', substr( urldecode( $location ), 4 ) );
+				$geo = explode( ';', $geo[0] );
+				$coords = explode( ',', $geo[0] );
+				$args['meta_input']['geo_latitude'] = trim( $coords[0] );
+				$args['meta_input']['geo_longitude'] = trim( $coords[1] );
+			}
 		}
 		return $args;
 	}
@@ -608,20 +612,48 @@ class Micropub {
 	 * Uses $input, so load_input() must be called before this.
 	 */
 	public static function store_mf2( $args ) {
-		if ( ! isset( $args['meta_input'] ) ) {
-			$args['meta_input'] = array();
+		$props = static::$input['properties'];
+		if ( $props ) {
+			if ( ! isset( $args['meta_input'] ) ) {
+				$args['meta_input'] = array();
+			}
+			$type = static::$input['type'];
+			if ( $type ) {
+				$args['meta_input'][ 'mf2_type' ] = $type;
+			}
+			foreach ( $props as $key => $val ) {
+				$args['meta_input'][ 'mf2_' . $key ] = $val;
+			}
 		}
 
-		$type = static::$input['type'];
-		if ( $type ) {
-			$args['meta_input'][ 'mf2_type' ] = $type;
+		$replace = static::$input['replace'];
+		if ( $replace ) {
+			foreach ( $replace as $key => $val ) {
+				update_post_meta( $args['ID'], 'mf2_' . $key, $val );
+			}
 		}
 
-		foreach ( static::$input['replace'] ?: static::$input['properties']
-				  as $key => $val ) {
-			$args['meta_input'][ 'mf2_' . $key ] = $val;
+		$add = static::$input['add'];
+		if ( $add ) {
+			$meta = get_post_meta( $args['ID'] );
+			foreach ( $add as $key => $val ) {
+				$key = 'mf2_' . $key;
+				$cur = $meta[ $key ][0] ? unserialize( $meta[ $key ][0] ) : array();
+				update_post_meta( $args['ID'], $key, array_merge( $cur, $val ) );
+			}
 		}
-		// TODO: add, delete
+
+		$delete = static::$input['delete'];
+		if ( $delete ) {
+			foreach ( $delete as $_ => $key ) {
+				delete_post_meta( $args['ID'], 'mf2_' . $key );
+				if ( $key == 'location' ) {
+					delete_post_meta( $args['ID'], 'geo_latitude' );
+					delete_post_meta( $args['ID'], 'geo_longitude' );
+				}
+			}
+		}
+
 		return $args;
 	}
 
