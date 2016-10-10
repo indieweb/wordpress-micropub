@@ -198,13 +198,13 @@ class MicropubTest extends WP_UnitTestCase {
 	}
 
 	function test_create_basic_post() {
-		Recorder::$request_headers = array( 'content-type' => 'application/x-www-form-urlencoded' );
+		Recorder::$request_headers = array( 'Content-type' => 'application/x-www-form-urlencoded' );
 		$_POST = self::$post;
 		self::check_create_basic();
 	}
 
 	function test_create_basic_json() {
-		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$request_headers = array( 'Content-type' => 'application/json; charset=utf-8' );
 		Recorder::$input = static::$mf2;
 		self::check_create_basic();
 	}

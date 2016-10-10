@@ -757,7 +757,11 @@ class Micropub {
 
 	protected static function get_header( $name ) {
 		if ( ! static::$request_headers ) {
-			static::$request_headers = getallheaders();
+			$headers = getallheaders();
+			static::$request_headers = array();
+			foreach ( $headers as $key => $value ) {
+				static::$request_headers[ strtolower( $key ) ] = $value;
+			}
 		}
 		return static::$request_headers[ strtolower( $name ) ];
 	}
@@ -766,12 +770,15 @@ class Micropub {
 
 // blatantly stolen from https://github.com/idno/Known/blob/master/Idno/Pages/File/View.php#L25
 if ( ! function_exists( 'getallheaders' ) ) {
-	function getallheaders()
-	{
-		$headers = '';
+	function getallheaders() {
+		$headers = array();
 		foreach ( $_SERVER as $name => $value ) {
 			if ( substr( $name, 0, 5 ) == 'HTTP_' ) {
-				$headers[str_replace( ' ', '-', ucwords( strtolower( str_replace( '_', ' ', substr( $name, 5 ) ) ) ) )] = $value;
+				$headers[str_replace( ' ', '-', strtolower( str_replace( '_', ' ', substr( $name, 5 ) ) ) ) ] = $value;
+			} elseif ( $name == 'CONTENT_TYPE' ) {
+				$headers['content-type'] = $value;
+			} elseif ( $name == 'CONTENT_LENGTH' ) {
+				$headers['content-length'] = $value;
 			}
 		}
 		return $headers;
