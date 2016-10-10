@@ -106,6 +106,15 @@ class MicropubTest extends WP_UnitTestCase {
 		return $post;
 	}
 
+	function query_source( $post_id ) {
+		$_GET = array(
+			'q' => 'source',
+			'url' => 'http://example.org/?p=' . $post_id,
+		);
+		$this->parse_query( 'GET' );
+		return Recorder::$response;
+	}
+
 	// POST args
 	protected static $post = array(
 		'h' => 'entry',
@@ -216,7 +225,7 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ) );
 		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ) );
 
-		$this->assertEquals( static::$mf2, Micropub::get_mf2( $post->ID ) );
+		$this->assertEquals( static::$mf2, $this->query_source( $post->ID ) );
 	}
 
 	function test_create_content_html_post() {
@@ -285,7 +294,7 @@ class MicropubTest extends WP_UnitTestCase {
 			'properties' => array(
 				$mf2_type => array( wp_get_attachment_url( $att->ID ) ),
 			) ),
-			Micropub::get_mf2( $post->ID ) );
+			$this->query_source( $post->ID ) );
 	}
 
 	function test_create_reply_post() {
@@ -342,7 +351,7 @@ class MicropubTest extends WP_UnitTestCase {
 			'properties' => array(
 				$property => array( 'http://target' ),
 			) ),
-			Micropub::get_mf2( $post->ID ) );
+			$this->query_source( $post->ID ) );
 	}
 
 	function test_create_event_post() 	{
@@ -388,7 +397,7 @@ at <a class="p-location" href="http://a/place">http://a/place</a>.
 EOF
 , $post->post_content);
 
-		$mf2 = Micropub::get_mf2( $post->ID );
+		$mf2 = $this->query_source( $post->ID );
 		$this->assertEquals( array( 'h-event' ), $mf2['type'] );
 		$this->assertEquals( array( '2013-06-30 12:00:00' ), $mf2['properties']['start'] );
 		$this->assertEquals( array( '2013-06-31 18:00:00' ), $mf2['properties']['end'] );
@@ -422,7 +431,7 @@ EOF
 				'in-reply-to' => array( 'http://target' ),
 				'rsvp' => array( 'maybe' ),
 			) ),
-			Micropub::get_mf2( $post->ID ) );
+			$this->query_source( $post->ID ) );
 		$this->assertEquals( <<<EOF
 <p>In reply to <a class="u-in-reply-to" href="http://target">http://target</a>.</p>
 <p>RSVPs <data class="p-rsvp" value="maybe">maybe</data>.</p>
@@ -488,7 +497,7 @@ EOF
 				'category' => array( 'tag1', 'tag4', 'add tag' ),
 				'published' => array( '2016-01-01T12:01:23Z' ),
 			) ),
-			Micropub::get_mf2( $post->ID ) );
+			$this->query_source( $post->ID ) );
 	}
 
 	function test_add_property_not_category() {
