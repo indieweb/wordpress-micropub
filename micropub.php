@@ -151,7 +151,7 @@ class Micropub {
 	 */
 	private static function authorize() {
 		// find the access token
-		$auth = $this->get_header( 'authorization' );
+		$auth = static::get_header( 'authorization' );
 		$token = $_POST['access_token'];
 		if ( ! $auth_header && ! $token) {
 			static::handle_authorize_error( 401, 'missing access token' );
@@ -213,7 +213,7 @@ class Micropub {
 
 		// create
 		if ( ! $url || $action == 'create' ) {
-			if ( ! user_can( $user_id, 'publish_posts' ) ) {
+			if ( $user_id && ! user_can( $user_id, 'publish_posts' ) ) {
 				static::error( 403, 'user id ' . $user_id . ' cannot publish posts' );
 			}
 			$args = static::create( $user_id );
@@ -322,14 +322,12 @@ class Micropub {
 			static::error( 400, static::$input['url'] . ' not found' );
 		}
 
-		if ( static::$input['add'] &&
-			 array_keys( static::$input['add'] ) != array( 'category' ) ) {
-			static::error( 400, 'can only add to category; other properties not supported' );
-		}
-
 		// add
 		$add = static::$input['add'];
 		if ( $add ) {
+			if ( array_diff( array_keys( $add ), array( 'category', 'syndication' ) ) ) {
+				static::error( 400, 'can only add to category and syndication; other properties not supported' );
+			}
 			$add_args = static::mp_to_wp( array( 'properties' => $add ) );
 			if ( $add_args['tags_input'] ) {
 				// i tried wp_add_post_tags here, but it didn't work

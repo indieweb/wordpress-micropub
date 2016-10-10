@@ -456,7 +456,10 @@ EOF
 			'action' => 'update',
 			'url' => 'http://example.org/?p=' . $post_id,
 			'replace' => array( 'content' => array( 'new<br>content' ) ),
-			'add' => array( 'category' => array( 'add tag' ) ),
+			'add' => array(
+				'category' => array( 'add tag' ),
+				'syndication' => array( 'http://synd/1', 'http://synd/2' ),
+			),
 			'delete' => array( 'location', 'summary' ),
 		);
 		$this->check( 200 );
@@ -495,6 +498,7 @@ EOF
 				'slug' => array( 'my_slug' ),
 				'name' => array( 'my name' ),
 				'category' => array( 'tag1', 'tag4', 'add tag' ),
+				'syndication' => array( 'http://synd/1', 'http://synd/2' ),
 				'published' => array( '2016-01-01T12:01:23Z' ),
 			) ),
 			$this->query_source( $post->ID ) );
@@ -508,7 +512,7 @@ EOF
 			'url' => 'http://example.org/?p=' . $post_id,
 			'add' => array( 'content' => array( 'foo' ) ),
 		);
-		$this->check( 400, 'can only add to category; other properties not supported' );
+		$this->check( 400, 'can only add to category and syndication' );
 	}
 
 	function test_update_post_not_found() {
