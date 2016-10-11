@@ -3,11 +3,25 @@
 /** Unit tests for the Micropub class.
  */
 
+function write_temp_file( $contents, $extension = '' ) {
+	$filename = tempnam( sys_get_temp_dir(), 'micropub_test' );
+	if ( $extension ) {
+		$filename .= '.' . $extension;
+	}
+	$file = fopen( $filename, 'w' );
+	fwrite( $file, $contents );
+	fclose( $file );
+	return $filename;
+}
+
+
 class Recorder extends Micropub {
 	public static $status;
 	public static $response;
 	public static $input;
 	public static $response_headers = array();
+	public static $download_url_filename;
+	public static $downloaded_url;
 
 	public static function init() {
 		remove_filter( 'query_vars', array( 'Micropub', 'query_var' ) );
@@ -29,6 +43,11 @@ class Recorder extends Micropub {
 
 	protected static function read_input() {
 		return json_encode( static::$input );
+	}
+
+	protected static function download_url( $url ) {
+		self::$downloaded_url = $url;
+		return self::$download_url_filename;
 	}
 }
 Recorder::init();
@@ -267,23 +286,22 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->_test_create_with_upload('audio', 'audio', 'mp3');
 	}
 
-	function _test_create_with_upload( $mf2_type, $wp_type, $extension ) {
-		$filename = tempnam( sys_get_temp_dir(), 'micropub_test' );
-		$file = fopen( $filename, 'w' );
-		fwrite( $file, 'fake file contents' );
-		fclose( $file );
+	function _test_create_with_upload( $mf2_prop, $wp_type, $extension ) {
+		$filename = write_temp_file( 'fake file contents' );
 
-		$_FILES = array( $mf2_type => array(
+		$_FILES = array( $mf2_prop => array(
 			'name' => 'micropub_test.' . $extension,
 			'tmp_name' => $filename,
 			'size' => 19,
 		) );
 		$_POST['action'] = 'allow_file_outside_uploads_dir';
+		Recorder::$request_headers = array(
+			'content-type' => 'multipart/form-data; boundary=asdf' );
 		$post = $this->check_create();
 
 		$this->assertEquals( get_permalink( $post ),
 							 Recorder::$response_headers['Location'] );
-		$this->assertEquals( "\n[gallery size=full columns=1]", $post->post_content );
+		$this->assertEquals( '[gallery size=full columns=1]', $post->post_content );
 
 		$media = get_attached_media( $wp_type, $post->ID );
 		$this->assertEquals( 1, count( $media ) );
@@ -292,9 +310,45 @@ class MicropubTest extends WP_UnitTestCase {
 
 		$this->assertEquals(array(
 			'properties' => array(
-				$mf2_type => array( wp_get_attachment_url( $att->ID ) ),
+				$mf2_prop => array( wp_get_attachment_url( $att->ID ) ),
 			) ),
 			$this->query_source( $post->ID ) );
+	}
+
+	function test_create_with_photo_url() {
+		$this->_test_create_with_upload_url('photo', 'image', 'jpg');
+	}
+
+	function test_create_with_video_url() {
+		$this->_test_create_with_upload_url('video', 'video', 'mp4');
+	}
+
+	function test_create_with_audio_url() {
+		$this->_test_create_with_upload_url('audio', 'audio', 'mp3');
+	}
+
+	function _test_create_with_upload_url( $mf2_prop, $wp_type, $extension ) {
+		Recorder::$download_url_filename = write_temp_file( 'fake file contents', $extension );
+
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		$url = 'http://elsewhere/file.' . $extension;
+		$mf2 = Recorder::$input = array(
+			'properties' => array(
+				$mf2_prop => array( $url ),
+			) );
+
+		$post = $this->check_create();
+		$this->assertEquals( $url, Recorder::$downloaded_url );
+		$this->assertEquals( get_permalink( $post ),
+							 Recorder::$response_headers['Location'] );
+		$this->assertEquals( '[gallery size=full columns=1]', $post->post_content );
+
+		$media = get_attached_media( $wp_type, $post->ID );
+		$this->assertEquals( 1, count( $media ) );
+		$att = current( $media );
+		$this->assertEquals( 'attachment', $att->post_type);
+
+		$this->assertEquals($mf2, $this->query_source( $post->ID ) );
 	}
 
 	function test_create_reply_post() {

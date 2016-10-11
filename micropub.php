@@ -504,8 +504,11 @@ class Micropub {
 		}
 
 		// TODO: generate my own markup so i can include u-photo
-		if ( isset( $_FILES['photo'] ) || isset( $_FILES['video'] ) || isset( $_FILES['audio'] ) ) {
-			$lines[] = "\n[gallery size=full columns=1]";
+		foreach ( array( 'photo', 'video', 'audio' ) as $field ) {
+			if ( isset( $_FILES[ $field ] ) || isset( $props[ $field ] ) ) {
+				$lines[] = '[gallery size=full columns=1]';
+				break;
+			}
 		}
 
 		$args['post_content'] = implode( "\n", $lines );
@@ -562,13 +565,31 @@ class Micropub {
 	 */
 	public static function default_file_handler( $post_id ) {
 		foreach ( array( 'photo', 'video', 'audio' ) as $field ) {
-			if ( isset( $_FILES[ $field ] ) ) {
+			$props = static::$input['properties'];
+			if ( isset( $_FILES[ $field ] ) || isset( $props[ $field ] ) ) {
 				require_once( ABSPATH . 'wp-admin/includes/image.php' );
 				require_once( ABSPATH . 'wp-admin/includes/file.php' );
 				require_once( ABSPATH . 'wp-admin/includes/media.php' );
-				$att_id = static::check_error( media_handle_upload(
-					$field, $post_id, array(),
-					array( 'action' => 'allow_file_outside_uploads_dir' ) ) );
+
+				if ( isset( $_FILES[ $field ] ) ) {
+					$att_id = static::check_error( media_handle_upload(
+						$field, $post_id, array(), array(
+							'action' => 'allow_file_outside_uploads_dir',
+							'test_form' => false,
+						) ) );
+
+				} elseif ( isset( $props[ $field ] ) ) {
+					$val = $props[ $field ][0];
+					$url = is_array( $val ) ? $val['value'] : $val;
+					$filename = static::check_error( static::download_url( $url ) );
+					$file = array(
+						'name' => basename( $url ),
+						'tmp_name' => $filename,
+						'size' => filesize( $filename ),
+					);
+					$att_id = static::check_error( media_handle_sideload( $file, $post_id ) );
+				}
+
 				add_post_meta( $post_id, 'mf2_' . $field,
 							   array( wp_get_attachment_url( $att_id ) ),
 							   true );
@@ -682,17 +703,6 @@ class Micropub {
 		) );
 	}
 
-	public static function respond( $code, $resp = NULL ) {
-		status_header( $code );
-		static::header( 'Content-Type',
-						'application/json; charset=' . get_option( 'blog_charset' ) );
-		exit( $resp ? json_encode( $resp ) : '' );
-	}
-
-	public static function header( $header, $value ) {
-		header( $header . ': ' . $value );
-	}
-
 	private static function check_error( $result ) {
 		if ( ! $result ) {
 			static::error( 400, $result );
@@ -734,7 +744,8 @@ class Micropub {
 		if ( $content_type  == 'application/json' ) {
 			static::$input = json_decode( static::read_input(), true );
 		} elseif ( ! $content_type ||
-				   $content_type  == 'application/x-www-form-urlencoded' ) {
+				   $content_type  == 'application/x-www-form-urlencoded' ||
+				   $content_type  == 'multipart/form-data' ) {
 			static::$input = array( 'properties' => array() );
 			foreach ( $_POST as $key => $val ) {
 				if ( $key == 'action' || $key == 'url' ) {
@@ -751,8 +762,21 @@ class Micropub {
 		}
 	}
 
+	/** Wrappers for WordPress/PHP functions so we can mock them for unit tests.
+	 **/
 	protected static function read_input() {
 			return file_get_contents( 'php://input' );
+	}
+
+	public static function respond( $code, $resp = NULL ) {
+		status_header( $code );
+		static::header( 'Content-Type',
+						'application/json; charset=' . get_option( 'blog_charset' ) );
+		exit( $resp ? json_encode( $resp ) : '' );
+	}
+
+	public static function header( $header, $value ) {
+		header( $header . ': ' . $value );
 	}
 
 	protected static function get_header( $name ) {
@@ -764,6 +788,10 @@ class Micropub {
 			}
 		}
 		return static::$request_headers[ strtolower( $name ) ];
+	}
+
+	protected static function download_url( $url ) {
+		return static::check_error( download_url( $url ) );
 	}
 }
 
