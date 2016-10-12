@@ -510,6 +510,8 @@ class Micropub {
 				$lines[] = htmlspecialchars( $content );
 			}
 			$lines[] = '</div>';
+		} elseif ( $args['post_content'] ) {
+			$lines[] = $args['post_content'];
 		}
 
 		// TODO: generate my own markup so i can include u-photo

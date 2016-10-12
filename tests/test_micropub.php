@@ -377,6 +377,7 @@ class MicropubTest extends WP_UnitTestCase {
 		$media = get_attached_media( $wp_type, $post->ID );
 		$this->assertEquals( 1, count( $media ) );
 
+		// media array keys are post ids, so can't just do [0]
 		$att = current( $media );
 		$this->assertEquals( 'attachment', $att->post_type);
 		return $att;
@@ -427,6 +428,7 @@ class MicropubTest extends WP_UnitTestCase {
 
 		$media = get_attached_media( 'image', $post->ID );
 		$this->assertEquals( 2, count( $media ) );
+		// media array keys are post ids, so can't just do [0]
 		$this->assertEquals( 'gif alt text', current( $media )->post_title);
 		$this->assertEquals( 'png alt text', next( $media )->post_title);
 
@@ -642,6 +644,33 @@ EOF
 				'category' => array( 'tag1', 'tag4', 'add tag' ),
 				'syndication' => array( 'http://synd/1', 'http://synd/2' ),
 				'published' => array( '2016-01-01T12:01:23Z' ),
+			) ),
+			$this->query_source( $post->ID ) );
+	}
+
+	function test_update_add_without_content() {
+		$_POST = array( 'content' => 'my<br>content' );
+		$post_id = $this->check_create()->ID;
+
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$input = array(
+			'action' => 'update',
+			'url' => 'http://example.org/?p=' . $post_id,
+			'add' => array( 'category' => array( 'foo', 'bar' ) ),
+		);
+		$this->check( 200 );
+
+		// added
+		$post = get_post( $post_id );
+		$tags = wp_get_post_tags( $post_id );
+		$this->assertEquals( 2, count( $tags ) );
+		$this->assertEquals( 'foo', $tags[1]->name );
+		$this->assertEquals( 'bar', $tags[0]->name );
+
+		$this->assertEquals( array(
+			'properties' => array(
+				'content' => array( 'my<br>content' ),
+				'category' => array( 'foo', 'bar' ),
 			) ),
 			$this->query_source( $post->ID ) );
 	}
