@@ -588,17 +588,18 @@ class Micropub {
 						) ) );
 
 				} elseif ( isset( $props[ $field ] ) ) {
-					$val = $props[ $field ][0];
-					$url = is_array( $val ) ? $val['value'] : $val;
-					$alt = is_array( $val ) ? $val['alt'] : null;
-					$filename = static::check_error( static::download_url( $url ) );
-					$file = array(
-						'name' => basename( $url ),
-						'tmp_name' => $filename,
-						'size' => filesize( $filename ),
-					);
-					$att_id = static::check_error( media_handle_sideload(
-						$file, $post_id, $alt ) );
+					foreach ( $props[ $field ] as $val ) {
+						$url = is_array( $val ) ? $val['value'] : $val;
+						$filename = static::check_error( static::download_url( $url ) );
+						$file = array(
+							'name' => basename( $url ),
+							'tmp_name' => $filename,
+							'size' => filesize( $filename ),
+						);
+						$desc = is_array( $val ) ? $val['alt'] : $file['name'];
+						$att_id = static::check_error( media_handle_sideload(
+							$file, $post_id, $desc ) );
+					}
 				}
 
 				add_post_meta( $post_id, 'mf2_' . $field,

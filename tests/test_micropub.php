@@ -20,8 +20,8 @@ class Recorder extends Micropub {
 	public static $response;
 	public static $input;
 	public static $response_headers = array();
-	public static $download_url_filename;
-	public static $downloaded_url;
+	public static $download_url_filenames;
+	public static $downloaded_urls;
 
 	public static function init() {
 		remove_filter( 'query_vars', array( 'Micropub', 'query_var' ) );
@@ -46,8 +46,8 @@ class Recorder extends Micropub {
 	}
 
 	protected static function download_url( $url ) {
-		self::$downloaded_url = $url;
-		return self::$download_url_filename;
+		self::$downloaded_urls[] = $url;
+		return array_pop( self::$download_url_filenames );
 	}
 }
 Recorder::init();
@@ -69,6 +69,7 @@ class MicropubTest extends WP_UnitTestCase {
 		$_FILES = array();
 		Recorder::$request_headers = array();
 		Recorder::$input = NULL;
+		Recorder::$downloaded_urls = array();
 		unset( $GLOBALS['post'] );
 
 		global $wp_query;
@@ -321,7 +322,8 @@ class MicropubTest extends WP_UnitTestCase {
 	}
 
 	function _test_create_with_upload_url( $mf2_prop, $wp_type, $extension ) {
-		Recorder::$download_url_filename = write_temp_file( 'fake file contents', $extension );
+		Recorder::$download_url_filenames = array(
+			write_temp_file( 'fake file contents', $extension ) );
 		Recorder::$request_headers = array( 'content-type' => 'application/json' );
 		$url = 'http://elsewhere/file.' . $extension;
 
@@ -331,7 +333,7 @@ class MicropubTest extends WP_UnitTestCase {
 			) );
 		$post = $this->check_create();
 		$att = $this->check_upload( $post, $wp_type );
-		$this->assertEquals( $url, Recorder::$downloaded_url );
+		$this->assertEquals( array( $url ), Recorder::$downloaded_urls );
 		$this->assertEquals( $mf2, $this->query_source( $post->ID ) );
 	}
 
@@ -348,7 +350,8 @@ class MicropubTest extends WP_UnitTestCase {
 	}
 
 	function _test_create_with_upload_url_alt( $mf2_prop, $wp_type, $extension ) {
-		Recorder::$download_url_filename = write_temp_file( 'fake file contents', $extension );
+		Recorder::$download_url_filenames = array(
+			write_temp_file( 'fake file contents', $extension ) );
 		Recorder::$request_headers = array( 'content-type' => 'application/json' );
 		$url = 'http://elsewhere/file.' . $extension;
 
@@ -362,7 +365,7 @@ class MicropubTest extends WP_UnitTestCase {
 
 		$post = $this->check_create();
 		$this->check_upload( $post, $wp_type );
-		$this->assertEquals( $url, Recorder::$downloaded_url );
+		$this->assertEquals( array( $url ), Recorder::$downloaded_urls );
 		$this->assertEquals( $mf2, $this->query_source( $post->ID ) );
 	}
 
@@ -377,6 +380,63 @@ class MicropubTest extends WP_UnitTestCase {
 		$att = current( $media );
 		$this->assertEquals( 'attachment', $att->post_type);
 		return $att;
+	}
+
+	function test_create_with_multiple_uploads() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$download_url_filenames = array(
+			write_temp_file( 'fake file contents', 'gif' ),
+			write_temp_file( 'fake file contents', 'png' ),
+			write_temp_file( 'fake file contents', 'mov' ),
+			write_temp_file( 'fake file contents', 'wav' ),
+			write_temp_file( 'fake file contents', 'ogg' ),
+			write_temp_file( 'fake file contents', 'mp3' ),
+		);
+		$url = 'http://elsewhere/file.' . $extension;
+
+		$mf2 = Recorder::$input = array(
+			'properties' => array(
+				'photo' => array( array(
+					'value' => 'http://photo/1.gif',
+					'alt' => 'gif alt text',
+				), array(
+					'value' => 'http://photo/2.png',
+					'alt' => 'png alt text',
+				) ),
+				'video' => array( 'http://video/3.mov' ),
+				'audio' => array(
+					'http://audio/4.wav',
+					'http://audio/5.ogg',
+					'http://audio/6.mp3',
+				),
+			) );
+
+		$post = $this->check_create();
+		$this->assertEquals( get_permalink( $post ),
+							 Recorder::$response_headers['Location'] );
+		$this->assertEquals( '[gallery size=full columns=1]', $post->post_content );
+		$this->assertEquals( array(
+			'http://photo/1.gif',
+			'http://photo/2.png',
+			'http://video/3.mov',
+			'http://audio/4.wav',
+			'http://audio/5.ogg',
+			'http://audio/6.mp3',
+		), Recorder::$downloaded_urls );
+		$this->assertEquals( $mf2, $this->query_source( $post->ID ) );
+
+		$media = get_attached_media( 'image', $post->ID );
+		$this->assertEquals( 2, count( $media ) );
+		$this->assertEquals( 'gif alt text', current( $media )->post_title);
+		$this->assertEquals( 'png alt text', next( $media )->post_title);
+
+		$media = get_attached_media( 'video', $post->ID );
+		$this->assertEquals( '3.mov', current( $media )->post_title);
+
+		$media = get_attached_media( 'audio', $post->ID );
+		$this->assertEquals( '4.wav', current( $media )->post_title);
+		$this->assertEquals( '5.ogg', next( $media )->post_title);
+		$this->assertEquals( '6.mp3', next( $media )->post_title);
 	}
 
 	function test_create_reply_post() {
