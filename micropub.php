@@ -325,6 +325,9 @@ class Micropub {
 		// add
 		$add = static::$input['add'];
 		if ( $add ) {
+			if ( ! is_array( $add ) ) {
+				static::error( 400, 'add must be an object' );
+			}
 			if ( array_diff( array_keys( $add ), array( 'category', 'syndication' ) ) ) {
 				static::error( 400, 'can only add to category and syndication; other properties not supported' );
 			}
@@ -344,6 +347,9 @@ class Micropub {
 		// replace
 		$replace = static::$input['replace'];
 		if ( $replace ) {
+			if ( ! is_array( $replace ) ) {
+				static::error( 400, 'replace must be an object' );
+			}
 			foreach ( static::mp_to_wp( array( 'properties' => $replace ) )
 					  as $name => $val ) {
 				$args[ $name ] = $val;
@@ -354,6 +360,9 @@ class Micropub {
 		// is an associative array mapping field names to values to remove.)
 		$delete = static::$input['delete'];
 		if ( $delete ) {
+			if ( ! is_array( $delete ) ) {
+				static::error( 400, 'delete must be an array' );
+			}
 			foreach ( static::mp_to_wp( array( 'properties' => array_flip( $delete ) ) )
 					  as $name => $_ ) {
 				$args[ $name ] = NULL;

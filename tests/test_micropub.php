@@ -620,6 +620,39 @@ EOF
 		$this->check( 403, 'cannot edit posts' );
 	}
 
+	function test_update_replace_not_array() {
+		$post_id = self::insert_post();
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$input = array(
+			'action' => 'update',
+			'url' => 'http://example.org/?p=' . $post_id,
+			'replace' => 'foo',
+	    );
+		$this->check( 400, 'replace must be an object' );
+	}
+
+	function test_update_add_not_array() {
+		$post_id = self::insert_post();
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$input = array(
+			'action' => 'update',
+			'url' => 'http://example.org/?p=' . $post_id,
+			'add' => 'foo',
+	    );
+		$this->check( 400, 'add must be an object' );
+	}
+
+	function test_update_delete_not_array() {
+		$post_id = self::insert_post();
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$input = array(
+			'action' => 'update',
+			'url' => 'http://example.org/?p=' . $post_id,
+			'delete' => 'foo',
+	    );
+		$this->check( 400, 'delete must be an array' );
+	}
+
 	function test_delete() {
 		$post_id = self::insert_post();
 
