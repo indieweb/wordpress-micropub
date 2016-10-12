@@ -581,13 +581,15 @@ class Micropub {
 				} elseif ( isset( $props[ $field ] ) ) {
 					$val = $props[ $field ][0];
 					$url = is_array( $val ) ? $val['value'] : $val;
+					$alt = is_array( $val ) ? $val['alt'] : null;
 					$filename = static::check_error( static::download_url( $url ) );
 					$file = array(
 						'name' => basename( $url ),
 						'tmp_name' => $filename,
 						'size' => filesize( $filename ),
 					);
-					$att_id = static::check_error( media_handle_sideload( $file, $post_id ) );
+					$att_id = static::check_error( media_handle_sideload(
+						$file, $post_id, $alt ) );
 				}
 
 				add_post_meta( $post_id, 'mf2_' . $field,

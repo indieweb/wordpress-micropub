@@ -297,21 +297,14 @@ class MicropubTest extends WP_UnitTestCase {
 		$_POST['action'] = 'allow_file_outside_uploads_dir';
 		Recorder::$request_headers = array(
 			'content-type' => 'multipart/form-data; boundary=asdf' );
+
 		$post = $this->check_create();
-
-		$this->assertEquals( get_permalink( $post ),
-							 Recorder::$response_headers['Location'] );
-		$this->assertEquals( '[gallery size=full columns=1]', $post->post_content );
-
-		$media = get_attached_media( $wp_type, $post->ID );
-		$this->assertEquals( 1, count( $media ) );
-		$att = current( $media );
-		$this->assertEquals( 'attachment', $att->post_type);
-
-		$this->assertEquals(array(
-			'properties' => array(
-				$mf2_prop => array( wp_get_attachment_url( $att->ID ) ),
-			) ),
+		$att = $this->check_upload( $post, $wp_type );
+		$this->assertEquals(
+			array(
+				'properties' => array(
+					$mf2_prop => array( wp_get_attachment_url( $att->ID ) ),
+				) ),
 			$this->query_source( $post->ID ) );
 	}
 
@@ -329,26 +322,61 @@ class MicropubTest extends WP_UnitTestCase {
 
 	function _test_create_with_upload_url( $mf2_prop, $wp_type, $extension ) {
 		Recorder::$download_url_filename = write_temp_file( 'fake file contents', $extension );
-
 		Recorder::$request_headers = array( 'content-type' => 'application/json' );
 		$url = 'http://elsewhere/file.' . $extension;
+
 		$mf2 = Recorder::$input = array(
 			'properties' => array(
 				$mf2_prop => array( $url ),
 			) );
+		$post = $this->check_create();
+		$att = $this->check_upload( $post, $wp_type );
+		$this->assertEquals( $url, Recorder::$downloaded_url );
+		$this->assertEquals( $mf2, $this->query_source( $post->ID ) );
+	}
+
+	function test_create_with_photo_url_alt() {
+		$this->_test_create_with_upload_url_alt('photo', 'image', 'jpg');
+	}
+
+	function test_create_with_video_url_alt() {
+		$this->_test_create_with_upload_url_alt('video', 'video', 'mp4');
+	}
+
+	function test_create_with_audio_url_alt() {
+		$this->_test_create_with_upload_url_alt('audio', 'audio', 'mp3');
+	}
+
+	function _test_create_with_upload_url_alt( $mf2_prop, $wp_type, $extension ) {
+		Recorder::$download_url_filename = write_temp_file( 'fake file contents', $extension );
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		$url = 'http://elsewhere/file.' . $extension;
+
+		$mf2 = Recorder::$input = array(
+			'properties' => array(
+				$mf2_prop => array( array(
+					'value' => $url,
+					'alt' => 'my alt text',
+				) ),
+			) );
 
 		$post = $this->check_create();
+		$this->check_upload( $post, $wp_type );
 		$this->assertEquals( $url, Recorder::$downloaded_url );
+		$this->assertEquals( $mf2, $this->query_source( $post->ID ) );
+	}
+
+	function check_upload( $post, $wp_type ) {
 		$this->assertEquals( get_permalink( $post ),
 							 Recorder::$response_headers['Location'] );
 		$this->assertEquals( '[gallery size=full columns=1]', $post->post_content );
 
 		$media = get_attached_media( $wp_type, $post->ID );
 		$this->assertEquals( 1, count( $media ) );
+
 		$att = current( $media );
 		$this->assertEquals( 'attachment', $att->post_type);
-
-		$this->assertEquals($mf2, $this->query_source( $post->ID ) );
+		return $att;
 	}
 
 	function test_create_reply_post() {
