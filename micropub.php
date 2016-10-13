@@ -357,16 +357,29 @@ class Micropub {
 			}
 		}
 
-		// TODO: support removing individual values. (ie when $input['delete']
-		// is an associative array mapping field names to values to remove.)
+		// delete
 		$delete = static::$input['delete'];
 		if ( $delete ) {
-			if ( ! is_array( $delete ) ) {
-				static::error( 400, 'delete must be an array' );
-			}
-			foreach ( static::mp_to_wp( array( 'properties' => array_flip( $delete ) ) )
-					  as $name => $_ ) {
-				$args[ $name ] = NULL;
+			if ( is_assoc_array( $delete ) ) {
+				if ( array_diff( array_keys( $delete ), array( 'category', 'syndication' ) ) ) {
+					static::error( 400, 'can only delete individual values from category and syndication; other properties not supported' );
+				}
+				$delete_args = static::mp_to_wp( array( 'properties' => $delete ) );
+				if ( $delete_args['tags_input'] ) {
+					$args['tags_input'] = array_diff( $args['tags_input'] ?: array(),
+													  $delete_args['tags_input']);
+				}
+				if ( $delete_args['post_category'] ) {
+					$args['post_category'] = array_diff($args['post_category'] ?: array(),
+														 $delete_args['post_category']);
+				}
+			} elseif ( is_array( $delete ) ) {
+				foreach ( static::mp_to_wp( array( 'properties' => array_flip( $delete ) ) )
+						  as $name => $_ ) {
+					$args[ $name ] = NULL;
+					}
+			} else {
+				static::error( 400, 'delete must be an array or object' );
 			}
 		}
 
@@ -662,16 +675,16 @@ class Micropub {
 
 		$replace = static::$input['replace'];
 		if ( $replace ) {
-			foreach ( $replace as $key => $val ) {
-				update_post_meta( $args['ID'], 'mf2_' . $key, $val );
+			foreach ( $replace as $prop => $val ) {
+				update_post_meta( $args['ID'], 'mf2_' . $prop, $val );
 			}
 		}
 
+		$meta = get_post_meta( $args['ID'] );
 		$add = static::$input['add'];
 		if ( $add ) {
-			$meta = get_post_meta( $args['ID'] );
-			foreach ( $add as $key => $val ) {
-				$key = 'mf2_' . $key;
+			foreach ( $add as $prop => $val ) {
+				$key = 'mf2_' . $prop;
 				$cur = $meta[ $key ][0] ? unserialize( $meta[ $key ][0] ) : array();
 				update_post_meta( $args['ID'], $key, array_merge( $cur, $val ) );
 			}
@@ -679,11 +692,22 @@ class Micropub {
 
 		$delete = static::$input['delete'];
 		if ( $delete ) {
-			foreach ( $delete as $_ => $key ) {
-				delete_post_meta( $args['ID'], 'mf2_' . $key );
-				if ( $key == 'location' ) {
-					delete_post_meta( $args['ID'], 'geo_latitude' );
-					delete_post_meta( $args['ID'], 'geo_longitude' );
+			if ( is_assoc_array( $delete ) ) {
+				foreach ( $delete as $prop => $to_delete ) {
+					$key = 'mf2_' . $prop;
+					if ( isset( $meta[ $key ] ) ) {
+						$existing = unserialize( $meta[ $key ][0]);
+						update_post_meta( $args['ID'], $key,
+										  array_diff( $existing, $to_delete ) );
+					}
+				}
+			} else {
+				foreach ( $delete as $_ => $prop ) {
+					delete_post_meta( $args['ID'], 'mf2_' . $prop );
+					if ( $prop == 'location' ) {
+						delete_post_meta( $args['ID'], 'geo_latitude' );
+						delete_post_meta( $args['ID'], 'geo_longitude' );
+					}
 				}
 			}
 		}
@@ -808,6 +832,11 @@ class Micropub {
 	protected static function download_url( $url ) {
 		return static::check_error( download_url( $url ) );
 	}
+}
+
+
+function is_assoc_array( $array ) {
+    return is_array( $array ) && $array != array_values( $array );
 }
 
 

@@ -627,7 +627,7 @@ EOF
 		$this->assertEquals( 'tag1', $tags[1]->name );
 		$this->assertEquals( 'tag4', $tags[2]->name );
 
-		// removed
+		// deleted
 		$this->assertEquals( '', $post->post_excerpt );
 		$meta = get_post_meta( $post->ID );
 		$this->assertNull( $meta['geo_latitude'] );
@@ -709,6 +709,45 @@ EOF
 			'replace' => array( 'content' => array( 'unused' ) ),
 		);
 		$this->check( 403, 'cannot edit posts' );
+	}
+
+
+	function test_update_delete_value() {
+		$_POST = self::$post;
+		$post_id = $this->check_create()->ID;
+
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$input = array(
+			'action' => 'update',
+			'url' => 'http://example.org/?p=' . $post_id,
+			'delete' => array(
+			    'category' => array(
+					'tag1',  // exists
+					'tag9',  // doesn't exist
+				),
+			),
+		);
+		$this->check( 200 );
+
+		$post = get_post( $post_id );
+
+		$tags = wp_get_post_tags( $post->ID );
+		$this->assertEquals( 1, count( $tags ) );
+		$this->assertEquals( 'tag4', $tags[0]->name );
+
+		$this->assertEquals( array( 'tag4' ),
+			array_values( $this->query_source( $post->ID )['properties']['category'] ));
+	}
+
+	function test_update_delete_bad_property() {
+		$post_id = self::insert_post();
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$input = array(
+			'action' => 'update',
+			'url' => 'http://example.org/?p=' . $post_id,
+			'delete' => array( 'content' => array( 'to delete ' ) ),
+		);
+		$this->check( 400, 'can only delete individual values from category and syndication' );
 	}
 
 	function test_update_replace_not_array() {
