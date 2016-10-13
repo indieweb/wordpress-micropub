@@ -96,6 +96,7 @@ TODO
 == Changelog ==
 
 = 0.5 (unreleased) =
+* Update to current W3C Micropub spec! https://www.w3.org/TR/micropub/
 * Storage of properties now takes place during wp_insert_post
 * Post content will not be automatically marked up if Post Kinds plugin is
   enabled: https://wordpress.org/plugins/indieweb-post-kinds/

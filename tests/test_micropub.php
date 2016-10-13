@@ -72,6 +72,7 @@ class MicropubTest extends WP_UnitTestCase {
 		Recorder::$downloaded_urls = array();
 		unset( $GLOBALS['post'] );
 
+		update_option( 'permalink_structure', '/%year%/%monthnum%/%day%/%postname%', 'yes' );
 		global $wp_query;
 		$wp_query->query_vars['micropub'] = 'endpoint';
 
@@ -170,6 +171,7 @@ class MicropubTest extends WP_UnitTestCase {
 			'tags_input' => array( 'tag1', 'tag4' ),
 			'post_date' => '2016-01-01 12:01:23',
 			'location' => 'geo:42.361,-71.092;u=25000',
+			'guid' => 'http://localhost/1/2/my_slug',
 		) );
 	}
 
@@ -772,15 +774,22 @@ EOF
 
 	function test_undelete() {
 		$post_id = self::insert_post();
+		$post = get_post( $post_id );
+		$url = get_the_guid( $post );
+		$slug = $post->post_name;
+
 		wp_trash_post( $post_id );
 		$this->assertEquals( 'trash', get_post( $post_id )->post_status );
 
 		$_POST = array(
 			'action' => 'undelete',
-			'url' => 'http://example.org/?p=' . $post_id,
+			'url' => $url,
 		);
 		$this->check( 200 );
-		$this->assertEquals( 'publish', get_post( $post_id )->post_status );
+		$post = get_post( $post_id );
+		$this->assertEquals( 'publish', $post->post_status );
+		$this->assertEquals( $slug, $post->post_name );
+		$this->assertEquals( $url, get_the_guid( $post_id ) );
 	}
 
 	function test_undelete_post_not_found() {

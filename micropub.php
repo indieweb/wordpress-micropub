@@ -249,7 +249,8 @@ class Micropub {
 			// here's another, more complicated way that customizes WP_Query:
 			// https://gist.github.com/peterwilsoncc/bb40e52cae7faa0e6efc
 			foreach ( get_posts( array( 'post_status' => 'trash' ) ) as $post ) {
-				if ( get_permalink ( $post ) == $url ) {
+				if ( get_the_guid ( $post ) == $url ) {
+					wp_untrash_post( $post->ID );
 					wp_publish_post( $post->ID );
 					$found = true;
 				}
