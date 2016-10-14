@@ -89,12 +89,6 @@ class Micropub {
 		add_action( 'send_headers', array( $cls, 'http_header' ) );
 		add_filter( 'host_meta', array( $cls, 'jrd_links' ) );
 		add_filter( 'webfinger_data', array( $cls, 'jrd_links' ) );
-
-		add_filter( 'before_micropub', array( $cls, 'store_mf2' ) );
-		add_filter( 'before_micropub', array( $cls, 'generate_post_content' ) );
-		add_filter( 'before_micropub', array( $cls, 'store_geodata' ) );
-		// Sideload any provided photos.
-		add_action( 'after_micropub', array( $cls, 'default_file_handler' ) );
 	}
 
 	/**
@@ -264,7 +258,6 @@ class Micropub {
 			static::error( 400, 'unknown action ' . $action );
 		}
 
-		do_action( 'after_micropub', $args['ID'] );
 		static::respond( $status );
 	}
 
@@ -307,14 +300,18 @@ class Micropub {
 	 * Handle a create request.
 	 */
 	private static function create( $user_id ) {
-		$args = apply_filters( 'before_micropub', static::mp_to_wp( static::$input ) );
+		$args = static::store_mf2( static::store_geodata(
+			static::generate_post_content( static::mp_to_wp( static::$input ) ) ) );
 		if ( $user_id ) {
 			$args['post_author'] = $user_id;
 		}
 		$args['post_status'] = MICROPUB_DRAFT_MODE ? 'draft' : 'publish';
+
 		kses_remove_filters();  // prevent sanitizing HTML tags in post_content
 		$args['ID'] = static::check_error( wp_insert_post( $args, true ) );
 		kses_init_filters();
+
+		static::default_file_handler( $args['ID'] );
 		return $args;
 	}
 
@@ -395,10 +392,13 @@ class Micropub {
 		// wp_update_post sets it to the current time
 		$args['edit_date'] = true;
 
-		$args = apply_filters( 'before_micropub', $args );
+		$args = static::store_mf2( static::store_geodata(
+			static::generate_post_content( $args ) ) );
 		kses_remove_filters();
 		static::check_error( wp_update_post( $args, true ) );
 		kses_init_filters();
+
+		static::default_file_handler( $post_id );
 		return $args;
 	}
 
@@ -635,8 +635,6 @@ class Micropub {
 
 	/**
 	 * Stores geodata in WordPress format
-	 *
-	 * Uses $input, so load_input() must be called before this.
 	 */
 	public static function store_geodata( $args ) {
 		$location = static::$input['properties']['location'][0];
@@ -665,6 +663,9 @@ class Micropub {
 	 * https://indiewebcamp.com/WordPress_Data#Microformats_data
 	 *
 	 * Uses $input, so load_input() must be called before this.
+	 *
+	 * If the request is a create, this populates $args['meta_input']. If the
+	 * request is an update, it changes the post meta values in the db directly.
 	 */
 	public static function store_mf2( $args ) {
 		$props = static::$input['properties'];
