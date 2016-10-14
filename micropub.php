@@ -284,11 +284,19 @@ class Micropub {
 				break;
 			case 'source':
 				$post_id = url_to_postid( $_GET['url'] );
-				if ( $post_id ) {
-					static::respond( 200, static::get_mf2( $post_id ) );
-				} else {
+				if ( ! $post_id ) {
 					static::error( 400, 'not found: ' . $_GET['url'] );
 				}
+				$mf2 = static::get_mf2( $post_id );
+				$props = $_GET['properties'];
+				if ( $props ) {
+					if ( ! is_array( $props ) ) {
+						$props = array( $props );
+					}
+					$mf2 = array( 'properties' => array_intersect_key(
+						$mf2['properties'], array_flip( $props) ) );
+				}
+				static::respond( 200, $mf2 );
 				break;
 			default:
 				static::error( 400, 'unknown query ' . $_GET['q'] );

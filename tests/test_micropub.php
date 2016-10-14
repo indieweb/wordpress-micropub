@@ -196,7 +196,7 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->check( 200, array( 'syndicate-to' => array( 'abc', 'xyz' ) ) );
 	}
 
-	function test_query_post() {
+	function test_query_source() {
 		$_POST = self::$post;
 		$post = $this->check_create();
 
@@ -207,7 +207,24 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->check( 200, self::$mf2 );
 	}
 
-	function test_query_post_not_found() {
+	function test_query_source_with_properties() {
+		$_POST = self::$post;
+		$post = $this->check_create();
+
+		$_GET = array(
+			'q' => 'source',
+			'url' => 'http://example.org/?p=' . $post->ID,
+			'properties' => array( 'content', 'category' ),
+		);
+		$this->check( 200, 	array(
+			'properties' => array(
+				'content' => array( 'my<br>content' ),
+				'category' => array( 'tag1', 'tag4' ),
+			),
+		) );
+	}
+
+	function test_query_source_not_found() {
 		$_GET = array(
 			'q' => 'source',
 			'url' => 'http:/localhost/doesnt/exist',
