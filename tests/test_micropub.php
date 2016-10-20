@@ -26,8 +26,6 @@ class Recorder extends Micropub {
 	public static function init() {
 		remove_filter( 'query_vars', array( 'Micropub', 'query_var' ) );
 		remove_action( 'parse_query', array( 'Micropub', 'parse_query' ) );
-		remove_all_filters('before_micropub');
-		remove_all_filters('after_micropub');
 		parent::init();
 	}
 
@@ -61,6 +59,57 @@ class MicropubTest extends WP_UnitTestCase {
 	 */
 	protected static $status = 0;
 
+	/**
+	 * Arguments captured from the before_micropub and after_micropub filters.
+	 * @vars array
+	 */
+	protected static $before_micropub_input;
+	protected static $after_micropub_input;
+	protected static $after_micropub_args;
+
+	// POST args
+	protected static $post = array(
+		'h' => 'entry',
+		'content' => 'my<br>content',
+		'slug' => 'my_slug',
+		'name' => 'my name',
+		'summary' => 'my summary',
+		'category' => array( 'tag1', 'tag4' ),
+		'published' => '2016-01-01T12:01:23Z',
+		'location' => 'geo:42.361,-71.092;u=25000',
+	);
+
+	// JSON mf2 input
+	protected static $mf2 = array(
+		'type' => array( 'h-entry' ),
+		'properties' => array(
+			'content' => array( 'my<br>content' ),
+			'slug' => array( 'my_slug' ),
+			'name' => array( 'my name' ),
+			'summary' => array( 'my summary' ),
+			'category' => array( 'tag1', 'tag4' ),
+			'published' => array( '2016-01-01T12:01:23Z' ),
+			'location' => array( 'geo:42.361,-71.092;u=25000' ),
+		),
+	);
+
+	// WordPress wp_insert_post/wp_update_post $args
+	protected static $wp_args = array(
+		'post_name' => 'my_slug',
+		'post_title' => 'my name',
+		'post_content' => 'my<br>content',
+		'tags_input' => array( 'tag1', 'tag4' ),
+		'post_date' => '2016-01-01 12:01:23',
+		'location' => 'geo:42.361,-71.092;u=25000',
+		'guid' => 'http://localhost/1/2/my_slug',
+	);
+
+	public static function setUpBeforeClass() {
+		WP_UnitTestCase::setUpBeforeClass();
+		add_filter( 'before_micropub', array(MicropubTest, before_micropub_recorder ) );
+		add_action( 'after_micropub', array(MicropubTest, after_micropub_recorder ), 10, 2 );
+	}
+
 	public function setUp() {
 		parent::setUp();
 		self::$status = 0;
@@ -70,6 +119,8 @@ class MicropubTest extends WP_UnitTestCase {
 		Recorder::$request_headers = array();
 		Recorder::$input = NULL;
 		Recorder::$downloaded_urls = array();
+		static::$before_micropub_input =
+            static::$after_micropub_input = static::$after_micropub_args = null;
 		unset( $GLOBALS['post'] );
 
 		update_option( 'permalink_structure', '/%year%/%monthnum%/%day%/%postname%', 'yes' );
@@ -115,6 +166,14 @@ class MicropubTest extends WP_UnitTestCase {
 		} else {
 			$this->assertSame( NULL, $expected );
 		}
+
+		$this->assertFalse( is_null( static::$before_micropub_input ) );
+		if ( (int) ( $status / 100 ) == 2 ) {
+			$this->assertFalse( is_null( static::$after_micropub_input ) );
+		} else {
+			$this->assertNull( static::$after_micropub_input );
+			$this->assertNull( static::$after_micropub_args );
+		}
 	}
 
 	function check_create() {
@@ -136,43 +195,18 @@ class MicropubTest extends WP_UnitTestCase {
 		return Recorder::$response;
 	}
 
-	// POST args
-	protected static $post = array(
-		'h' => 'entry',
-		'content' => 'my<br>content',
-		'slug' => 'my_slug',
-		'name' => 'my name',
-		'summary' => 'my summary',
-		'category' => array( 'tag1', 'tag4' ),
-		'published' => '2016-01-01T12:01:23Z',
-		'location' => 'geo:42.361,-71.092;u=25000',
-	);
-
-	// JSON mf2 input
-	protected static $mf2 = array(
-		'type' => array( 'h-entry' ),
-		'properties' => array(
-			'content' => array( 'my<br>content' ),
-			'slug' => array( 'my_slug' ),
-			'name' => array( 'my name' ),
-			'summary' => array( 'my summary' ),
-			'category' => array( 'tag1', 'tag4' ),
-			'published' => array( '2016-01-01T12:01:23Z' ),
-			'location' => array( 'geo:42.361,-71.092;u=25000' ),
-		),
-	);
-
-	// Creates a WordPress post with data that matches $properties above
 	protected static function insert_post() {
-		return wp_insert_post( array(
-			'post_name' => 'my_slug',
-			'post_title' => 'my name',
-			'post_content' => 'my<br>content',
-			'tags_input' => array( 'tag1', 'tag4' ),
-			'post_date' => '2016-01-01 12:01:23',
-			'location' => 'geo:42.361,-71.092;u=25000',
-			'guid' => 'http://localhost/1/2/my_slug',
-		) );
+		return wp_insert_post( static::$wp_args );
+	}
+
+	public static function before_micropub_recorder( $input ) {
+		static::$before_micropub_input = $input;
+		return $input;
+	}
+
+	public static function after_micropub_recorder( $input, $args ) {
+		static::$after_micropub_input = $input;
+		static::$after_micropub_args = $args;
 	}
 
 	function test_bad_query() {
@@ -193,7 +227,12 @@ class MicropubTest extends WP_UnitTestCase {
 		add_filter( 'micropub_syndicate-to', 'syndicate_to' );
 
 		$_GET['q'] = 'syndicate-to';
-		$this->check( 200, array( 'syndicate-to' => array( 'abc', 'xyz' ) ) );
+		$expected = array( 'syndicate-to' => array( 'abc', 'xyz' ) );
+		$this->check( 200, $expected );
+
+		$this->assertEquals( $_GET, static::$before_micropub_input );
+		$this->assertEquals( $_GET, static::$after_micropub_input );
+		$this->assertNull( static::$after_micropub_args );
 	}
 
 	function test_query_source() {
@@ -234,6 +273,10 @@ class MicropubTest extends WP_UnitTestCase {
 			'error' => 'invalid_request',
 			'error_description' => 'not found: http:/localhost/doesnt/exist',
 		) );
+
+		$this->assertEquals( $_GET, static::$before_micropub_input );
+		$this->assertNull( static::$after_micropub_input );
+		$this->assertNull( static::$after_micropub_args );
 	}
 
 	function test_create_basic_post() {
@@ -263,6 +306,11 @@ class MicropubTest extends WP_UnitTestCase {
 
 		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ) );
 		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ) );
+
+		$this->assertEquals( static::$mf2, static::$before_micropub_input );
+		$this->assertEquals( static::$mf2, static::$after_micropub_input );
+		$this->assertEquals( 'my name', static::$after_micropub_args['post_title'] );
+		$this->assertGreaterThan( 0, static::$after_micropub_args['ID'] );
 
 		$this->assertEquals( static::$mf2, $this->query_source( $post->ID ) );
 	}
@@ -630,12 +678,12 @@ EOF
 		$post = get_post( $post_id );
 
 		// updated
-		$this->assertEquals( <<<EOF
+		$expected_content = <<<EOF
 <div class="e-content">
 new&lt;br&gt;content
 </div>
-EOF
-, $post->post_content );
+EOF;
+		$this->assertEquals( $expected_content, $post->post_content );
 
 		// added
 		$tags = wp_get_post_tags( $post->ID );
@@ -653,6 +701,11 @@ EOF
 		// check that published date is preserved
 		// https://github.com/snarfed/wordpress-micropub/issues/16
 		$this->assertEquals( '2016-01-01 12:01:23', $post->post_date );
+
+		$this->assertEquals( Recorder::$input, static::$before_micropub_input );
+		$this->assertEquals( Recorder::$input, static::$after_micropub_input );
+		$this->assertEquals( $expected_content, static::$after_micropub_args['post_content'] );
+		$this->assertGreaterThan( 0, static::$after_micropub_args['ID'] );
 
 		$this->assertEquals( array(
 			'type' => array( 'h-entry' ),
@@ -808,6 +861,9 @@ EOF
 
 		$post = get_post( $post_id );
 		$this->assertEquals( 'trash', $post->post_status );
+		$this->assertEquals( $_POST, static::$before_micropub_input );
+		$this->assertEquals( $_POST, static::$after_micropub_input );
+		$this->assertEquals( $post_id, static::$after_micropub_args['ID'] );
 	}
 
 	function test_delete_post_not_found() {
@@ -846,6 +902,10 @@ EOF
 		$this->assertEquals( 'publish', $post->post_status );
 		$this->assertEquals( $slug, $post->post_name );
 		$this->assertEquals( $url, get_the_guid( $post_id ) );
+
+		$this->assertEquals( $_POST, static::$before_micropub_input );
+		$this->assertEquals( $_POST, static::$after_micropub_input );
+		$this->assertEquals( $post_id, static::$after_micropub_args['ID'] );
 	}
 
 	function test_undelete_post_not_found() {
@@ -881,6 +941,12 @@ EOF
 	function test_bad_content_type() {
 		Recorder::$request_headers = array( 'content-type' => 'not/supported' );
 		$_POST = array( 'content' => 'foo' );
-		$this->check( 400, 'unsupported content type not/supported' );
+
+		// can't use check() because it checks the before_micropub filter, which
+		// isn't called on bad content type.
+		$this->parse_query();
+		$this->assertEquals( 400, Recorder::$status );
+		$this->assertContains( 'unsupported content type not/supported',
+							   Recorder::$response['error_description'] );
 	}
 }

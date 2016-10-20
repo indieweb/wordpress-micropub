@@ -51,6 +51,9 @@ Stores [microformats2](http://microformats.org/wiki/microformats2) properties in
 with keys prefixed by `mf2_`.
 [Details here.](https://indiewebcamp.com/WordPress_Data#Microformats_data)
 
+Does *not* support multithreading. (PHP doesn't really either, so it generally
+won't matter, but just for the record.)
+
 This project is placed in the public domain. You may also use it under the
 [CC0 license](http://creativecommons.org/publicdomain/zero/1.0/).
 
