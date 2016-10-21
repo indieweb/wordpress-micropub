@@ -391,7 +391,11 @@ class Micropub {
 				foreach ( static::mp_to_wp( array( 'properties' => array_flip( $delete ) ) )
 						  as $name => $_ ) {
 					$args[ $name ] = NULL;
-					}
+				}
+				if ( in_array( 'category', $delete ) ) {
+					wp_set_post_tags( $post_id, '', false);
+					wp_set_post_categories( $post_id, '');
+				}
 			} else {
 				static::error( 400, 'delete must be an array or object' );
 			}
@@ -463,7 +467,7 @@ class Micropub {
 
 		// Map micropub categories to WordPress categories if they exist, otherwise
 		// to WordPress tags.
-		if ( $props['category'] ) {
+		if ( isset( $props['category'] ) ) {
 			$args['post_category'] = array();
 			$args['tags_input'] = array();
 			foreach ( $props['category'] as $mp_cat ) {

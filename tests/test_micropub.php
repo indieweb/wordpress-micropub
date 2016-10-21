@@ -852,6 +852,20 @@ EOF;
 			array_values( $this->query_source( $post->ID )['properties']['category'] ));
 	}
 
+	function test_update_delete_category() {
+		$post_id = self::insert_post();
+		$this->assertEquals( 2, count( wp_get_post_tags( $post_id ) ) );
+
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$input = array(
+			'action' => 'update',
+			'url' => 'http://example.org/?p=' . $post_id,
+			'delete' => array( 'category' ),
+		);
+		$this->check( 200 );
+		$this->assertEquals( 0, count( wp_get_post_tags( $post_id ) ) );
+	}
+
 	function test_update_delete_bad_property() {
 		$post_id = self::insert_post();
 		Recorder::$request_headers = array( 'content-type' => 'application/json' );
