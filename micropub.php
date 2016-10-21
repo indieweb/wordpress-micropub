@@ -606,17 +606,38 @@ class Micropub {
 	public static function default_file_handler( $post_id ) {
 		foreach ( array( 'photo', 'video', 'audio' ) as $field ) {
 			$props = static::$input['properties'];
+			$att_ids = array();
+
 			if ( isset( $_FILES[ $field ] ) || isset( $props[ $field ] ) ) {
 				require_once( ABSPATH . 'wp-admin/includes/image.php' );
 				require_once( ABSPATH . 'wp-admin/includes/file.php' );
 				require_once( ABSPATH . 'wp-admin/includes/media.php' );
 
 				if ( isset( $_FILES[ $field ] ) ) {
-					$att_id = static::check_error( media_handle_upload(
-						$field, $post_id, array(), array(
-							'action' => 'allow_file_outside_uploads_dir',
-							'test_form' => false,
-						) ) );
+					$overrides = array(
+						'action' => 'allow_file_outside_uploads_dir',
+						'test_form' => false,
+					);
+
+					$files = $_FILES[ $field ];
+					if ( is_array( $files['name'] ) ) {
+						for ( $i = 0; $i < count( $files['name'] ); ++$i ) {
+							$_FILES = array(
+								$field => array(
+									'name' => $files['name'][ $i ],
+									'tmp_name' => $files['tmp_name'][ $i ],
+									// 'type' => $files['type'][ $i ],
+									// 'error' => $files['error'][ $i ],
+									'size' => $files['size'][ $i ],
+								),
+							);
+							$att_ids[] = static::check_error( media_handle_upload(
+								$field, $post_id, array(), $overrides ) );
+						}
+					} else {
+						$att_ids[] = static::check_error( media_handle_upload(
+							$field, $post_id, array(), $overrides ) );
+					}
 
 				} elseif ( isset( $props[ $field ] ) ) {
 					foreach ( $props[ $field ] as $val ) {
@@ -628,14 +649,16 @@ class Micropub {
 							'size' => filesize( $filename ),
 						);
 						$desc = is_array( $val ) ? $val['alt'] : $file['name'];
-						$att_id = static::check_error( media_handle_sideload(
+						$att_ids[] = static::check_error( media_handle_sideload(
 							$file, $post_id, $desc ) );
 					}
 				}
 
-				add_post_meta( $post_id, 'mf2_' . $field,
-							   array( wp_get_attachment_url( $att_id ) ),
-							   true );
+				$att_urls = array();
+				foreach ( $att_ids as $id ) {
+					$att_urls[] = wp_get_attachment_url( $id );
+				}
+				add_post_meta( $post_id, 'mf2_' . $field, $att_urls, true );
 			}
 		}
 	}

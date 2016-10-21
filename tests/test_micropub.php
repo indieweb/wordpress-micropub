@@ -376,6 +376,49 @@ class MicropubTest extends WP_UnitTestCase {
 			$this->query_source( $post->ID ) );
 	}
 
+	function test_create_with_upload_multiple_photos() {
+		$filenames = array(
+			write_temp_file( 'fake file contents' ),
+			write_temp_file( 'fake file contents 2' ),
+		);
+
+		$_FILES = array( 'photo' => array(
+			'name' => array( '1.jpg', '2.png' ),
+			'tmp_name' => $filenames,
+			'size' => array( 19, 21 ),
+		) );
+		$_POST['action'] = 'allow_file_outside_uploads_dir';
+		Recorder::$request_headers = array(
+			'content-type' => 'multipart/form-data; boundary=asdf' );
+
+		$post = $this->check_create();
+		$atts = $this->check_upload( $post, 'image', 2 );
+
+		$att_ids = array();
+		foreach ( $atts as $_ => $att ) {
+			$att_urls[] = wp_get_attachment_url( $att->ID );
+		}
+		$this->assertEquals(
+			array(
+				'properties' => array(
+					'photo' => $att_urls,
+				) ),
+			$this->query_source( $post->ID ) );
+	}
+
+	function test_create_with_upload_error() {
+		$_FILES = array( 'photo' => array(
+			'name' => NULL,
+			'tmp_name' => NULL,
+			'error' => UPLOAD_ERR_PARTIAL,
+		) );
+		$_POST['action'] = 'allow_file_outside_uploads_dir';
+		Recorder::$request_headers = array(
+			'content-type' => 'multipart/form-data; boundary=asdf' );
+
+		$post = $this->check(400, 'The uploaded file was only partially uploaded.');
+	}
+
 	function test_create_with_photo_url() {
 		$this->_test_create_with_upload_url('photo', 'image', 'jpg');
 	}
@@ -436,18 +479,18 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( $mf2, $this->query_source( $post->ID ) );
 	}
 
-	function check_upload( $post, $wp_type ) {
+	function check_upload( $post, $wp_type, $num = 1 ) {
 		$this->assertEquals( get_permalink( $post ),
 							 Recorder::$response_headers['Location'] );
 		$this->assertEquals( '[gallery size=full columns=1]', $post->post_content );
 
 		$media = get_attached_media( $wp_type, $post->ID );
-		$this->assertEquals( 1, count( $media ) );
+		$this->assertEquals( $num, count( $media ) );
 
-		// media array keys are post ids, so can't just do [0]
-		$att = current( $media );
-		$this->assertEquals( 'attachment', $att->post_type);
-		return $att;
+		foreach ( $media as $_ => $att ) {
+			$this->assertEquals( 'attachment', $att->post_type);
+		}
+		return $num == 1 ? reset( $media ) : $media;
 	}
 
 	function test_create_with_multiple_uploads() {
