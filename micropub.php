@@ -155,7 +155,7 @@ class Micropub {
 		// find the access token
 		$auth = static::get_header( 'authorization' );
 		$token = $_POST['access_token'];
-		if ( ! $auth_header && ! $token) {
+		if ( ! $auth && ! $token) {
 			static::handle_authorize_error( 401, 'missing access token' );
 		}
 
