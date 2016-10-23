@@ -837,6 +837,8 @@ class Micropub {
 					static::$input[ $key ] = $val;
 				} elseif ( $key == 'h' ) {
 					static::$input['type'] = array( 'h-' . $val );
+				} elseif ( $key == 'access_token' ) {
+					continue;
 				} else {
 					if ( ! isset( static::$input['properties'] ) ) {
 						static::$input['properties'] = array();

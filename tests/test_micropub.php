@@ -286,13 +286,12 @@ class MicropubTest extends WP_UnitTestCase {
 	}
 
 	function test_create_basic_json() {
-		Recorder::$request_headers = array( 'Content-type' => 'application/json; charset=utf-8' );
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
 		Recorder::$input = static::$mf2;
 		self::check_create_basic();
 	}
 
 	function check_create_basic() {
-		$_POST = self::$post;
 		$post = $this->check_create();
 
 		$this->assertEquals( 'publish', $post->post_status );
@@ -313,6 +312,8 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertGreaterThan( 0, static::$after_micropub_args['ID'] );
 
 		$this->assertEquals( static::$mf2, $this->query_source( $post->ID ) );
+
+		return $post;
 	}
 
 	function test_create_content_html_post() {
@@ -333,6 +334,16 @@ class MicropubTest extends WP_UnitTestCase {
 				'name' => array( 'HTML content test' ),
 			) );
 		self::check_create_content_html();
+	}
+
+	function test_create_doesnt_store_access_token() {
+		Recorder::$request_headers = array( 'Content-type' => 'application/x-www-form-urlencoded' );
+		$_POST = self::$post;
+		$_POST['access_token'] = 'super secret';
+		$post = self::check_create_basic();
+
+		$mf2 = $this->query_source( $post->ID );
+		$this->assertFalse( isset($mf2['properties']['access_token'] ) );
 	}
 
 	function check_create_content_html() {
