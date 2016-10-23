@@ -167,11 +167,12 @@ class Micropub {
 		$code = wp_remote_retrieve_response_code( $resp );
 		$body = wp_remote_retrieve_body( $resp );
 		parse_str( $body, $params );
+		$scopes = explode( ' ', $params['scope'] );
+
 		if ( (int) ( $code / 100 ) != 2 ) {
 			static::handle_authorize_error(
 				$code, 'invalid access token: ' . $body );
-		} elseif ( ! isset( $params['scope'] ) ||
-				   ! in_array( 'post', explode( ' ', $params['scope'] ) ) ) {
+		} elseif ( ! in_array( 'post',  $scopes ) && ! in_array( 'create',  $scopes ) ) {
 			static::handle_authorize_error(
 				403, 'access token is missing post scope; got `' . $params['scope'] . '`' );
 		}
