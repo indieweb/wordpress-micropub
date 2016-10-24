@@ -346,6 +346,27 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertFalse( isset($mf2['properties']['access_token'] ) );
 	}
 
+	function test_create_nested_mf2_object() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		$input = Recorder::$input = array(
+			'type' => array( 'h-entry' ),
+			'properties' => array(
+				'summary' => array( 'Weighed 70.64 kg' ),
+				'x-weight' => array(
+					'type' => array( 'h-measure' ),
+					'properties' => array(
+						'num' => array( '70.64' ),
+						'unit' => array( 'kg' ),
+					),
+				),
+			),
+		);
+		$post = self::check_create();
+
+		$mf2 = $this->query_source( $post->ID );
+		$this->assertEquals( $input, $mf2);
+	}
+
 	function check_create_content_html() {
 		$post = $this->check_create();
 		$this->assertEquals( 'HTML content test', $post->post_title );

@@ -487,8 +487,8 @@ class Micropub {
 								    htmlspecialchars( $content['value'] );
 		} elseif ( $content ) {
 			$args['post_content'] = htmlspecialchars( $content );
-		} elseif ( isset( $props['summary'] ) ) {
-			$args['post_content'] = $props['summary'];
+		} elseif ( $props['summary'] ) {
+			$args['post_content'] = $props['summary'][0];
 		}
 
 		return $args;
