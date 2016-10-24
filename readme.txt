@@ -2,7 +2,7 @@
 Contributors: snarfed, dshanske
 Tags: micropub
 Requires at least: 4.4
-Tested up to: 4.5
+Tested up to: 4.6.1
 Stable tag: trunk
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
@@ -23,61 +23,77 @@ that, try other clients like [OwnYourGram](http://ownyourgram.com/), [OwnYourChe
 [MobilePub](http://indiewebcamp.com/MobilePub), and
 [Teacup](https://teacup.p3k.io/).
 
-Supports create, update, and delete, but not undelete. Supports these
-Micropub properties:
+Supports the [full W3C Micropub CR spec](https://www.w3.org/TR/micropub/) as of
+2016-10-18, except for the optional media endpoint. Media may be uploaded
+directly to the wordpress-micropub endpoint as multipart/form-data, or
+sideloaded from URLs.
 
-* `category` maps to WordPress category if it exists, otherwise to WordPress tag
-* `content`
-* `description`
-* `end`
-* `h`=entry and `h`=event
-* `in-reply-to`
-* `like-of`/`like`
-* `location` is stored in [WordPress standard geodata format](http://codex.wordpress.org/Geodata)
-* `name`
-* `photo`
-* `published`
-* `repost-of`/`repost`
-* `rsvp`
-* `slug`
-* `start`
-* `summary`
-* `url`
+== WordPress details ==
 
-Adds the following filters:
-* `before_micropub($wp_args)`
-* `micropub_syndicate-to', array(), $user_id)`
+=== Filters and hooks ===
 
-And the hook:
-* `after_micropub($post_id)`
+Adds one filter: `before_micropub( $input )`
 
-Delegates token handling to
-[tokens.indieauth.com](https://tokens.indieauth.com/) by default. For ease of
-development, if the WordPress site is running on `localhost`, it logs a warning
-if the access token is missing or invalid and still allows the request. 
-There is also a wp-config option to use WordPress authentication.
+Called before handling a Micropub request. Returns $input, possibly modified.
+
+...and one hook: `after_micropub( $input, $wp_args = null)`
+
+Called after handling a Micropub request. Not called if the request fails
+(ie doesn't return HTTP 2xx).
+
+Arguments:
+
+`$input`: associative array, the Micropub request in
+  [JSON format](http://micropub.net/draft/index.html#json-syntax). If the
+  request was form-encoded or a multipart file upload, it's converted to JSON
+  format.
+
+`$wp_args`: optional associative array. For creates and updates, this is the
+8  arguments passed to wp_insert_post or wp_update_post. For deletes and
+  undeletes, args['ID'] contains the post id to be (un)deleted. Null for queries.
+
+=== Other ===
 
 Stores [microformats2](http://microformats.org/wiki/microformats2) properties in
 [post metadata](http://codex.wordpress.org/Function_Reference/post_meta_Function_Examples)
 with keys prefixed by `mf2_`.
 [Details here.](https://indiewebcamp.com/WordPress_Data#Microformats_data)
+All values are arrays; use `unserialize()` to deserialize them.
 
-Development happens at http://github.com/snarfed/wordpress-micropub . Feedback
-and pull requests are welcome!
+Does *not* support multithreading. (PHP doesn't really either, so it generally
+won't matter, but just for the record.)
+
+
+== Authentication and authorization ==
+
+Supports the full OAuth2/IndieAuth authentication and authorization flow.
+Defaults to IndieAuth. Custom auth and token endpoints can be used by overriding
+the `MICROPUB_AUTHENTICATION_ENDPOINT` and `MICROPUB_TOKEN_ENDPOINT` endpoints.
+If the token's `me` value matches a WordPress user's URL, that user will be
+used. Otherwise, the token must match the site's URL, and no user will be used.
+
+Alternatively, you can set `MICROPUB_LOCAL_AUTH` to 1 to use WordPress's
+internal user login instead of tokens.
+
+Finally, for ease of development, if the WordPress site is running on
+`localhost`, it logs a warning if the access token is missing or invalid and
+still allows the request.
+
 
 == Installation ==
 
 Install from the WordPress plugin directory or put `micropub.php` in your plugin directory. No setup needed.
 
+
 == Configuration Options ==
 
 These configuration options can be enabled by adding them to your wp-config.php
 
-* `define('MICROPUB_LOCAL_AUTH', '1')` - Bypasses Micropub authentication in 
-favor of WordPress authentication for testing purposes
+* `define('MICROPUB_LOCAL_AUTH', '1')` - Bypasses Micropub authentication in
+favor of WordPress authentication
 * `define('MICROPUB_AUTHENTICATION_ENDPOINT', 'https://indieauth.com/auth')` -
 Define a custom authentication endpoint
-* `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` - 
+* `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` -
 Define a custom token endpoint
 * `define('MICROPUB_DRAFT_MODE', '1')` - set all micropub posts to draft mode
 
@@ -91,16 +107,64 @@ None yet.
 
 == Screenshots ==
 
-TODO
+None.
+
+== Development ==
+
+The canonical repo is http://github.com/snarfed/wordpress-micropub . Feedback
+and pull requests are welcome!
+
+To add a new release to the WordPress plugin directory, run `push.sh`.
+
+To set up your local environment to run the unit tests:
+
+1. Install [PHPUnit](https://github.com/sebastianbergmann/phpunit#installation),
+   e.g. `brew install homebrew/php/wp-cli phpunit` with Homebrew on Mac OS X.
+1. Install and start MySQL. (You may already have it.)
+1. Run `./bin/install-wp-tests.sh wordpress_micropub_test root '' localhost` to
+   download WordPress and
+   [its unit test library](https://develop.svn.wordpress.org/trunk/tests/phpunit/),
+   into `/tmp` and `./temp` by default, and create a MySQL db to test against.
+   [Background here](http://wp-cli.org/docs/plugin-unit-tests/). Feel free to
+   use a MySQL user other than `root`. You can set the `WP_CORE_DIR` and
+   `WP_TESTS_DIR` environment variables to change where WordPress and its test
+   library are installed. For example, I put them both in the repo dir.
+1. Open `wordpress-tests-lib/wp-tests-config.php` and add a slash to the end of
+   the ABSPATH value. No clue why it leaves off the slash; it doesn't work
+   without it.
+1. Run `phpunit` in the repo root dir. If you set `WP_CORE_DIR` and
+   `WP_TESTS_DIR` above, you'll need to set them for this too. You should see
+   output like this:
+
+    ```
+    Installing...
+    ...
+    1 / 1 (100%)
+    Time: 703 ms, Memory: 33.75Mb
+    OK (1 test, 3 assertions)
+    ```
+
+To set up PHPCodesniffer to test changes for adherance to WordPress Coding Standards
+
+1. install [PHPCS](https://github.com/squizlabs/PHP_CodeSniffer).
+1. install and connect [WordPress-Coding-Standards](https://github.com/WordPress-Coding-Standards/WordPress-Coding-Standards)
+1. Run in command line or install a plugin for your favorite editor.
+1. To list coding standard issues in a file, run phpcs --standard=phpcs.ruleset.xml micropub.php
+1. If you want to try to automatically fix issues, run phpcbf with the same arguments as phpcs.
+
 
 == Changelog ==
 
-= 0.5 (unreleased) =
-* Update to current W3C Micropub spec! https://www.w3.org/TR/micropub/
-* Storage of properties now takes place during wp_insert_post
-* Post content will not be automatically marked up if Post Kinds plugin is
-  enabled: https://wordpress.org/plugins/indieweb-post-kinds/
-* Add PHP Codesniffer File to continue march toward WordPress Coding Standards
+= 1.0 =
+Substantial update. Supports
+[full W3C Micropub spec](https://www.w3.org/TR/micropub/), except for optional
+media endpoint.
+
+* Post content will not be automatically marked up if theme supports
+  microformats2 or
+  [Post Kinds plugin](https://wordpress.org/plugins/indieweb-post-kinds/) is
+  enabled.
+* Add PHP Codesniffer File
 
 = 0.4 =
 * Store all properties in post meta except those in a blacklist
@@ -126,8 +190,3 @@ TODO
 
 = 0.1 =
 Initial release.
-
-== Development ==
-
-The canonical repo is http://github.com/snarfed/wordpress-micropub . Feedback
-and pull requests are welcome!
