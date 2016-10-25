@@ -30,8 +30,7 @@ sideloaded from URLs.
 
 == WordPress details ==
 
-=== Filters and hooks ===
-
+= Filters and hooks =
 Adds one filter: `before_micropub( $input )`
 
 Called before handling a Micropub request. Returns $input, possibly modified.
@@ -43,16 +42,15 @@ Called after handling a Micropub request. Not called if the request fails
 
 Arguments:
 
-`$input`: associative array, the Micropub request in
+* `$input`: associative array, the Micropub request in
   [JSON format](http://micropub.net/draft/index.html#json-syntax). If the
   request was form-encoded or a multipart file upload, it's converted to JSON
   format.
-
-`$wp_args`: optional associative array. For creates and updates, this is the
-8  arguments passed to wp_insert_post or wp_update_post. For deletes and
+* `$wp_args`: optional associative array. For creates and updates, this is the
+  arguments passed to wp_insert_post or wp_update_post. For deletes and
   undeletes, args['ID'] contains the post id to be (un)deleted. Null for queries.
 
-=== Other ===
+= Other =
 
 Stores [microformats2](http://microformats.org/wiki/microformats2) properties in
 [post metadata](http://codex.wordpress.org/Function_Reference/post_meta_Function_Examples)
@@ -75,8 +73,8 @@ used. Otherwise, the token must match the site's URL, and no user will be used.
 Alternatively, you can set `MICROPUB_LOCAL_AUTH` to 1 to use WordPress's
 internal user login instead of tokens.
 
-Finally, for ease of development, if the WordPress site is running on
-`localhost`, it logs a warning if the access token is missing or invalid and
+Finally, for ease of development, if the WordPress site is running
+on `localhost`, it logs a warning if the access token is missing or invalid and
 still allows the request.
 
 
