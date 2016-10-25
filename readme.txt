@@ -160,6 +160,12 @@ Substantial update. Supports
 [full W3C Micropub spec](https://www.w3.org/TR/micropub/), except for optional
 media endpoint.
 
+* Changed `mf2_*` post meta format from multiple separate values to single array
+  value that can be deserialized with `unserialize`.
+* Changed the `before_micropub` filter's signature from `( $wp_args )` to
+  `( $input )` (microformats2 associative array).
+* Changed the `after_micropub` hook's signature changed from `( $post_id )` to
+  `( $input, $wp_args )` (microformats2 associative array, WordPress post args).
 * Post content will not be automatically marked up if theme supports
   microformats2 or
   [Post Kinds plugin](https://wordpress.org/plugins/indieweb-post-kinds/) is
