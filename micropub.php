@@ -823,7 +823,8 @@ class Micropub {
 	}
 
 	protected static function load_input() {
-		$content_type = explode( ';', static::get_header( 'Content-Type' ) )[0];
+		$content_type = explode( ';', static::get_header( 'Content-Type' ) );
+		$content_type = $content_type[0];
 		if ( $_SERVER['REQUEST_METHOD'] == 'GET' ) {
 			static::$input = $_GET;
 		} elseif ( $content_type  == 'application/json' ) {
@@ -897,7 +898,7 @@ if ( ! function_exists( 'getallheaders' ) ) {
 		$headers = array();
 		foreach ( $_SERVER as $name => $value ) {
 			if ( substr( $name, 0, 5 ) == 'HTTP_' ) {
-				$headers[str_replace( ' ', '-', strtolower( str_replace( '_', ' ', substr( $name, 5 ) ) ) ) ] = $value;
+				$headers[ str_replace( ' ', '-', strtolower( str_replace( '_', ' ', substr( $name, 5 ) ) ) ) ] = $value;
 			} elseif ( $name == 'CONTENT_TYPE' ) {
 				$headers['content-type'] = $value;
 			} elseif ( $name == 'CONTENT_LENGTH' ) {
