@@ -6,7 +6,7 @@
  Protocol spec: <a href="https://www.w3.org/TR/micropub/">w3.org/TR/micropub</a>
  Author: Ryan Barrett
  Author URI: https://snarfed.org/
- Version: 1.0
+ Version: 1.0.1
 */
 
 /*

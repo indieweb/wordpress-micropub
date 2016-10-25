@@ -153,6 +153,9 @@ To set up PHPCodesniffer to test changes for adherance to WordPress Coding Stand
 
 == Changelog ==
 
+= 1.0.1 =
+* Remove accidental dependence on PHP 5.3 (#46).
+
 = 1.0 =
 Substantial update. Supports
 [full W3C Micropub spec](https://www.w3.org/TR/micropub/), except for optional
