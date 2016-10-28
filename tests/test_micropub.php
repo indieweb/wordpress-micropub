@@ -319,7 +319,7 @@ class MicropubTest extends WP_UnitTestCase {
 	function test_create_content_html_post() {
 		$_POST = array(
 			'h' => 'entry',
-			'content' => array( array( 'html' => '<h1>HTML content!</h1><p>coolio.</p>' ) ),
+			'content' => array( 'html' => '<h1>HTML content!</h1><p>coolio.</p>' ),
 			'name' => 'HTML content test',
 		);
 		self::check_create_content_html();

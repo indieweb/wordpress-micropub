@@ -845,7 +845,8 @@ class Micropub {
 						static::$input['properties'] = array();
 					}
 					static::$input['properties'][ $key ] =
-						is_array( $val ) ? $val : array( $val );
+						( is_array( $val ) && ! is_assoc_array( $val ) )
+						? $val : array( $val );
 				}
 			}
 		} else {
