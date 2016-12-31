@@ -121,6 +121,10 @@ To set up PHPCodesniffer to test changes for adherance to WordPress Coding Stand
 
 ### Changelog
 
+#### 1.1 (unreleased)
+* Support [`h-adr`](http://microformats.org/wiki/h-adr), [`h-geo`](http://microformats.org/wiki/h-geo), and plain text values for `p-location`.
+* Bug fix for create/update with content[html].
+
 #### 1.0.1
 * Remove accidental dependence on PHP 5.3 (#46).
 

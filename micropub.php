@@ -677,7 +677,15 @@ class Micropub {
 			if ( ! isset( $args['meta_input'] ) ) {
 				$args['meta_input'] = array();
 			}
-			if ( $location && substr( $location, 0, 4 ) == 'geo:' ) {
+			if ( is_array( $location ) ) {
+				$props = $location['properties'];
+				if ( isset( $props['geo'] ) ) {
+					$args['meta_input']['geo_address'] = $props['label'][0];
+					$props = $props['geo'][0]['properties'];
+				}
+				$args['meta_input']['geo_latitude'] = $props['latitude'][0];
+				$args['meta_input']['geo_longitude'] = $props['longitude'][0];
+			} elseif ( substr( $location, 0, 4 ) == 'geo:' ) {
 				// Geo URI format:
 				// http://en.wikipedia.org/wiki/Geo_URI#Example
 				// https://indiewebcamp.com/micropub##location
@@ -688,6 +696,8 @@ class Micropub {
 				$coords = explode( ',', $geo[0] );
 				$args['meta_input']['geo_latitude'] = trim( $coords[0] );
 				$args['meta_input']['geo_longitude'] = trim( $coords[1] );
+			} elseif ( substr( $location, 0, 4 ) != 'http' ) {
+				$args['meta_input']['geo_address'] = $location;
 			}
 		}
 		return $args;

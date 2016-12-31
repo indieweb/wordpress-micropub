@@ -93,6 +93,15 @@ class MicropubTest extends WP_UnitTestCase {
 		),
 	);
 
+	protected static $geo = array(
+		'type' => array('h-geo'),
+		'properties' => array(
+			'latitude' => array('42.361'),
+			'longitude' => array('-71.092'),
+			'altitude' => array('25000'),
+		),
+	);
+
 	// WordPress wp_insert_post/wp_update_post $args
 	protected static $wp_args = array(
 		'post_name' => 'my_slug',
@@ -305,6 +314,7 @@ class MicropubTest extends WP_UnitTestCase {
 
 		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ) );
 		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ) );
+		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_address', true ) );
 
 		$this->assertEquals( static::$mf2, static::$before_micropub_input );
 		$this->assertEquals( static::$mf2, static::$after_micropub_input );
@@ -365,6 +375,57 @@ class MicropubTest extends WP_UnitTestCase {
 
 		$mf2 = $this->query_source( $post->ID );
 		$this->assertEquals( $input, $mf2);
+	}
+
+	function test_create_location_url_ignore() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+		Recorder::$input = static::$mf2;
+		Recorder::$input['properties']['location'] = array( 'http://a/venue' );
+		$post = self::check_create();
+
+		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_latitude', true ) );
+		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_longitude', true ) );
+		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_address', true ) );
+	}
+
+	function test_create_location_h_geo() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+		Recorder::$input = static::$mf2;
+		Recorder::$input['properties']['location'] = array( static::$geo );
+		$post = self::check_create();
+
+		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ) );
+		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ) );
+		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_address', true ) );
+	}
+
+	function test_create_location_h_adr() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+		Recorder::$input = static::$mf2;
+		Recorder::$input['properties']['location'] = array(
+			array(
+				'type' => array('h-adr'),
+				'properties' => array(
+					'geo' => array( static::$geo ),
+				),
+			),
+		);
+		$post = self::check_create();
+
+		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ) );
+		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ) );
+		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_address', true ) );
+	}
+
+	function test_create_location_plain_text() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+		Recorder::$input = static::$mf2;
+		Recorder::$input['properties']['location'] = array( 'foo bar baz' );
+		$post = self::check_create();
+
+		$this->assertEquals( 'foo bar baz', get_post_meta( $post->ID, 'geo_address', true ) );
+		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_latitude', true ) );
+		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_longitude', true ) );
 	}
 
 	function check_create_content_html() {
