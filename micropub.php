@@ -805,56 +805,65 @@ class Micropub {
 		return $result;
 	}
 
+	public static function get_micropub_endpoint() {
+		return apply_filters( 'micropub_endpoint', site_url( '?micropub=endpoint' ) );
+	}
+
+	public static function get_authentication_endpoint() {
+		return apply_filters( 'micropub_authentication_endpoint', MICROPUB_AUTHENTICATION_ENDPOINT );
+	}
+
+	public static function get_token_endpoint() {
+		return apply_filters( 'micropub_endpoint', MICROPUB_TOKEN_ENDPOINT );
+	}
+
 	/**
 	 * The micropub autodicovery meta tags
 	 */
 	public static function html_header() {
-		echo '<link rel="micropub" href="' . site_url( '?micropub=endpoint' ) . '">';
-		echo '<link rel="authorization_endpoint" href="' . MICROPUB_AUTHENTICATION_ENDPOINT . '">';
-		echo '<link rel="token_endpoint" href="' . MICROPUB_TOKEN_ENDPOINT . '">';
+			printf( '<link rel="micropub" href="%s" />' . PHP_EOL, static::get_micropub_endpoint() );
+			printf( '<link rel="authorization_endpoint" href="%s" />' . PHP_EOL, static::get_authentication_endpoint() );
+			printf( '<link rel="token_endpoint" href="%s" />' . PHP_EOL, static::get_token_endpoint() );
 	}
 
-	/**
-	 * The micropub autodicovery http-header
-	 */
 	public static function http_header() {
-		static::header( 'Link', '<' . site_url( '?micropub=endpoint' ) . '>; rel="micropub"', false );
-		static::header( 'Link', '<' . MICROPUB_AUTHENTICATION_ENDPOINT . '>; rel="authorization_endpoint"', false );
-		static::header( 'Link', '<' . MICROPUB_TOKEN_ENDPOINT . '>; rel="token_endpoint"', false );
+		static::header( 'Link', sprintf( '<%s>; rel="micropub"', static::get_micropub_endpoint(), false ) );
+		static::header( 'Link', sprintf( '<%s>; rel="authorization_endpoint"', static::get_authentication_endpoint(), false ) );
+		static::header( 'Link', sprintf( '<%s>; rel="token_endpoint"', static::get_token_endpoint(), false ) );
 	}
 
 	/**
 	 * Generates webfinger/host-meta links
 	 */
-	public static function jrd_links( $array ) {
-		$array['links'][] = array( 'rel' => 'micropub', 'href' => site_url( '?micropub=endpoint' ) );
-		$array['links'][] = array( 'rel' => 'authorization_endpoint', 'href' => MICROPUB_AUTHENTICATION_ENDPOINT );
-		$array['links'][] = array( 'rel' => 'token_endpoint', 'href' => MICROPUB_TOKEN_ENDPOINT );
-	}
+		public static function jrd_links( $array ) {
+			$array['links'][] = array( 'rel' => 'micropub', 'href' => static::get_micropub_endpoint() );
+			$array['links'][] = array( 'rel' => 'authorization_endpoint', 'href' => static::get_authentication_endpoint() );
+			$array['links'][] = array( 'rel' => 'token_endpoint', 'href' => static::get_token_endpoint() );
+		}
 
-	protected static function load_input() {
-		$content_type = explode( ';', static::get_header( 'Content-Type' ) );
-		$content_type = $content_type[0];
-		if ( $_SERVER['REQUEST_METHOD'] == 'GET' ) {
-			static::$input = $_GET;
-		} elseif ( $content_type  == 'application/json' ) {
-			static::$input = json_decode( static::read_input(), true );
-		} elseif ( ! $content_type ||
-				   $content_type  == 'application/x-www-form-urlencoded' ||
-				   $content_type  == 'multipart/form-data' ) {
-			static::$input = array();
-			foreach ( $_POST as $key => $val ) {
-				if ( $key == 'action' || $key == 'url' ) {
-					static::$input[ $key ] = $val;
-				} elseif ( $key == 'h' ) {
-					static::$input['type'] = array( 'h-' . $val );
-				} elseif ( $key == 'access_token' ) {
-					continue;
-				} else {
-					if ( ! isset( static::$input['properties'] ) ) {
-						static::$input['properties'] = array();
-					}
-					static::$input['properties'][ $key ] =
+		protected static function load_input() {
+			$content_type = explode( ';', static::get_header( 'Content-Type' ) );
+			$content_type = $content_type[0];
+			if ( 'GET' === $_SERVER['REQUEST_METHOD'] ) {
+				static::$input = $_GET;
+			} elseif ( 'application/json' === $content_type ) {
+				static::$input = json_decode( static::read_input(), true );
+			} elseif ( ! $content_type ||
+				   'application/x-www-form-urlencoded' === $content_type ||
+				   'multipart/form-data' === $content_type ) {
+				static::$input = array();
+				foreach ( $_POST as $key => $val ) {
+					if ( 'action' === $key || 'url' === $key ) {
+						static::$input[ $key ] = $val;
+					} elseif ( 'h' === $key ) {
+						static::$input['type'] = array( 'h-' . $val );
+					} elseif ( 'access_token' === $key ) {
+						continue;
+					} else {
+						if ( ! isset( static::$input['properties'] ) ) {
+							static::$input['properties'] = array();
+						}
+						static::$input['properties'][ $key ] =
 						( is_array( $val ) && ! is_assoc_array( $val ) )
 						? $val : array( $val );
 				}
