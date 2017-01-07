@@ -2,7 +2,7 @@
 Contributors: snarfed, dshanske
 Tags: micropub
 Requires at least: 4.4
-Tested up to: 4.6.1
+Tested up to: 4.7
 Stable tag: trunk
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
@@ -31,9 +31,13 @@ sideloaded from URLs.
 == WordPress details ==
 
 = Filters and hooks =
-Adds one filter: `before_micropub( $input )`
+Adds several filters: `before_micropub( $input )`
 
 Called before handling a Micropub request. Returns $input, possibly modified.
+
+`micropub_endpoint( $default )`, `micropub_authentication_endpoint( $default )`, `micropub_token_endpoint( $default)`
+
+Allows these three default endpoint locations to be filtered.
 
 ...and one hook: `after_micropub( $input, $wp_args = null)`
 
@@ -49,6 +53,7 @@ Arguments:
 * `$wp_args`: optional associative array. For creates and updates, this is the
   arguments passed to wp_insert_post or wp_update_post. For deletes and
   undeletes, args['ID'] contains the post id to be (un)deleted. Null for queries.
+* `$default`: The default endpoint location used by the plugin. The Authentication and Token Endpoints default to [IndieAuth](https://indieauth.com/), the Micropub endpoint to the `/?micropub=endpoint`
 
 = Other =
 
@@ -65,8 +70,9 @@ won't matter, but just for the record.)
 == Authentication and authorization ==
 
 Supports the full OAuth2/IndieAuth authentication and authorization flow.
-Defaults to IndieAuth. Custom auth and token endpoints can be used by overriding
+Defaults to [IndieAuth](https://indieauth.com/). Custom auth and token endpoints can be used by overriding
 the `MICROPUB_AUTHENTICATION_ENDPOINT` and `MICROPUB_TOKEN_ENDPOINT` endpoints.
+
 If the token's `me` value matches a WordPress user's URL, that user will be
 used. Otherwise, the token must match the site's URL, and no user will be used.
 
@@ -90,9 +96,9 @@ These configuration options can be enabled by adding them to your wp-config.php
 * `define('MICROPUB_LOCAL_AUTH', '1')` - Bypasses Micropub authentication in
 favor of WordPress authentication
 * `define('MICROPUB_AUTHENTICATION_ENDPOINT', 'https://indieauth.com/auth')` -
-Define a custom authentication endpoint
+Define a custom authentication endpoint (can also be overridden by filter `micropub_authentication_endpoint`)
 * `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` -
-Define a custom token endpoint
+Define a custom token endpoint (can also be overriden by filter `micropub_token_endpoint`)
 * `define('MICROPUB_DRAFT_MODE', '1')` - set all micropub posts to draft mode
 
 == Frequently Asked Questions ==
@@ -156,6 +162,7 @@ To set up PHPCodesniffer to test changes for adherance to WordPress Coding Stand
 = 1.1 (unreleased) =
 * Support [`h-adr`](http://microformats.org/wiki/h-adr), [`h-geo`](http://microformats.org/wiki/h-geo), and plain text values for `p-location`.
 * Bug fix for create/update with content[html].
+* Add filters for the three endpoints to allow override by plugin.
 
 = 1.0.1 =
 * Remove accidental dependence on PHP 5.3 (#46).
