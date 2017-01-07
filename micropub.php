@@ -817,7 +817,7 @@ class Micropub {
 	}
 
 	public static function get_token_endpoint() {
-		return apply_filters( 'micropub_endpoint', MICROPUB_TOKEN_ENDPOINT );
+		return apply_filters( 'micropub_token_endpoint', MICROPUB_TOKEN_ENDPOINT );
 	}
 
 	/**

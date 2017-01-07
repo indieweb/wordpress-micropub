@@ -25,9 +25,14 @@ sideloaded from URLs.
 
 #### Filters and hooks
 
-Adds one filter: `before_micropub( $input )`
+Adds several filters: `before_micropub( $input )`
 
 Called before handling a Micropub request. Returns $input, possibly modified.
+
+`micropub_endpoint( $default )`, `micropub_authentication_endpoint( $default )`, `micropub_token_endpoint( $default)`
+
+Allows these three default endpoint locations to be filtered.
+
 
 ...and one hook: `after_micropub( $input, $wp_args = null)`
 
@@ -45,6 +50,8 @@ Arguments:
   arguments passed to wp_insert_post or wp_update_post. For deletes and
   undeletes, args['ID'] contains the post id to be (un)deleted. Null for queries.
 
+`$default`: The default endpoint location used by the plugin. The Authentication and Token Endpoints default to [IndieAuth](https://indieauth.com/), the Micropub endpoint to the `/?micropub=endpoint`
+
 #### Other
 
 Stores [microformats2](http://microformats.org/wiki/microformats2) properties in
@@ -60,7 +67,7 @@ won't matter, but just for the record.)
 ### Authentication and authorization
 
 Supports the full OAuth2/IndieAuth authentication and authorization flow.
-Defaults to IndieAuth. Custom auth and token endpoints can be used by overriding
+Defaults to [IndieAuth](https://indieauth.com/). Custom auth and token endpoints can be used by overriding
 the `MICROPUB_AUTHENTICATION_ENDPOINT` and `MICROPUB_TOKEN_ENDPOINT` endpoints.
 If the token's `me` value matches a WordPress user's URL, that user will be
 used. Otherwise, the token must match the site's URL, and no user will be used.
@@ -124,6 +131,7 @@ To set up PHPCodesniffer to test changes for adherance to WordPress Coding Stand
 #### 1.1 (unreleased)
 * Support [`h-adr`](http://microformats.org/wiki/h-adr), [`h-geo`](http://microformats.org/wiki/h-geo), and plain text values for `p-location`.
 * Bug fix for create/update with content[html].
+* Add filters for the three endpoints to allow override by plugin.
 
 #### 1.0.1
 * Remove accidental dependence on PHP 5.3 (#46).
