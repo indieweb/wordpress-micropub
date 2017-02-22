@@ -809,9 +809,9 @@ class Micropub {
 	 * The micropub autodicovery meta tags
 	 */
 	public static function html_header() {
-		echo '<link rel="micropub" href="' . site_url( '?micropub=endpoint' ) . '">';
-		echo '<link rel="authorization_endpoint" href="' . MICROPUB_AUTHENTICATION_ENDPOINT . '">';
-		echo '<link rel="token_endpoint" href="' . MICROPUB_TOKEN_ENDPOINT . '">';
+		echo '<link rel="micropub" href="' . site_url( '?micropub=endpoint' ) . '">', PHP_EOL;
+		echo '<link rel="authorization_endpoint" href="' . MICROPUB_AUTHENTICATION_ENDPOINT . '">', PHP_EOL;
+		echo '<link rel="token_endpoint" href="' . MICROPUB_TOKEN_ENDPOINT . '">', PHP_EOL;
 	}
 
 	/**
