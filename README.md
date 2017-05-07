@@ -80,6 +80,9 @@ To set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https
 
 ### Changelog
 
+#### 1.2 (unreleased)
+* Support [OwnYourSwarm](https://ownyourswarm.p3k.io/)'s [custom `checkin` microformats2 property](https://ownyourswarm.p3k.io/docs#checkins), including auto-generating content if necessary.
+
 #### 1.1 (2017-03-30)
 * Support [`h-adr`](http://microformats.org/wiki/h-adr), [`h-geo`](http://microformats.org/wiki/h-geo), and plain text values for [`p-location`](http://microformats.org/wiki/h-event#p-location).
 * Bug fix for create/update with `content[html]`.
