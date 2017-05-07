@@ -435,7 +435,6 @@ class MicropubTest extends WP_UnitTestCase {
 		Recorder::$input = array(
 			'type' => array( 'h-entry' ),
 			'properties' => array(
-				'content' => 'I checked in',
 				'checkin' => array( array(
 					'type' => array( 'h-card' ),
 					'properties' => array(
@@ -463,6 +462,7 @@ class MicropubTest extends WP_UnitTestCase {
 							 get_post_meta( $post->ID, 'geo_address', true ) );
 		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ) );
 		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ) );
+		$this->assertEquals( 'Checked into <a class="h-card p-location" href="http:/a/place">A Place</a>.', $post->post_content );
 	}
 
 	function check_create_content_html() {

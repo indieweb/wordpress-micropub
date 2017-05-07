@@ -549,6 +549,14 @@ class Micropub {
 			$lines[] = $args['post_content'];
 		}
 
+		$checkin = $props['checkin'][0];
+		if ( $checkin ) {
+			$name = $checkin['properties']['name'][0];
+			$urls = $checkin['properties']['url'];
+			$lines[] = 'Checked into <a class="h-card p-location" href="' .
+				($urls[1] ?: $urls[0]) . '">' . $name . '</a>.';
+		}
+
 		// TODO: generate my own markup so i can include u-photo
 		foreach ( array( 'photo', 'video', 'audio' ) as $field ) {
 			if ( isset( $_FILES[ $field ] ) || isset( $props[ $field ] ) ) {
