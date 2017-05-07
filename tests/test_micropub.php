@@ -428,6 +428,43 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_longitude', true ) );
 	}
 
+	// checkin isn't a standard mf2 property yet, but OwnYourSwarm uses it.
+	// https://ownyourswarm.p3k.io/docs#checkins
+	function test_create_checkin() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+		Recorder::$input = array(
+			'type' => array( 'h-entry' ),
+			'properties' => array(
+				'content' => 'I checked in',
+				'checkin' => array( array(
+					'type' => array( 'h-card' ),
+					'properties' => array(
+						'name' => array( 'A Place' ),
+						'url' => array(
+							'https:/foursquare.com/a/place',
+							'http:/a/place',
+							'https:/twitter.com/aplace',
+						),
+						'latitude' => array( '42.361' ),
+						'longitude' => array( '-71.092' ),
+						'street-address' => array( '1 Micro Pub' ),
+						'locality' => array( 'Portland' ),
+						'region' => array( 'Oregon' ),
+						'country-name' => array( 'US' ),
+						'postal-code' => array( '97214' ),
+						'tel' => array( '(123) 456-7890' ),
+					),
+				) ),
+			),
+		);
+		$post = self::check_create();
+
+		$this->assertEquals( 'A Place, 1 Micro Pub, Portland, Oregon, 97214, US',
+							 get_post_meta( $post->ID, 'geo_address', true ) );
+		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ) );
+		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ) );
+	}
+
 	function check_create_content_html() {
 		$post = $this->check_create();
 		$this->assertEquals( 'HTML content test', $post->post_title );

@@ -669,10 +669,19 @@ class Micropub {
 	}
 
 	/**
-	 * Stores geodata in WordPress format
+	 * Stores geodata in WordPress format.
+	 *
+	 * Reads from the location and checkin properties. checkin isn't an official
+	 * mf2 property yet, but OwnYourSwarm sends it:
+	 * https://ownyourswarm.p3k.io/docs#checkins
+	 *
+	 * WordPress geo data is stored in post meta: geo_address (free text),
+	 * geo_latitude, and geo_longitude:
+	 * https://codex.wordpress.org/Geodata
 	 */
 	public static function store_geodata( $args ) {
-		$location = static::$input['properties']['location'][0];
+		$location = static::$input['properties']['location'][0] ?:
+					static::$input['properties']['checkin'][0];
 		if ( $location ) {
 			if ( ! isset( $args['meta_input'] ) ) {
 				$args['meta_input'] = array();
@@ -682,6 +691,17 @@ class Micropub {
 				if ( isset( $props['geo'] ) ) {
 					$args['meta_input']['geo_address'] = $props['label'][0];
 					$props = $props['geo'][0]['properties'];
+				} else {
+					$parts = array(
+						$props['name'][0],
+						$props['street-address'][0],
+						$props['locality'][0],
+						$props['region'][0],
+						$props['postal-code'][0],
+						$props['country-name'][0],
+					);
+					$args['meta_input']['geo_address'] = implode(
+						', ', array_filter( $parts, function($v){ return $v; }));
 				}
 				$args['meta_input']['geo_latitude'] = $props['latitude'][0];
 				$args['meta_input']['geo_longitude'] = $props['longitude'][0];
