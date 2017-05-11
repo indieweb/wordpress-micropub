@@ -138,6 +138,8 @@ class MicropubTest extends WP_UnitTestCase {
 
 		$this->userid = self::factory()->user->create( array( 'role' => 'editor' ) );
 		wp_set_current_user( $this->userid );
+
+		unregister_taxonomy( 'kind', 'post' );
 	}
 
 	/**
@@ -779,7 +781,7 @@ at <a class="p-location" href="http://a/place">http://a/place</a>.
 <p class="p-description">some stuff</p>
 </div>
 EOF
-, $post->post_content);
+, $post->post_content );
 
 		$mf2 = $this->query_source( $post->ID );
 		$this->assertEquals( array( 'h-event' ), $mf2['type'] );
@@ -820,8 +822,36 @@ EOF
 <p>In reply to <a class="u-in-reply-to" href="http://target">http://target</a>.</p>
 <p>RSVPs <data class="p-rsvp" value="maybe">maybe</data>.</p>
 EOF
-, $post->post_content);
+, $post->post_content );
 	}
+
+	function test_merges_auto_generated_content() {
+		$_POST = array(
+			'h' => 'entry',
+			'content' => 'foo bar',
+			'in-reply-to' => 'http://target',
+		);
+		$post = $this->check_create();
+		$this->assertEquals( <<<EOF
+<p>In reply to <a class="u-in-reply-to" href="http://target">http://target</a>.</p>
+<div class="e-content">
+foo bar
+</div>
+EOF
+, $post->post_content );
+	}
+
+	function test_post_kinds_skips_auto_generated_content() {
+		register_taxonomy( 'kind', 'post' );
+
+		$_POST = array(
+			'h' => 'entry',
+			'content' => 'foo bar',
+			'in-reply-to' => 'http://target',
+		);
+		$post = $this->check_create();
+		$this->assertEquals( 'foo bar', $post->post_content );
+}
 
 	function test_create_user_cannot_publish_posts() {
 		get_user_by( 'ID', $this->userid )->remove_role( 'editor' );
