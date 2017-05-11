@@ -464,7 +464,31 @@ class MicropubTest extends WP_UnitTestCase {
 							 get_post_meta( $post->ID, 'geo_address', true ) );
 		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ) );
 		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ) );
-		$this->assertEquals( 'Checked into <a class="h-card p-location" href="http:/a/place">A Place</a>.', $post->post_content );
+		$this->assertEquals( '<p>Checked into <a class="h-card p-location" href="http:/a/place">A Place</a>.</p>', $post->post_content );
+	}
+
+	function test_create_checkin_autogenerates_checkin_text_with_content_and_post_kinds() {
+		register_taxonomy( 'kind', 'post' );
+
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$input = array(
+			'type' => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array( 'something' ),
+				'checkin' => array( array(
+					'properties' => array(
+						'name' => array( 'Place' ),
+						'url' => array( 'http://place' ),
+					),
+				) ),
+			),
+		);
+		$post = self::check_create();
+
+		$this->assertEquals( 'Place', get_post_meta( $post->ID, 'geo_address', true ) );
+		$this->assertEquals( "something\n" .
+			'<p>Checked into <a class="h-card p-location" href="http://place">Place</a>.</p>',
+			$post->post_content );
 	}
 
 	function check_create_content_html() {

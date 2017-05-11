@@ -499,21 +499,35 @@ class Micropub {
 	 * and friends.
 	 */
 	public static function generate_post_content( $args ) {
+		$props = static::$input['replace'] ?: static::$input['properties'];
+		$lines = array();
+
+		// Special case OwnYourSwarm's checkin property; auto generate content for
+		// it even if Post Kinds or an mf2-aware theme is installed. Discussion:
+		// https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-300805891
+		$checkin = $props['checkin'][0];
+		if ( $checkin ) {
+			$name = $checkin['properties']['name'][0];
+			$urls = $checkin['properties']['url'];
+			$lines[] = '<p>Checked into <a class="h-card p-location" href="' .
+				($urls[1] ?: $urls[0]) . '">' . $name . '</a>.</p>';
+		}
+
 		if ( $args['post_content'] &&
 			 ( current_theme_supports( 'microformats2' ) ||
 			   // Post Kinds: https://wordpress.org/plugins/indieweb-post-kinds/
 			   taxonomy_exists( 'kind' ) ) ) {
+			if ( $lines ) {
+				$args['post_content'] .= "\n" . implode( "\n", $lines ) ;
+			}
 			return $args;
 		}
-
-		$props = static::$input['replace'] ?: static::$input['properties'];
 
 		$verbs = array(
 			'like-of' => 'Likes',
 			'repost-of' => 'Reposted',
 			'in-reply-to' => 'In reply to',
 		);
-		$lines = array();
 
 		// interactions
 		foreach ( array_keys( $verbs ) as $prop ) {
@@ -547,14 +561,6 @@ class Micropub {
 			$lines[] = '</div>';
 		} elseif ( $args['post_content'] ) {
 			$lines[] = $args['post_content'];
-		}
-
-		$checkin = $props['checkin'][0];
-		if ( $checkin ) {
-			$name = $checkin['properties']['name'][0];
-			$urls = $checkin['properties']['url'];
-			$lines[] = 'Checked into <a class="h-card p-location" href="' .
-				($urls[1] ?: $urls[0]) . '">' . $name . '</a>.';
 		}
 
 		// TODO: generate my own markup so i can include u-photo
