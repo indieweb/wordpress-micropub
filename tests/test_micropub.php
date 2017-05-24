@@ -1190,4 +1190,19 @@ EOF;
 		$this->assertContains( 'unsupported content type not/supported',
 							   Recorder::$response['error_description'] );
 	}
+
+	// https://github.com/snarfed/wordpress-micropub/issues/57#issuecomment-302965336
+	// https://dougbeal.com/2017/05/21/285/
+	function test_unicode_content() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		$input = Recorder::$input = array(
+			'type' => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array( 'Charles ☕ Foo covers 😻 #dougbeal.com' ),
+			),
+		);
+		$post = self::check_create();
+		$mf2 = $this->query_source( $post->ID );
+		$this->assertEquals( $input, $mf2);
+	}
 }
