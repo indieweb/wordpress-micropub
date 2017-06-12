@@ -93,7 +93,7 @@ class Micropub {
 		add_action( 'wp_head', array( $cls, 'html_header' ), 99 );
 		add_action( 'send_headers', array( $cls, 'http_header' ) );
 		add_filter( 'host_meta', array( $cls, 'jrd_links' ) );
-		add_filter( 'webfinger_data', array( $cls, 'jrd_links' ) );
+		add_filter( 'webfinger_user_data', array( $cls, 'jrd_links' ) );
 	}
 
 	/**
@@ -864,7 +864,7 @@ class Micropub {
 		$array['links'][] = array( 'rel' => 'micropub', 'href' => site_url( '?micropub=endpoint' ) );
 		$array['links'][] = array( 'rel' => 'authorization_endpoint', 'href' => MICROPUB_AUTHENTICATION_ENDPOINT );
 		$array['links'][] = array( 'rel' => 'token_endpoint', 'href' => MICROPUB_TOKEN_ENDPOINT );
-		
+
 		return $array;
 	}
 
