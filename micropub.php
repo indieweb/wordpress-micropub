@@ -28,9 +28,12 @@
  *   undeletes, args['ID'] contains the post id to be (un)deleted. Null for queries.
  */
 
-// Example command line for testing:
+// Example command lines for testing:
+// Form-encoded:
 // curl -i -H 'Authorization: Bearer ...' -F h=entry -F name=foo -F content=bar \
 //   -F photo=@gallery/snarfed.gif 'http://localhost/w/?micropub=endpoint'
+// JSON:
+// curl -v -d @body.json -H 'Content-Type: application/json' 'http://localhost/w/?micropub=endpoint'
 //
 // To generate an access token for testing:
 // 1. Open this in a browser, filling in SITE:
@@ -547,6 +550,14 @@ class Micropub {
 		// event
 		if ( static::$input['type'] == array( 'h-event' ) ) {
 			$lines[] = static::generate_event( static::$input );
+		}
+
+		// bookmark
+		if ( isset( $props['bookmark-of'] ) ) {
+			foreach ( $props['bookmark-of'] as $bookmark ) {
+				$lines[] = '<p>Bookmarked <a class="u-bookmark-of" href="' .
+						 $bookmark . '">' . $bookmark . '</a>.</p>';
+			}
 		}
 
 		// content

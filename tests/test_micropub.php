@@ -849,6 +849,20 @@ EOF
 , $post->post_content );
 	}
 
+	function test_create_bookmark() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$input = array(
+			'type' => array( 'h-entry' ),
+			'properties' => array(
+				'bookmark-of' => array( 'http://target' ),
+			) );
+		$post = $this->check_create();
+		$this->assertEquals( <<<EOF
+<p>Bookmarked <a class="u-bookmark-of" href="http://target">http://target</a>.</p>
+EOF
+, $post->post_content );
+	}
+
 	function test_merges_auto_generated_content() {
 		$_POST = array(
 			'h' => 'entry',
