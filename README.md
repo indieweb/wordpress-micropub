@@ -45,6 +45,17 @@ Alternatively, you can set `MICROPUB_LOCAL_AUTH` to 1 to use WordPress's interna
 Finally, for ease of development, if the WordPress site is running on `localhost`, it logs a warning if the access token is missing or invalid and still allows the request.
 
 
+### Troubleshooting
+
+If your Micropub client includes an `Authorization` HTTP request header but you still get an HTTP 401 response with body `missing access token`, your server may be stripping the `Authorization` header. If you're on Apache, [try adding this line to your `.htaccess` file](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299202820):
+
+```
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+```
+
+If that doesn't work, you may need to ask your hosting provider to whitelist the `Authorization` header for your account. If they refuse, you can [pass it through Apache with an alternate name](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299569822), but [you'll need to edit this plugin's code to read from that alternate name](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299569822).
+
+
 ### License
 
 This project is placed in the public domain. You may also use it under the [CC0 license](http://creativecommons.org/publicdomain/zero/1.0/).
