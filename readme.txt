@@ -72,7 +72,7 @@ If your Micropub client includes an `Authorization` HTTP request header but you 
 
     SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 
-If that doesn't work, try this line:
+If that doesn't work, [try this line](https://github.com/georgestephanis/application-passwords/wiki/Basic-Authorization-Header----Missing):
 
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
