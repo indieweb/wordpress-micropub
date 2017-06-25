@@ -53,6 +53,12 @@ If your Micropub client includes an `Authorization` HTTP request header but you 
 SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 ```
 
+If that doesn't work, [try this line](https://github.com/georgestephanis/application-passwords/wiki/Basic-Authorization-Header----Missing):
+
+```
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+```
+
 If that doesn't work, you may need to ask your hosting provider to whitelist the `Authorization` header for your account. If they refuse, you can [pass it through Apache with an alternate name](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299569822), but [you'll need to edit this plugin's code to read from that alternate name](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299569822).
 
 

@@ -70,11 +70,13 @@ These configuration options can be enabled by adding them to your wp-config.php
 
 If your Micropub client includes an `Authorization` HTTP request header but you still get an HTTP 401 response with body `missing access token`, your server may be stripping the `Authorization` header. If you're on Apache, [try adding this line to your `.htaccess` file](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299202820):
 
-```
-SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
-```
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 
-If that doesn't work, you may need to ask your hosting provider to whitelist the `Authorization` header for your account. If they refuse, you can [pass it through Apache with an alternate name](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299569822), but [you'll need to edit this plugin's code to read from that alternate name](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299569822).
+If that doesn't work, try this line:
+
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+If that doesn't work either, you may need to ask your hosting provider to whitelist the `Authorization` header for your account. If they refuse, you can [pass it through Apache with an alternate name](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299569822), but [you'll need to edit this plugin's code to read from that alternate name](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299569822).
 
 == Upgrade Notice ==
 
