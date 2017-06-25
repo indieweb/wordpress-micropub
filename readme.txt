@@ -115,7 +115,7 @@ To set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https
 
 == Changelog ==
 
-= 1.2 (unreleased) =
+= 1.2 (2017-06-25) =
 * Support [OwnYourSwarm](https://ownyourswarm.p3k.io/)'s [custom `checkin` microformats2 property](https://ownyourswarm.p3k.io/docs#checkins), including auto-generating content if necessary.
 * Support `u-bookmark-of`.
 
