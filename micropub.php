@@ -319,6 +319,9 @@ class Micropub {
 			$args['post_author'] = $user_id;
 		}
 		$args['post_status'] = MICROPUB_DRAFT_MODE ? 'draft' : 'publish';
+		if ( WP_DEBUG ) {
+			error_log( 'wp_insert_post with args: ' . serialize( $args ) );
+		}
 
 		kses_remove_filters();  // prevent sanitizing HTML tags in post_content
 		$args['ID'] = static::check_error( wp_insert_post( $args, true ) );
@@ -408,9 +411,12 @@ class Micropub {
 		// tell wordpress to preserve published date explicitly, otherwise
 		// wp_update_post sets it to the current time
 		$args['edit_date'] = true;
-
 		$args = static::store_mf2( static::store_geodata(
 			static::generate_post_content( $args ) ) );
+		if ( WP_DEBUG ) {
+			error_log( 'wp_update_post with args: ' . serialize( $args ) );
+		}
+
 		kses_remove_filters();
 		static::check_error( wp_update_post( $args, true ) );
 		kses_init_filters();
