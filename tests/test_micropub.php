@@ -306,6 +306,8 @@ class MicropubTest extends WP_UnitTestCase {
 		$post = $this->check_create();
 
 		$this->assertEquals( 'publish', $post->post_status );
+		$this->assertEquals( 'post', $post->post_type );
+		$this->assertFalse( has_post_format( $post ) );
 		$this->assertEquals( $this->userid, $post->post_author );
 		// check that HTML in content is sanitized
 		$this->assertEquals( "<div class=\"e-content\">\nmy&lt;br&gt;content\n</div>", $post->post_content );
