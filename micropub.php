@@ -80,7 +80,7 @@ class Micropub {
 	protected static $input;
 
 	// associative array, populated by authorize().
-	protected static $token_data;
+	protected static $micropub_auth_response;
 
 	/**
 	 * Initialize the plugin.
@@ -186,7 +186,7 @@ class Micropub {
 		parse_str( $body, $resp );
 		$me = untrailingslashit( $resp['me'] );
 
-		static::$token_data = $resp;
+		static::$micropub_auth_response = $resp;
 
 		// look for a user with the same url as the token's `me` value. search both
 		// with and without trailing slash.
@@ -318,7 +318,7 @@ class Micropub {
 	 * Handle a create request.
 	 */
 	private static function create( $user_id ) {
-		$args = static::store_token_data(static::store_mf2( static::store_geodata(
+		$args = static::store_micropub_auth_response(static::store_mf2( static::store_geodata(
 			static::generate_post_content( static::mp_to_wp( static::$input ) ) ) ) );
 		if ( $user_id ) {
 			$args['post_author'] = $user_id;
@@ -764,13 +764,13 @@ class Micropub {
 	 * https://indieauth.com/developers
 	 * https://tokens.indieauth.com/
 	 */
-	public static function store_token_data ( $args ) {
-		$token_data = static::$token_data;
-		if( $token_data || ( is_assoc_array( $token_data ) ) ) {
+	public static function store_micropub_auth_response ( $args ) {
+		$micropub_auth_response = static::$micropub_auth_response;
+		if( $micropub_auth_response || ( is_assoc_array( $micropub_auth_response ) ) ) {
 			if ( ! isset( $args['meta_input'] ) ) {
 				$args['meta_input'] = array();
 			}
-			$args['meta_input']['token_data'] = $token_data;
+			$args['meta_input']['micropub_auth_response'] = $micropub_auth_response;
 		}
 		return $args;
 	}
