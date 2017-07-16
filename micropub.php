@@ -79,6 +79,9 @@ class Micropub {
     // load_input().
 	protected static $input;
 
+	// associative array, populated by authorize().
+	protected static $token_data;
+
 	/**
 	 * Initialize the plugin.
 	 */
@@ -182,6 +185,8 @@ class Micropub {
 
 		parse_str( $body, $resp );
 		$me = untrailingslashit( $resp['me'] );
+
+		static::$token_data = $resp;
 
 		// look for a user with the same url as the token's `me` value. search both
 		// with and without trailing slash.
@@ -313,8 +318,8 @@ class Micropub {
 	 * Handle a create request.
 	 */
 	private static function create( $user_id ) {
-		$args = static::store_mf2( static::store_geodata(
-			static::generate_post_content( static::mp_to_wp( static::$input ) ) ) );
+		$args = static::store_token_data(static::store_mf2( static::store_geodata(
+			static::generate_post_content( static::mp_to_wp( static::$input ) ) ) ) );
 		if ( $user_id ) {
 			$args['post_author'] = $user_id;
 		}
@@ -750,6 +755,22 @@ class Micropub {
 			} elseif ( substr( $location, 0, 4 ) != 'http' ) {
 				$args['meta_input']['geo_address'] = $location;
 			}
+		}
+		return $args;
+	}
+
+	/**
+	 * Store the return of the authorization endpoint as post metadata. Details:
+	 * https://indieauth.com/developers
+	 * https://tokens.indieauth.com/
+	 */
+	public static function store_token_data ( $args ) {
+		$token_data = static::$token_data;
+		if( $token_data || ( is_assoc_array( $token_data ) ) ) {
+			if ( ! isset( $args['meta_input'] ) ) {
+				$args['meta_input'] = array();
+			}
+			$args['meta_input']['token_data'] = $token_data;
 		}
 		return $args;
 	}
