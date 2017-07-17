@@ -19,6 +19,7 @@ class Recorder extends Micropub {
 	public static $status;
 	public static $response;
 	public static $input;
+	public static $micropub_auth_response;
 	public static $response_headers = array();
 	public static $download_url_filenames;
 	public static $downloaded_urls;
@@ -91,6 +92,15 @@ class MicropubTest extends WP_UnitTestCase {
 			'published' => array( '2016-01-01T12:01:23Z' ),
 			'location' => array( 'geo:42.361,-71.092;u=25000' ),
 		),
+	);
+
+	// Micropub Auth Response, based on https://tokens.indieauth.com/
+	protected static $micropub_auth_response = array(
+		'me'    =>  'http://tacos.com', // taken from WordPress' tests/user.php
+		'client_id' =>  'https://example.com',
+		'scope' =>  'post',
+		'issued_at' =>   1399155608,
+		'nonce' => 501884823,
 	);
 
 	protected static $geo = array(
@@ -293,12 +303,14 @@ class MicropubTest extends WP_UnitTestCase {
 	function test_create_basic_post() {
 		Recorder::$request_headers = array( 'Content-type' => 'application/x-www-form-urlencoded' );
 		$_POST = self::$post;
+		Recorder::$micropub_auth_response = static::$micropub_auth_response;
 		self::check_create_basic();
 	}
 
 	function test_create_basic_json() {
 		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
 		Recorder::$input = static::$mf2;
+		Recorder::$micropub_auth_response = static::$micropub_auth_response;
 		self::check_create_basic();
 	}
 
@@ -326,6 +338,8 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertGreaterThan( 0, static::$after_micropub_args['ID'] );
 
 		$this->assertEquals( static::$mf2, $this->query_source( $post->ID ) );
+
+		$this->assertEquals( static::$micropub_auth_response, get_post_meta ( $post->ID, 'micropub_auth_response', true ) ) ;
 
 		return $post;
 	}
