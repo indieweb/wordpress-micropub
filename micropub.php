@@ -761,7 +761,6 @@ class Micropub {
 
 	/**
 	 * Store the return of the authorization endpoint as post metadata. Details:
-	 * https://indieauth.com/developers
 	 * https://tokens.indieauth.com/
 	 */
 	public static function store_micropub_auth_response ( $args ) {
