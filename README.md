@@ -15,11 +15,19 @@ Supports the [full W3C Micropub CR spec](https://www.w3.org/TR/micropub/) as of 
 
 #### Filters and hooks
 
-Adds one filter: `before_micropub( $input )`
+Adds two filters:
+
+`before_micropub( $input )`
 
 Called before handling a Micropub request. Returns `$input`, possibly modified.
 
-...and one hook: `after_micropub( $input, $wp_args = null)`
+`micropub_syndicate-to( $synd_urls, $user_id )`
+
+Called to generate the list of `syndicate-to` targets to return in response to a query. Returns `$synd_urls`, an array, possibly modified.
+
+...and one hook:
+
+`after_micropub( $input, $wp_args = null)`
 
 Called after handling a Micropub request. Not called if the request fails (ie doesn't return HTTP 2xx).
 
