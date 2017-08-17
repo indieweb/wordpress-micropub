@@ -43,6 +43,15 @@ Stores [microformats2](http://microformats.org/wiki/microformats2) properties in
 
 Does *not* support multithreading. PHP doesn't really either, so it generally won't matter, but just for the record.
 
+WordPress has a [whitelist of file extensions that it allows in uploads](https://codex.wordpress.org/Uploading_Files#About_Uploading_Files_on_Dashboard). If you upload a file in a Micropub extension that doesn't have an allowed extension, the plugin will return HTTP 400 with body:
+
+```json
+{
+  "error": "invalid request",
+  "error_description": "Sorry, this file is not permitted for security reasons."
+}
+```
+
 
 ### Authentication and authorization
 
