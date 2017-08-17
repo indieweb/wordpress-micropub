@@ -477,7 +477,7 @@ class Micropub {
 
 		if ( isset( $props['published'] ) ) {
 			$args['post_date'] = iso8601_to_datetime( $props['published'][0] );
-			$args['post_date_gmt'] = get_gmt_from_date( $args['post_date'][0] );
+			$args['post_date_gmt'] = get_gmt_from_date( $args['post_date'] );
 		}
 
 		// Map micropub categories to WordPress categories if they exist, otherwise
