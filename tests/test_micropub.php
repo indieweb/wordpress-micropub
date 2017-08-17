@@ -328,6 +328,9 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( 'my summary', $post->post_excerpt );
 		$this->assertEquals( '2016-01-01 12:01:23', $post->post_date );
 
+		// Check that post_date_gmt is set. It is the same here as post_date, since the WordPress test library is set to GMT.
+		$this->assertEquals( '2016-01-01 12:01:23', $post->post_date_gmt );
+
 		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ) );
 		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ) );
 		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_address', true ) );
