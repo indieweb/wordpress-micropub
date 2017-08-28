@@ -945,8 +945,7 @@ class Micropub {
 
 	protected static function respond( $code, $resp = NULL, $args = NULL ) {
 		status_header( $code );
-		static::header( 'Content-Type',
-						'application/json; charset=' . get_option( 'blog_charset' ) );
+		static::header( 'Content-Type', 'application/json' );
 		exit( $resp ? json_encode( $resp ) : '' );
 	}
 
