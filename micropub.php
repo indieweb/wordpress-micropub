@@ -481,7 +481,7 @@ class Micropub {
 			if ( $date ) {
 				$tz_string = get_option( 'timezone_string' );
 				if ( empty( $tz_string ) ) {
-					$tz_string = 'GMT';
+					$tz_string = 'UTC';
 				}
 				$date->setTimeZone( new DateTimeZone( $tz_string ) );
 				$tz = $date->getTimezone(); 
