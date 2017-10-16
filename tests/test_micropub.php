@@ -76,7 +76,7 @@ class MicropubTest extends WP_UnitTestCase {
 		'name' => 'my name',
 		'summary' => 'my summary',
 		'category' => array( 'tag1', 'tag4' ),
-		'published' => '2016-01-01T12:01:23Z',
+		'published' => '2016-01-01T04:01:23-08:00',
 		'location' => 'geo:42.361,-71.092;u=25000',
 	);
 
@@ -89,7 +89,7 @@ class MicropubTest extends WP_UnitTestCase {
 			'name' => array( 'my name' ),
 			'summary' => array( 'my summary' ),
 			'category' => array( 'tag1', 'tag4' ),
-			'published' => array( '2016-01-01T12:01:23Z' ),
+			'published' => array( '2016-01-01T04:01:23-08:00' ),
 			'location' => array( 'geo:42.361,-71.092;u=25000' ),
 		),
 	);
@@ -975,7 +975,7 @@ EOF;
 				'name' => array( 'my name' ),
 				'category' => array( 'tag1', 'tag4', 'add tag' ),
 				'syndication' => array( 'http://synd/1', 'http://synd/2' ),
-				'published' => array( '2016-01-01T12:01:23Z' ),
+				'published' => array( '2016-01-01T04:01:23-08:00' ),
 			) ),
 			$this->query_source( $post->ID ) );
 	}
