@@ -476,8 +476,17 @@ class Micropub {
 		}
 
 		if ( isset( $props['published'] ) ) {
-			$args['post_date'] = iso8601_to_datetime( $props['published'][0] );
-			$args['post_date_gmt'] = get_gmt_from_date( $args['post_date'] );
+			$date = new DateTime( $props['published'][0] );
+			// If for whatever reason the date cannot be parsed do not include one which defaults to now
+			if ( $date ) {
+				$date->setTimeZone( new DateTimeZone( get_option( 'timezone_string' ) ) );
+				$tz = $date->getTimezone(); 
+				// Pass this argument to the filter for use
+				$args['timezone'] = $tz->getName();
+				$args['post_date'] = $date->format( 'Y-m-d H:i:s' );
+				$date->setTimeZone( new DateTimeZone( 'GMT' ) );
+				$args['post_date_gmt'] = $date->format( 'Y-m-d H:i:s' );
+			}
 		}
 
 		// Map micropub categories to WordPress categories if they exist, otherwise
