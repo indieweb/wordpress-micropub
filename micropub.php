@@ -479,7 +479,11 @@ class Micropub {
 			$date = new DateTime( $props['published'][0] );
 			// If for whatever reason the date cannot be parsed do not include one which defaults to now
 			if ( $date ) {
-				$date->setTimeZone( new DateTimeZone( get_option( 'timezone_string' ) ) );
+				$tz_string = get_option( 'timezone_string' );
+				if ( empty( $tz_string ) ) {
+					$tz_string = 'GMT';
+				}
+				$date->setTimeZone( new DateTimeZone( $tz_string ) );
 				$tz = $date->getTimezone(); 
 				// Pass this argument to the filter for use
 				$args['timezone'] = $tz->getName();
