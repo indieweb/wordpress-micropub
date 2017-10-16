@@ -135,6 +135,8 @@ To set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https
 = 1.3 (unreleased) =
 * Saves [access token response](https://tokens.indieauth.com/) in a post meta field `micropub_auth_response`.
 * Bug fix for `post_date_gmt`
+* Store timezone from published in arguments passed to micropub filter
+* Correctly handle published times that are in a different timezone than the site.
 
 = 1.2 (2017-06-25) =
 * Support [OwnYourSwarm](https://ownyourswarm.p3k.io/)'s [custom `checkin` microformats2 property](https://ownyourswarm.p3k.io/docs#checkins), including auto-generating content if necessary.
