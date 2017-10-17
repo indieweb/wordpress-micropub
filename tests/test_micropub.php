@@ -1238,4 +1238,15 @@ EOF;
 		$mf2 = $this->query_source( $post->ID );
 		$this->assertEquals( $input, $mf2);
 	}
+
+	function test_create_with_no_timezone() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+		static::$mf2['properties']['published'] = array( '2016-01-01T12:01:23Z' );
+		Recorder::$input = static::$mf2;
+		Recorder::$micropub_auth_response = static::$micropub_auth_response;
+		self::check_create_basic();
+	}
+
+
+
 }
