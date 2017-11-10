@@ -9,24 +9,7 @@
  Version: 1.3
 */
 
-/*
- * New filter: before_micropub( $input )
- *   Called before handling a Micropub request. Returns $input, possibly modified.
- *
- * New action: after_micropub( $input, $wp_args = null)
- *   Called after handling a Micropub request. Not called if the request fails
- *   (ie doesn't return HTTP 2xx).
- *
- * Arguments:
- *
- * $input: associative array, the Micropub request in JSON format:
- *   http://micropub.net/draft/index.html#json-syntax . If the request was
- *   form-encoded or a multipart file upload, it's converted to JSON format.
- *
- * $wp_args: optional associative array. For creates and updates, this is the
- *   arguments passed to wp_insert_post or wp_update_post. For deletes and
- *   undeletes, args['ID'] contains the post id to be (un)deleted. Null for queries.
- */
+/* See README for supported filters and actions. */
 
 // Example command lines for testing:
 // Form-encoded:
@@ -219,8 +202,16 @@ class Micropub {
 		$action = static::$input['action'];
 		$url = static::$input['url'];
 
+		// check that we support all requested syndication targets
+		$synd_supported = apply_filters( 'micropub_syndicate-to', array(), $user_id );
+		$synd_requested = static::$input['properties']['syndicate-to'];
+		$unknown = array_diff( $synd_requested, $synd_supported );
+
+		if ( $unknown ) {
+			static::error( 400, 'Unknown syndicate-to targets: ' . implode(', ', $unknown ) );
+
 		// create
-		if ( ! $url || $action == 'create' ) {
+		} elseif ( ! $url || $action == 'create' ) {
 			if ( $user_id && ! user_can( $user_id, 'publish_posts' ) ) {
 				static::error( 403, 'user id ' . $user_id . ' cannot publish posts' );
 			}

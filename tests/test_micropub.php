@@ -347,6 +347,32 @@ class MicropubTest extends WP_UnitTestCase {
 		return $post;
 	}
 
+	public static function syndications( $synd_urls, $user_id ) {
+		return array( 'instagram', 'twitter' );
+	}
+
+	function test_create_with_supported_syndicate_to() {
+		add_filter( 'micropub_syndicate-to', array( $this, 'syndications' ) );
+
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+		Recorder::$input = static::$mf2;
+		Recorder::$input['properties']['syndicate-to'] = array( 'twitter' );
+		Recorder::$micropub_auth_response = static::$micropub_auth_response;
+
+		self::check_create();
+	}
+
+	function test_create_with_unsupported_syndicate_to() {
+		add_filter( 'micropub_syndicate-to', array( $this, 'syndications' ) );
+
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+		Recorder::$input = static::$mf2;
+		Recorder::$input['properties']['syndicate-to'] = array( 'twitter', 'facebook' );
+		Recorder::$micropub_auth_response = static::$micropub_auth_response;
+
+		$this->check( 400, 'Unknown syndicate-to targets: facebook' );
+	}
+
 	function test_create_content_html_post() {
 		$_POST = array(
 			'h' => 'entry',
