@@ -520,25 +520,19 @@ class Micropub {
 		$props = static::$input['replace'] ?: static::$input['properties'];
 		$lines = array();
 
-		// Special case OwnYourSwarm's checkin property; auto generate content for
-		// it even if Post Kinds or an mf2-aware theme is installed. Discussion:
-		// https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-300805891
+		if ( $args['post_content'] &&
+			 ( current_theme_supports( 'microformats2' ) ||
+			   // Post Kinds: https://wordpress.org/plugins/indieweb-post-kinds/
+			   taxonomy_exists( 'kind' ) ) ) {
+			return $args;
+		}
+
 		$checkin = $props['checkin'][0];
 		if ( $checkin ) {
 			$name = $checkin['properties']['name'][0];
 			$urls = $checkin['properties']['url'];
 			$lines[] = '<p>Checked into <a class="h-card p-location" href="' .
 				($urls[1] ?: $urls[0]) . '">' . $name . '</a>.</p>';
-		}
-
-		if ( $args['post_content'] &&
-			 ( current_theme_supports( 'microformats2' ) ||
-			   // Post Kinds: https://wordpress.org/plugins/indieweb-post-kinds/
-			   taxonomy_exists( 'kind' ) ) ) {
-			if ( $lines ) {
-				$args['post_content'] .= "\n" . implode( "\n", $lines ) ;
-			}
-			return $args;
 		}
 
 		$verbs = array(
@@ -550,10 +544,15 @@ class Micropub {
 		// interactions
 		foreach ( array_keys( $verbs ) as $prop ) {
 			$val = $props[ $prop ][0];
-			if ( $val ) {
+			if ( is_string( $val ) ) {
 				$lines[] = '<p>' . $verbs[ $prop ] .
 						   ' <a class="u-' . $prop . '" href="' .
 						   $val . '">' . $val . '</a>.</p>';
+			}
+			if ( is_array( $val ) && isset( $val['name'] ) && isset( $val['url'] ) ) {
+				$lines[] = '<p>' . $verbs[ $prop ] .
+						  ' <a class="u-' . $prop . '" href="' .
+						  $val['url'] . '">' . $val['name'] . '</a>.</p>';
 			}
 		}
 
@@ -570,8 +569,13 @@ class Micropub {
 		// bookmark
 		if ( isset( $props['bookmark-of'] ) ) {
 			foreach ( $props['bookmark-of'] as $bookmark ) {
-				$lines[] = '<p>Bookmarked <a class="u-bookmark-of" href="' .
-						 $bookmark . '">' . $bookmark . '</a>.</p>';
+				if ( is_string( $bookmark ) ) {
+					$lines[] = '<p>Bookmarked <a class="u-bookmark-of" href="' .
+							 $bookmark . '">' . $bookmark . '</a>.</p>';
+				}
+				if ( is_array( $bookmark ) && isset( $bookmark['name'] ) && isset( $bookmark['url'] ) ) {
+					$lines[] = '<p>Bookmarked <a class="u-bookmark-of" href="' . $bookmark['url'] . '">' . $bookmark['name'] . '</a>.</p>';
+				}
 			}
 		}
 
@@ -596,8 +600,15 @@ class Micropub {
 				break;
 			}
 		}
-
-		$args['post_content'] = implode( "\n", $lines );
+		// If the theme supports microformats2 or Post Kinds is being used shunt the generated summary into the excerpt field
+		if (     ( current_theme_supports( 'microformats2' ) ||
+			// Post Kinds: https://wordpress.org/plugins/indieweb-post-kinds/
+			taxonomy_exists( 'kind' ) ) ) {
+				$args['post_excerpt'] = implode( "\n", $lines );
+			}
+		else { 
+			$args['post_content'] = implode( "\n", $lines );
+		}
 		return $args;
 	}
 

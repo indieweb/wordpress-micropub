@@ -137,6 +137,8 @@ To set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https
 * Bug fix for `post_date_gmt`
 * Store timezone from published in arguments passed to micropub filter
 * Correctly handle published times that are in a different timezone than the site.
+* Remove Own Your Swarm override for Post Kinds and Microformats2 and instead shunt the generated content into the excerpt
+* Handle nested properties in bookmarks, likes, replies, and reposts if a name is passed in addition to a URL
 
 = 1.2 (2017-06-25) =
 * Support [OwnYourSwarm](https://ownyourswarm.p3k.io/)'s [custom `checkin` microformats2 property](https://ownyourswarm.p3k.io/docs#checkins), including auto-generating content if necessary.
