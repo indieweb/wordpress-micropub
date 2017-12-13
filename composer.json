@@ -1,0 +1,26 @@
+{
+    "require": {
+	"php": ">=5.2.0",
+	"composer/installers": "~1.0"
+    },
+    "require-dev": {
+        "dealerdirect/phpcodesniffer-composer-installer": "^0.4",
+	"squizlabs/php_codesniffer": "^2.2 || ^3.0.2",
+        "wimg/php-compatibility": "dev-master",
+        "wp-coding-standards/wpcs": "dev-master",
+        "wpreadme2markdown/wp2md": "^3.0"
+    },
+    "prefer-stable" : true,
+    "scripts": {
+        "lint": "phpcs",
+	"install-codestandards": [
+		"Dealerdirect\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\Plugin::run"
+	],
+	"update-readme": [
+		"wp2md -i readme.txt | tail -n +12 > readme.md"
+	],
+	"post-update-cmd": [
+		"@update-readme"
+	]
+    }
+}
