@@ -1,8 +1,9 @@
-# wordpress-micropub [![Circle CI](https://circleci.com/gh/snarfed/wordpress-micropub.svg?style=svg)](https://circleci.com/gh/snarfed/wordpress-micropub)
+A [Micropub](http://micropub.net/) server plugin. Available in the WordPress plugin directory at [wordpress.org/plugins/micropub](https://wordpress.org/plugins/micropub/).
 
-A [Micropub](http://micropub.net/) server plugin for [WordPress](https://wordpress.org/). Available in the WordPress plugin directory at [wordpress.org/plugins/micropub](https://wordpress.org/plugins/micropub/).
 
-From [micropub.net](http://micropub.net/):
+## Description 
+
+[![Circle CI](https://circleci.com/gh/snarfed/wordpress-micropub.svg?style=svg)](https://circleci.com/gh/snarfed/wordpress-micropub)
 
 > Micropub is an open API standard that is used to create posts on one's own domain using third-party clients. Web apps and native apps (e.g. iPhone, Android) can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com.
 
@@ -11,10 +12,15 @@ Once you've installed and activated the plugin, try using [Quill](http://quill.p
 Supports the [full W3C Micropub CR spec](https://www.w3.org/TR/micropub/) as of 2016-10-18, except for the optional media endpoint. Media may be uploaded directly to the wordpress-micropub endpoint as multipart/form-data, or sideloaded from URLs.
 
 
-### WordPress details
+## License 
 
-#### Filters and hooks
+This project is placed in the public domain. You may also use it under the [CC0 license](http://creativecommons.org/publicdomain/zero/1.0/).
 
+
+## WordPress details 
+
+
+### Filters and hooks 
 Adds two filters:
 
 `before_micropub( $input )`
@@ -33,11 +39,11 @@ Called after handling a Micropub request. Not called if the request fails (ie do
 
 Arguments:
 
-`$input`: associative array, the Micropub request in [JSON format](http://micropub.net/draft/index.html#json-syntax). If the request was form-encoded or a multipart file upload, it's converted to JSON format.
+* `$input`: associative array, the Micropub request in [JSON format](http://micropub.net/draft/index.html#json-syntax). If the request was form-encoded or a multipart file upload, it's converted to JSON format.
+* `$wp_args`: optional associative array. For creates and updates, this is the arguments passed to `wp_insert_post` or `wp_update_post`. For deletes and undeletes, `args['ID']` contains the post id to be (un)deleted. Null for queries.
 
-`$wp_args`: optional associative array. For creates and updates, this is the arguments passed to wp_insert_post or wp_update_post. For deletes and undeletes, args['ID'] contains the post id to be (un)deleted. Null for queries.
 
-#### Other
+### Other 
 
 Stores [microformats2](http://microformats.org/wiki/microformats2) properties in [post metadata](http://codex.wordpress.org/Function_Reference/post_meta_Function_Examples) with keys prefixed by `mf2_`. [Details here.](https://indiewebcamp.com/WordPress_Data#Microformats_data) All values are arrays; use `unserialize()` to deserialize them.
 
@@ -45,15 +51,14 @@ Does *not* support multithreading. PHP doesn't really either, so it generally wo
 
 WordPress has a [whitelist of file extensions that it allows in uploads](https://codex.wordpress.org/Uploading_Files#About_Uploading_Files_on_Dashboard). If you upload a file in a Micropub extension that doesn't have an allowed extension, the plugin will return HTTP 400 with body:
 
-```json
-{
-  "error": "invalid request",
-  "error_description": "Sorry, this file is not permitted for security reasons."
-}
-```
+    {
+      "error": "invalid request",
+      "error_description": "Sorry, this file is not permitted for security reasons."
+    }
 
 
-### Authentication and authorization
+
+## Authentication and authorization 
 
 Supports the full OAuth2/IndieAuth authentication and authorization flow. Defaults to IndieAuth. Custom auth and token endpoints can be used by overriding the `MICROPUB_AUTHENTICATION_ENDPOINT` and `MICROPUB_TOKEN_ENDPOINT` endpoints. If the token's `me` value matches a WordPress user's URL, that user will be used. Otherwise, the token must match the site's URL, and no user will be used.
 
@@ -62,28 +67,49 @@ Alternatively, you can set `MICROPUB_LOCAL_AUTH` to 1 to use WordPress's interna
 Finally, for ease of development, if the WordPress site is running on `localhost`, it logs a warning if the access token is missing or invalid and still allows the request.
 
 
-### Troubleshooting
+
+## Installation 
+
+Install from the WordPress plugin directory or put `micropub.php` in your plugin directory. No setup needed.
+
+
+
+## Configuration Options 
+
+These configuration options can be enabled by adding them to your wp-config.php
+
+* `define('MICROPUB_LOCAL_AUTH', '1')` - Bypasses Micropub authentication in favor of WordPress authentication
+* `define('MICROPUB_AUTHENTICATION_ENDPOINT', 'https://indieauth.com/auth')` - Define a custom authentication endpoint
+* `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` - Define a custom token endpoint
+* `define('MICROPUB_DRAFT_MODE', '1')` - Set all Micropub posts to draft mode
+
+
+## Frequently Asked Questions 
 
 If your Micropub client includes an `Authorization` HTTP request header but you still get an HTTP 401 response with body `missing access token`, your server may be stripping the `Authorization` header. If you're on Apache, [try adding this line to your `.htaccess` file](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299202820):
 
-```
-SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
-```
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 
 If that doesn't work, [try this line](https://github.com/georgestephanis/application-passwords/wiki/Basic-Authorization-Header----Missing):
 
-```
-RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-```
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-If that doesn't work, you may need to ask your hosting provider to whitelist the `Authorization` header for your account. If they refuse, you can [pass it through Apache with an alternate name](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299569822), but [you'll need to edit this plugin's code to read from that alternate name](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299569822).
+If that doesn't work either, you may need to ask your hosting provider to whitelist the `Authorization` header for your account. If they refuse, you can [pass it through Apache with an alternate name](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299569822), but [you'll need to edit this plugin's code to read from that alternate name](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299569822).
 
 
-### License
+## Upgrade Notice 
 
-This project is placed in the public domain. You may also use it under the [CC0 license](http://creativecommons.org/publicdomain/zero/1.0/).
+None yet.
 
-### Development
+
+## Screenshots 
+
+None.
+
+
+## Development 
+
+The canonical repo is http://github.com/snarfed/wordpress-micropub . Feedback and pull requests are welcome!
 
 To add a new release to the WordPress plugin directory, run `push.sh`.
 
@@ -103,37 +129,46 @@ To set up your local environment to run the unit tests:
     OK (1 test, 3 assertions)
     ```
 
-To set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https://make.wordpress.org/core/handbook/coding-standards/php/):
+To set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https://make.wordpress.org/core/handbook/coding-standards/php/) and [PHP 5.3 Compatibility](https://github.com/wimg/PHPCompatibility):
 
-1. Install [PHPCS](https://github.com/squizlabs/PHP_CodeSniffer).
-1. Install and connect [WordPress-Coding-Standards](https://github.com/WordPress-Coding-Standards/WordPress-Coding-Standards).
-1. Run in command line or install a plugin for your favorite editor.
-1. To list coding standard issues in a file, run `phpcs --standard=phpcs.ruleset.xml micropub.php`.
+1. Install [Composer](https://getcomposer.org).
+1. Run `composer install` which will install all dependencies for PHP Codesniffer and the standards required
+1. To list coding standard issues in a file, run `phpcs --standard=phpcs.xml`
 1. If you want to try to automatically fix issues, run `phpcbf` with the same arguments as `phpcs`.
 
+To automatically convert the readme.txt file to readme.md, you may, if you have installed composer as noted in the previous section, enter `composer update-readme` to have the .txt file converted
+into markdown and saved to readme.md.
 
-### Changelog
 
-#### 1.3 (unreleased)
+## Changelog 
+
+
+### 1.3 (unreleased) 
 * Saves [access token response](https://tokens.indieauth.com/) in a post meta field `micropub_auth_response`.
 * Bug fix for `post_date_gmt`
 * Store timezone from published in arguments passed to micropub filter
 * Correctly handle published times that are in a different timezone than the site.
+* Set minimum version to PHP 5.3
+* Adhere to WordPress Coding Standards
 
 
-#### 1.2 (2017-06-25)
+### 1.2 (2017-06-25) 
 * Support [OwnYourSwarm](https://ownyourswarm.p3k.io/)'s [custom `checkin` microformats2 property](https://ownyourswarm.p3k.io/docs#checkins), including auto-generating content if necessary.
 * Support `u-bookmark-of`.
 
-#### 1.1 (2017-03-30)
+
+### 1.1 (2017-03-30) 
 * Support [`h-adr`](http://microformats.org/wiki/h-adr), [`h-geo`](http://microformats.org/wiki/h-geo), and plain text values for [`p-location`](http://microformats.org/wiki/h-event#p-location).
 * Bug fix for create/update with `content[html]`.
 
-#### 1.0.1
+
+### 1.0.1 
 * Remove accidental dependence on PHP 5.3 (#46).
 
-#### 1.0
-Substantial update. Supports [full W3C Micropub spec](https://www.w3.org/TR/micropub/), except for optional media endpoint.
+
+### 1.0 
+Substantial update. Supports [full W3C Micropub spec](https://www.w3.org/TR/micropub/), except for optional
+media endpoint.
 
 * Change `mf2_*` post meta format from multiple separate values to single array value that can be deserialized with `unserialize`.
 * Change the `before_micropub` filter's signature from `( $wp_args )` to `( $input )` (microformats2 associative array).
@@ -141,7 +176,8 @@ Substantial update. Supports [full W3C Micropub spec](https://www.w3.org/TR/micr
 * Post content will not be automatically marked up if theme supports microformats2 or [Post Kinds plugin](https://wordpress.org/plugins/indieweb-post-kinds/) is enabled.
 * Add PHP Codesniffer File.
 
-#### 0.4
+
+### 0.4 
 * Store all properties in post meta except those in a blacklist.
 * Support setting authentication and token endpoint in wp-config by setting `MICROPUB_AUTHENTICATION_ENDPOINT` and `MICROPUB_TOKEN_ENDPOINT`.
 * Support setting all micropub posts to draft in wp-config for testing by setting `MICROPUB_DRAFT_MODE` in wp-config.
@@ -149,14 +185,18 @@ Substantial update. Supports [full W3C Micropub spec](https://www.w3.org/TR/micr
 * Set content to summary if no content provided.
 * Support querying for syndicate-to and future query options.
 
-#### 0.3
+
+### 0.3 
 * Use the specific WordPress user whose URL matches the access token, if possible.
 * Set `post_date_gmt` as well as `post_date`.
 
-#### 0.2
+
+### 0.2 
 * Support more Micropub properties: `photo`, `like-of`, `repost-of`, `in-reply-to`, `rsvp`, `location`, `category`, `h=event`.
 * Check but don't require access tokens on localhost.
 * Better error handling.
 
-#### 0.1
+
+### 0.1 
 Initial release.
+

@@ -1,24 +1,29 @@
 === Micropub ===
 Contributors: snarfed, dshanske
-Tags: micropub
+Tags: micropub, publish
 Requires at least: 4.4
-Tested up to: 4.8
+Requires PHP: 5.3
+Tested up to: 4.9.1
 Stable tag: trunk
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
 
-A Micropub server plugin.
+A [Micropub](http://micropub.net/) server plugin. Available in the WordPress plugin directory at [wordpress.org/plugins/micropub](https://wordpress.org/plugins/micropub/).
 
 == Description ==
 
-A [Micropub](http://micropub.net/) server plugin. From [micropub.net](http://micropub.net/):
+[![Circle CI](https://circleci.com/gh/snarfed/wordpress-micropub.svg?style=svg)](https://circleci.com/gh/snarfed/wordpress-micropub)
 
 > Micropub is an open API standard that is used to create posts on one's own domain using third-party clients. Web apps and native apps (e.g. iPhone, Android) can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com.
 
 Once you've installed and activated the plugin, try using [Quill](http://quill.p3k.io/) to create a new post on your site. It walks you through the steps and helps you troubleshoot if you run into any problems. After that, try other clients like [OwnYourGram](http://ownyourgram.com/), [OwnYourCheckin](https://ownyourcheckin.wirres.net/), [MobilePub](http://indiewebcamp.com/MobilePub), and [Teacup](https://teacup.p3k.io/).
 
 Supports the [full W3C Micropub CR spec](https://www.w3.org/TR/micropub/) as of 2016-10-18, except for the optional media endpoint. Media may be uploaded directly to the wordpress-micropub endpoint as multipart/form-data, or sideloaded from URLs.
+
+== License ==
+
+This project is placed in the public domain. You may also use it under the [CC0 license](http://creativecommons.org/publicdomain/zero/1.0/).
 
 == WordPress details ==
 
@@ -27,7 +32,7 @@ Adds two filters:
 
 `before_micropub( $input )`
 
-Called before handling a Micropub request. Returns $input, possibly modified.
+Called before handling a Micropub request. Returns `$input`, possibly modified.
 
 `micropub_syndicate-to( $synd_urls, $user_id )`
 
@@ -42,7 +47,7 @@ Called after handling a Micropub request. Not called if the request fails (ie do
 Arguments:
 
 * `$input`: associative array, the Micropub request in [JSON format](http://micropub.net/draft/index.html#json-syntax). If the request was form-encoded or a multipart file upload, it's converted to JSON format.
-* `$wp_args`: optional associative array. For creates and updates, this is the arguments passed to wp_insert_post or wp_update_post. For deletes and undeletes, args['ID'] contains the post id to be (un)deleted. Null for queries.
+* `$wp_args`: optional associative array. For creates and updates, this is the arguments passed to `wp_insert_post` or `wp_update_post`. For deletes and undeletes, `args['ID']` contains the post id to be (un)deleted. Null for queries.
 
 = Other =
 
@@ -115,20 +120,23 @@ To set up your local environment to run the unit tests:
 1. Open `wordpress-tests-lib/wp-tests-config.php` and add a slash to the end of the ABSPATH value. No clue why it leaves off the slash; it doesn't work without it.
 1. Run `phpunit` in the repo root dir. If you set `WP_CORE_DIR` and `WP_TESTS_DIR` above, you'll need to set them for this too. You should see output like this:
 
+    ```
     Installing...
     ...
     1 / 1 (100%)
     Time: 703 ms, Memory: 33.75Mb
     OK (1 test, 3 assertions)
+    ```
 
-To set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https://make.wordpress.org/core/handbook/coding-standards/php/):
+To set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https://make.wordpress.org/core/handbook/coding-standards/php/) and [PHP 5.3 Compatibility](https://github.com/wimg/PHPCompatibility):
 
-1. Install [PHPCS](https://github.com/squizlabs/PHP_CodeSniffer).
-1. Install and connect [WordPress-Coding-Standards](https://github.com/WordPress-Coding-Standards/WordPress-Coding-Standards).
-1. Run in command line or install a plugin for your favorite editor.
-1. To list coding standard issues in a file, run `phpcs --standard=phpcs.ruleset.xml micropub.php`.
+1. Install [Composer](https://getcomposer.org).
+1. Run `composer install` which will install all dependencies for PHP Codesniffer and the standards required
+1. To list coding standard issues in a file, run `phpcs --standard=phpcs.xml`
 1. If you want to try to automatically fix issues, run `phpcbf` with the same arguments as `phpcs`.
 
+To automatically convert the readme.txt file to readme.md, you may, if you have installed composer as noted in the previous section, enter `composer update-readme` to have the .txt file converted
+into markdown and saved to readme.md.
 
 == Changelog ==
 
@@ -137,6 +145,8 @@ To set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https
 * Bug fix for `post_date_gmt`
 * Store timezone from published in arguments passed to micropub filter
 * Correctly handle published times that are in a different timezone than the site.
+* Set minimum version to PHP 5.3
+* Adhere to WordPress Coding Standards
 
 = 1.2 (2017-06-25) =
 * Support [OwnYourSwarm](https://ownyourswarm.p3k.io/)'s [custom `checkin` microformats2 property](https://ownyourswarm.p3k.io/docs#checkins), including auto-generating content if necessary.

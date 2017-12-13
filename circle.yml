@@ -23,7 +23,10 @@ machine:
   environment:
     WP_CORE_DIR: $HOME/wordpress
     WP_TESTS_DIR: $HOME/wordpress-tests-lib
-
+    PATH: $HOME/.composer/vendor/bin:$PATH
 test:
+  pre:
+    - composer install
   override:
+    - ./vendor/bin/phpcs --config-set ignore_warnings_on_exit 1 --standard=phpcs.xml 
     - ./phpunit-5.7.phar --coverage-html $CIRCLE_ARTIFACTS
