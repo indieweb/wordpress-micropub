@@ -126,7 +126,7 @@ class Micropub_Plugin {
 			$user_id = static::authorize();
 		}
 
-		if ( 'GET' === $_SERVER['REQUEST_METHOD'] && isset( $_GET['q'] ) ) {
+		if ( 'GET' === $_SERVER['REQUEST_METHOD'] && isset( static::$input['q'] ) ) {
 			static::query_handler( $user_id );
 		} elseif ( 'POST' === $_SERVER['REQUEST_METHOD'] ) {
 			self::post_handler( $user_id );
@@ -144,7 +144,7 @@ class Micropub_Plugin {
 	private static function authorize() {
 		// find the access token
 		$auth  = static::get_header( 'authorization' );
-		$token = $_POST['access_token'];
+		$token = isset( $_POST['access_token'] ) ? $_POST['access_token'] : null;
 		if ( ! $auth && ! $token ) {
 			static::handle_authorize_error( 401, 'missing access token' );
 		}
@@ -298,7 +298,7 @@ class Micropub_Plugin {
 	 * @param int $user_id Authenticated User
 	 */
 	private static function query_handler( $user_id ) {
-		switch ( $_GET['q'] ) {
+		switch ( static::$input['q'] ) {
 			case 'config':
 			case 'syndicate-to':
 			case 'mp-syndicate-to':
@@ -307,12 +307,12 @@ class Micropub_Plugin {
 				$resp          = array( 'syndicate-to' => $syndicate_tos );
 				break;
 			case 'source':
-				$post_id = url_to_postid( $_GET['url'] );
+				$post_id = url_to_postid( static::$input['url'] );
 				if ( ! $post_id ) {
-					static::error( 400, 'not found: ' . $_GET['url'] );
+					static::error( 400, 'not found: ' . static::$input['url'] );
 				}
 				$resp  = static::get_mf2( $post_id );
-				$props = $_GET['properties'];
+				$props = static::$input['properties'];
 				if ( $props ) {
 					if ( ! is_array( $props ) ) {
 						$props = array( $props );
@@ -325,10 +325,10 @@ class Micropub_Plugin {
 				}
 				break;
 			default:
-				static::error( 400, 'unknown query ' . $_GET['q'] );
+				static::error( 400, 'unknown query ' . static::$input['q'] );
 		}
 
-		do_action( 'after_micropub', static::$input, $args );
+		do_action( 'after_micropub', static::$input, null );
 		static::respond( 200, $resp );
 	}
 
