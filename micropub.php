@@ -596,15 +596,35 @@ class Micropub_Plugin {
 			'like-of'     => 'Likes',
 			'repost-of'   => 'Reposted',
 			'in-reply-to' => 'In reply to',
+			'bookmark-of' => 'Bookmarked',
 		);
 
 		// interactions
 		foreach ( array_keys( $verbs ) as $prop ) {
-			$val = $props[ $prop ][0];
+			if ( wp_is_numeric_array( $props[ $prop ] ) ) {
+				$val = $props[ $prop ][0];
+			} else {
+				$val = $props[ $prop ];
+			}
 			if ( $val ) {
-				$lines[] = '<p>' . $verbs[ $prop ] .
-				  ' <a class="u-' . $prop . '" href="' .
-				  $val . '">' . $val . '</a>.</p>';
+				// Supports nested properties by turning single value properties into nested
+				// https://micropub.net/draft/#nested-microformats-objects
+				if ( is_string( $val ) ) {
+					$val = array(
+						'url' => $val,
+					);
+				}
+				if ( ! isset( $val['name'] ) && isset( $val['url'] ) ) {
+					$val['name'] = $val['url'];
+				}
+				if ( isset( $val['url'] ) ) {
+					$lines[] = sprintf(
+						'<p>%1s <a class="u-%2s" href="%3s">%4s</a>.</p>',
+						$verbs[ $prop ],
+						$prop, $val['url'],
+						$val['name']
+					);
+				}
 			}
 		}
 
@@ -616,14 +636,6 @@ class Micropub_Plugin {
 		// event
 		if ( array( 'h-event' ) === static::$input['type'] ) {
 			$lines[] = static::generate_event( static::$input );
-		}
-
-		// bookmark
-		if ( isset( $props['bookmark-of'] ) ) {
-			foreach ( $props['bookmark-of'] as $bookmark ) {
-				$lines[] = '<p>Bookmarked <a class="u-bookmark-of" href="' .
-					$bookmark . '">' . $bookmark . '</a>.</p>';
-			}
 		}
 
 		// content
