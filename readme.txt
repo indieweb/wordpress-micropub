@@ -152,6 +152,7 @@ into markdown and saved to readme.md.
 * Set minimum version to PHP 5.3
 * Adhere to WordPress Coding Standards
 * Add `micropub_query` filter
+* Support Nested Properties in Content Generation 
 
 = 1.2 (2017-06-25) =
 * Support [OwnYourSwarm](https://ownyourswarm.p3k.io/)'s [custom `checkin` microformats2 property](https://ownyourswarm.p3k.io/docs#checkins), including auto-generating content if necessary.

@@ -155,6 +155,7 @@ into markdown and saved to readme.md.
 * Set minimum version to PHP 5.3
 * Adhere to WordPress Coding Standards
 * Add `micropub_query` filter
+* Support Nested Properties in Content Generation 
 
 
 ### 1.2 (2017-06-25) 

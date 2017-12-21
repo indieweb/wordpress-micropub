@@ -935,6 +935,46 @@ EOF
 EOF
 , $post->post_content );
 	}
+	
+	// While the specification allows for nested properties, currently the Post Kinds
+	// plugin hooks into the Micropub plugin to enhance a URL in a like, bookmark, etc.
+	// by parsing the URL and trying to find the page title among other things and adds
+	// it into the input properties.
+	// https://github.com/dshanske/indieweb-post-kinds/blob/master/readme.md
+	function test_create_nested_bookmark() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$input = array(
+			'type' => array( 'h-entry' ),
+			'properties' => array(
+				'bookmark-of' => array(
+					'name' => 'Target',
+					'url' => 'http://target'
+				)
+			) );
+		$post = $this->check_create();
+		$this->assertEquals( <<<EOF
+<p>Bookmarked <a class="u-bookmark-of" href="http://target">Target</a>.</p>
+EOF
+, $post->post_content );
+	}
+
+	function test_create_multiple_bookmark_urls() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json' );
+		Recorder::$input = array(
+			'type' => array( 'h-entry' ),
+			'properties' => array(
+				'bookmark-of' => array(
+					'http://target',
+					'http://tarjet'
+				)
+			) );
+		$post = $this->check_create();
+		$this->assertEquals( <<<EOF
+<p>Bookmarked <a class="u-bookmark-of" href="http://target">http://target</a>.</p>
+EOF
+, $post->post_content );
+	}
+
 
 	function test_merges_auto_generated_content() {
 		$_POST = array(
