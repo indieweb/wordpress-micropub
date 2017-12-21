@@ -21,7 +21,7 @@ This project is placed in the public domain. You may also use it under the [CC0 
 
 
 ### Filters and hooks 
-Adds two filters:
+Adds three filters:
 
 `before_micropub( $input )`
 
@@ -30,6 +30,10 @@ Called before handling a Micropub request. Returns `$input`, possibly modified.
 `micropub_syndicate-to( $synd_urls, $user_id )`
 
 Called to generate the list of `syndicate-to` targets to return in response to a query. Returns `$synd_urls`, an array, possibly modified.
+
+`micropub_query( $resp, $input )`
+
+$resp defaults to null. If the return value is non-null, it should be an associative array that is encoded as JSON and will be returned in place of the normal micropub response.
 
 ...and one hook:
 
@@ -150,6 +154,7 @@ into markdown and saved to readme.md.
 * Correctly handle published times that are in a different timezone than the site.
 * Set minimum version to PHP 5.3
 * Adhere to WordPress Coding Standards
+* Add `micropub_query` filter
 
 
 ### 1.2 (2017-06-25) 

@@ -256,6 +256,34 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertNull( static::$after_micropub_args );
 	}
 
+
+	function test_custom_query() {
+		function custom_query( $return, $input ) {
+			if ( 'abc' === $input['q'] ) {
+				return array( 'abc' => array( '123' ) );
+			}
+			return $return;
+		}
+		add_filter( 'micropub_query', 'custom_query', 10, 2 );
+		$_GET['q'] = 'abc';
+		$expected = array( 'abc' => array( '123' ) );
+		$this->check( 200, $expected );
+
+		$this->assertEquals( $_GET, static::$before_micropub_input );
+		$this->assertEquals( $_GET, static::$after_micropub_input );
+		$this->assertNull( static::$after_micropub_args );
+
+		// Check to ensure default options are still working
+		$_GET['q'] = 'config';
+		$expected = array( 'syndicate-to' => array() );
+		$this->check( 200, $expected );
+
+		$this->assertEquals( $_GET, static::$before_micropub_input );
+		$this->assertEquals( $_GET, static::$after_micropub_input );
+		$this->assertNull( static::$after_micropub_args );
+	}
+
+
 	function test_query_source() {
 		$_POST = self::$post;
 		$post = $this->check_create();
