@@ -298,34 +298,37 @@ class Micropub_Plugin {
 	 * @param int $user_id Authenticated User
 	 */
 	private static function query_handler( $user_id ) {
-		switch ( static::$input['q'] ) {
-			case 'config':
-			case 'syndicate-to':
-			case 'mp-syndicate-to':
-				// return empty syndication target with filter
-				$syndicate_tos = apply_filters( 'micropub_syndicate-to', array(), $user_id );
-				$resp          = array( 'syndicate-to' => $syndicate_tos );
-				break;
-			case 'source':
-				$post_id = url_to_postid( static::$input['url'] );
-				if ( ! $post_id ) {
-					static::error( 400, 'not found: ' . static::$input['url'] );
-				}
-				$resp  = static::get_mf2( $post_id );
-				$props = static::$input['properties'];
-				if ( $props ) {
-					if ( ! is_array( $props ) ) {
-						$props = array( $props );
+		$resp = apply_filters( 'micropub_query', null, static::$input );
+		if ( ! $resp ) {
+			switch ( static::$input['q'] ) {
+				case 'config':
+				case 'syndicate-to':
+				case 'mp-syndicate-to':
+					// return empty syndication target with filter
+					$syndicate_tos = apply_filters( 'micropub_syndicate-to', array(), $user_id );
+					$resp          = array( 'syndicate-to' => $syndicate_tos );
+					break;
+				case 'source':
+					$post_id = url_to_postid( static::$input['url'] );
+					if ( ! $post_id ) {
+						static::error( 400, 'not found: ' . static::$input['url'] );
 					}
-					$resp = array(
-						'properties' => array_intersect_key(
-							$resp['properties'], array_flip( $props )
-						),
-					);
-				}
-				break;
-			default:
-				static::error( 400, 'unknown query ' . static::$input['q'] );
+					$resp  = static::get_mf2( $post_id );
+					$props = static::$input['properties'];
+					if ( $props ) {
+						if ( ! is_array( $props ) ) {
+							$props = array( $props );
+						}
+						$resp = array(
+							'properties' => array_intersect_key(
+								$resp['properties'], array_flip( $props )
+							),
+						);
+					}
+					break;
+				default:
+					static::error( 400, 'unknown query ' . static::$input['q'] );
+			}
 		}
 
 		do_action( 'after_micropub', static::$input, null );
