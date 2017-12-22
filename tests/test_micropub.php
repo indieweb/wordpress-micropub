@@ -1341,6 +1341,71 @@ EOF;
 		self::check_create_basic();
 	}
 
+	function test_create_draft_status() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+  		$input = Recorder::$input = array(
+			'type' => array( 'h-entry' ),
+			'properties' => array(
+				'post-status' => array( 'draft' ),
+				'content' => array( 'This is a test' )
+			)
+		);
+		$post = self::check_create();
+		$this->assertEquals( 'draft', $post->post_status );
+	}
+
+	function test_create_publish_status() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+  		$input = Recorder::$input = array(
+			'type' => array( 'h-entry' ),
+			'properties' => array(
+				'post-status' => array( 'published' ),
+				'content' => array( 'This is a test' )
+			)
+		);
+		$post = self::check_create();
+		$this->assertEquals( 'publish', $post->post_status );
+	}
+
+
+	function test_create_private_status() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+  		$input = Recorder::$input = array(
+			'type' => array( 'h-entry' ),
+			'properties' => array(
+				'visibility' => array( 'private' ),
+				'content' => array( 'This is a test' )
+			)
+		);
+		$post = self::check_create();
+		$this->assertEquals( 'private', $post->post_status );
+	}
+
+	function test_create_custom_visibility() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+  		$input = Recorder::$input = array(
+			'type' => array( 'h-entry' ),
+			'properties' => array(
+				'visibility' => array( 'limited' ),
+				'content' => array( 'This is a test' )
+			)
+		);
+		$this->check( 400, array( 'error' => 'invalid_request',
+			'error_description' => 'Invalid Post Status' ) );
+	}
+
+	function test_create_custom_status() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+  		$input = Recorder::$input = array(
+			'type' => array( 'h-entry' ),
+			'properties' => array(
+				'post-status' => array( 'fakestatus' ),
+				'content' => array( 'This is a test' )
+			)
+		);
+		$this->check( 400, array( 'error' => 'invalid_request',
+			'error_description' => 'Invalid Post Status' ) );
+	}
 
 
 }
