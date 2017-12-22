@@ -53,6 +53,15 @@ Stores [microformats2](http://microformats.org/wiki/microformats2) properties in
 
 Does *not* support multithreading. PHP doesn't really either, so it generally won't matter, but just for the record.
 
+Supports Experimental Properties for [Post Status](https://indieweb.org/Micropub-extensions#Post_Status) and [Visibility](https://indieweb.org/Micropub-extensions#Visibility). Visibility can be either
+`public` or `private`. Setting it to `private` will set the post status to private. Post Status may be set to either `published` or `draft`. If visibility or post status are not set to one of these 
+options, the plugin will return HTTP 400 with body:
+
+    {
+      "error": "invalid_request",
+      "error_description": "Invalid Post Status"
+    }
+
 WordPress has a [whitelist of file extensions that it allows in uploads](https://codex.wordpress.org/Uploading_Files#About_Uploading_Files_on_Dashboard). If you upload a file in a Micropub extension that doesn't have an allowed extension, the plugin will return HTTP 400 with body:
 
     {
@@ -85,7 +94,6 @@ These configuration options can be enabled by adding them to your wp-config.php
 * `define('MICROPUB_LOCAL_AUTH', '1')` - Bypasses Micropub authentication in favor of WordPress authentication
 * `define('MICROPUB_AUTHENTICATION_ENDPOINT', 'https://indieauth.com/auth')` - Define a custom authentication endpoint
 * `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` - Define a custom token endpoint
-* `define('MICROPUB_DRAFT_MODE', '1')` - Set all Micropub posts to draft mode
 
 
 ## Frequently Asked Questions 
@@ -156,7 +164,7 @@ into markdown and saved to readme.md.
 * Adhere to WordPress Coding Standards
 * Add `micropub_query` filter
 * Support Nested Properties in Content Generation 
-
+* Deprecate `MICROPUB_DRAFT_MODE` configuration option in favor of setting option
 
 ### 1.2 (2017-06-25) 
 * Support [OwnYourSwarm](https://ownyourswarm.p3k.io/)'s [custom `checkin` microformats2 property](https://ownyourswarm.p3k.io/docs#checkins), including auto-generating content if necessary.

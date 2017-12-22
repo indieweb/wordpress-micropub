@@ -82,6 +82,18 @@ class Micropub_Plugin {
 		add_action( 'send_headers', array( $cls, 'http_header' ) );
 		add_filter( 'host_meta', array( $cls, 'jrd_links' ) );
 		add_filter( 'webfinger_user_data', array( $cls, 'jrd_links' ) );
+		// Register Setting
+		register_setting(
+			'writing', // Option Group Writing
+			'micropub_default_post_status', // Setting Name
+			array(
+				'type'              => 'string',
+				'description'       => 'Default Post Status for Micropub Server',
+				'sanitize_callback' => 'sanitize_text_field',
+				'show_in_rest'      => false,
+				'default'           => MICROPUB_DRAFT_MODE ? 'draft' : 'publish', // If not set can be set with deprecated property
+			)
+		);
 	}
 
 	/**
@@ -349,7 +361,10 @@ class Micropub_Plugin {
 		if ( $user_id ) {
 			$args['post_author'] = $user_id;
 		}
-		$args['post_status'] = MICROPUB_DRAFT_MODE ? 'draft' : 'publish';
+		$args['post_status'] = static::post_status( static::$input );
+		if ( ! $args['post_status'] ) {
+			static::error( 400, 'Invalid Post Status' );
+		}
 		if ( WP_DEBUG ) {
 			error_log( 'wp_insert_post with args: ' . serialize( $args ) );
 		}
@@ -479,6 +494,39 @@ class Micropub_Plugin {
 			return;
 		}
 		static::respond( $code, $msg );
+	}
+
+	private static function post_status( $mf2 ) {
+		$props          = $mf2['properties'];
+		$visibilitylist = array( array( 'private' ), array( 'public' ) );
+		if ( isset( $props['visibility'] ) ) {
+			if ( ! in_array( $props['visibility'], $visibilitylist, true ) ) {
+				// Returning null will cause the server to return a 400 error
+				return null;
+			}
+			if ( array( 'private' ) === $props['visibility'] ) {
+				return 'private';
+			}
+		}
+		if ( ! isset( $props['post-status'] ) ) {
+			return get_option( 'micropub_default_post_status' );
+		} else {
+			//  According to the proposed specification these are the only two properties supported.
+			// https://indieweb.org/Micropub-extensions#Post_Status
+			// For now these are the only two we will support even though WordPress defaults to 8 and allows custom
+			// But makes it easy to change
+			$statuslist = array( array( 'published' ), array( 'draft' ) );
+			if ( ! in_array( $props['post-status'], $statuslist, true ) ) {
+				// Returning null will cause the server to return a 400 error
+				return null;
+			}
+			// Map published to the WordPress property publish.
+			if ( array( 'published' ) === $props['post-status'] ) {
+				return 'publish';
+			}
+			return 'draft';
+		}
+		// Execution will never reach here
 	}
 
 	/**
