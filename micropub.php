@@ -568,35 +568,22 @@ class Micropub_Plugin {
 	 * and friends.
 	 */
 	public static function generate_post_content( $args ) {
-		$props = static::$input['replace'] ?: static::$input['properties'];
-		$lines = array();
-
-		// Special case OwnYourSwarm's checkin property; auto generate content for
-		// it even if Post Kinds or an mf2-aware theme is installed. Discussion:
-		// https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-300805891
-		$checkin = $props['checkin'][0];
-		if ( $checkin ) {
-			$name    = $checkin['properties']['name'][0];
-			$urls    = $checkin['properties']['url'];
-			$lines[] = '<p>Checked into <a class="h-card p-location" href="' .
-				( $urls[1] ?: $urls[0] ) . '">' . $name . '</a>.</p>';
-		}
-
-		if ( $args['post_content'] &&
-			  ( current_theme_supports( 'microformats2' ) ||
-			  // Post Kinds: https://wordpress.org/plugins/indieweb-post-kinds/
-			  taxonomy_exists( 'kind' ) ) ) {
-			if ( $lines ) {
-				$args['post_content'] .= "\n" . implode( "\n", $lines );
-			}
-			return $args;
-		}
-
-		$verbs = array(
+		$props      = static::$input['replace'] ?: static::$input['properties'];
+		$lines      = array();
+		$kindneeded = array();
+		$verbs      = array(
 			'like-of'     => 'Likes',
 			'repost-of'   => 'Reposted',
 			'in-reply-to' => 'In reply to',
 			'bookmark-of' => 'Bookmarked',
+		);
+		// Kinds are the term used for Indieweb post types in the Post Kinds plugin as post types are a WordPress term already.
+		// This endeavors to map properties to their kinds to determine if Post Kinds supports it.
+		$kindmap = array(
+			'like-of'     => 'like',
+			'repost-of'   => 'repost',
+			'in-reply-to' => 'reply',
+			'bookmark-of' => 'bookmark',
 		);
 
 		// interactions
@@ -625,17 +612,43 @@ class Micropub_Plugin {
 						$val['name']
 					);
 				}
+				$kindneeded[] = $prop;
 			}
 		}
 
 		if ( isset( $props['rsvp'] ) ) {
-			$lines[] = '<p>RSVPs <data class="p-rsvp" value="' . $props['rsvp'][0] .
+			$lines[]      = '<p>RSVPs <data class="p-rsvp" value="' . $props['rsvp'][0] .
 			  '">' . $props['rsvp'][0] . '</data>.</p>';
+			$kindneeded[] = 'rsvp';
+		}
+
+		$checkin = $props['checkin'][0];
+		if ( $checkin ) {
+			$name         = $checkin['properties']['name'][0];
+			$urls         = $checkin['properties']['url'];
+			$lines[]      = '<p>Checked into <a class="h-card p-location" href="' .
+				( $urls[1] ?: $urls[0] ) . '">' . $name . '</a>.</p>';
+			$kindneeded[] = 'checkin';
 		}
 
 		// event
 		if ( array( 'h-event' ) === static::$input['type'] ) {
-			$lines[] = static::generate_event( static::$input );
+			$lines[]      = static::generate_event( static::$input );
+			$kindneeded[] = 'event';
+		}
+		foreach ( $kindneeded as $key => $value ) {
+			if ( isset( $kindmap[ $value ] ) ) {
+				$kindneeded[ $key ] = $kindmap[ $value ];
+			}
+		}
+		// A list of enabled kinds is stored by the Post Kind plugin in kinds_termslist. This compares used properties to supported kinds.
+		$kindneeded = array_intersect( $kindneeded, get_option( 'kind_termslist', array() ) );
+
+		if ( ! $args['post_excerpt'] &&
+			  // Post Kinds plugin uses a taxonomy called kind: https://wordpress.org/plugins/indieweb-post-kinds/
+			  ( taxonomy_exists( 'kind' ) && $kindneeded ) ) {
+			$args['post_excerpt'] = implode( "\n", $lines );
+			return $args;
 		}
 
 		// content
@@ -659,7 +672,6 @@ class Micropub_Plugin {
 				break;
 			}
 		}
-
 		$args['post_content'] = implode( "\n", $lines );
 		return $args;
 	}

@@ -145,6 +145,9 @@ into markdown and saved to readme.md.
 == Changelog ==
 
 = 1.3 (unreleased) =
+* Removes support for custom checkin property(introduced in 1.2) when Post Kinds is enabled or when theme supports microformats2
+* Now generates summary content even when Post Kinds is enabled and the post kind for the property is enabled but stores this as the post excerpt if empty in accordance with the Micropub spec
+* Removes overriding summary content if theme supports microformats2 on basis of fact that no theme actually renders any of these properties as of today. This includes ZenPress, Independent Publisher, SemPress, and the Indieweb fork of TwentySixteen
 * Saves [access token response](https://tokens.indieauth.com/) in a post meta field `micropub_auth_response`.
 * Bug fix for `post_date_gmt`
 * Store timezone from published in arguments passed to micropub filter
@@ -152,7 +155,7 @@ into markdown and saved to readme.md.
 * Set minimum version to PHP 5.3
 * Adhere to WordPress Coding Standards
 * Add `micropub_query` filter
-* Support Nested Properties in Content Generation 
+* Support Nested Properties in Content Generation
 
 = 1.2 (2017-06-25) =
 * Support [OwnYourSwarm](https://ownyourswarm.p3k.io/)'s [custom `checkin` microformats2 property](https://ownyourswarm.p3k.io/docs#checkins), including auto-generating content if necessary.
