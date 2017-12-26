@@ -542,7 +542,7 @@ class MicropubTest extends WP_UnitTestCase {
 
 	function test_create_checkin_autogenerates_checkin_text_with_content_and_post_kinds() {
 		register_taxonomy( 'kind', 'post' );
-
+		update_option( 'kind_termslist', array( 'checkin' ) );
 		Recorder::$request_headers = array( 'content-type' => 'application/json' );
 		Recorder::$input = array(
 			'type' => array( 'h-entry' ),
@@ -559,9 +559,9 @@ class MicropubTest extends WP_UnitTestCase {
 		$post = self::check_create();
 
 		$this->assertEquals( 'Place', get_post_meta( $post->ID, 'geo_address', true ) );
-		$this->assertEquals( "something\n" .
-			'<p>Checked into <a class="h-card p-location" href="http://place">Place</a>.</p>',
-			$post->post_content );
+		$this->assertEquals( '<p>Checked into <a class="h-card p-location" href="http://place">Place</a>.</p>',
+			$post->post_excerpt );
+		$this->assertEquals( 'something', $post->post_content );
 	}
 
 	function check_create_content_html() {
@@ -994,7 +994,7 @@ EOF
 
 	function test_post_kinds_skips_auto_generated_content() {
 		register_taxonomy( 'kind', 'post' );
-
+		update_option( 'kind_termslist', array( 'reply' ) );
 		$_POST = array(
 			'h' => 'entry',
 			'content' => 'foo bar',
