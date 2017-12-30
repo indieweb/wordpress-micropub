@@ -21,11 +21,15 @@ This project is placed in the public domain. You may also use it under the [CC0 
 
 
 ### Filters and hooks 
-Adds three filters:
+Adds four filters:
 
 `before_micropub( $input )`
 
 Called before handling a Micropub request. Returns `$input`, possibly modified.
+
+`micropub_post_content( $post_content, $input )` 
+
+Called during the handling of a Micropub request. The content generation function is attached to this filter by default. Returns `$post_content`, possibly modified.
 
 `micropub_syndicate-to( $synd_urls, $user_id )`
 
@@ -165,6 +169,9 @@ into markdown and saved to readme.md.
 * Add `micropub_query` filter
 * Support Nested Properties in Content Generation 
 * Deprecate `MICROPUB_DRAFT_MODE` configuration option in favor of setting option
+* Remove post content generation override in case of microformats2 capable theme or Post Kinds plugin installed
+* Introduce `micropub_post_content` filter to which post content generation is attached so that a theme or plugin can modify/remove the post generation as needed
+
 
 ### 1.2 (2017-06-25) 
 * Support [OwnYourSwarm](https://ownyourswarm.p3k.io/)'s [custom `checkin` microformats2 property](https://ownyourswarm.p3k.io/docs#checkins), including auto-generating content if necessary.

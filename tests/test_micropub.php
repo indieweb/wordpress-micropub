@@ -148,8 +148,6 @@ class MicropubTest extends WP_UnitTestCase {
 
 		$this->userid = self::factory()->user->create( array( 'role' => 'editor' ) );
 		wp_set_current_user( $this->userid );
-
-		unregister_taxonomy( 'kind', 'post' );
 	}
 
 	/**
@@ -540,9 +538,7 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( '<p>Checked into <a class="h-card p-location" href="http:/a/place">A Place</a>.</p>', $post->post_content );
 	}
 
-	function test_create_checkin_autogenerates_checkin_text_with_content_and_post_kinds() {
-		register_taxonomy( 'kind', 'post' );
-
+	function test_create_checkin_autogenerates_checkin_text_with_content() {
 		Recorder::$request_headers = array( 'content-type' => 'application/json' );
 		Recorder::$input = array(
 			'type' => array( 'h-entry' ),
@@ -559,8 +555,8 @@ class MicropubTest extends WP_UnitTestCase {
 		$post = self::check_create();
 
 		$this->assertEquals( 'Place', get_post_meta( $post->ID, 'geo_address', true ) );
-		$this->assertEquals( "something\n" .
-			'<p>Checked into <a class="h-card p-location" href="http://place">Place</a>.</p>',
+		$this->assertEquals( "<p>Checked into <a class=\"h-card p-location\" href=\"http://place\">Place</a>.</p>\n" .
+			"<div class=\"e-content\">\nsomething\n</div>",
 			$post->post_content );
 	}
 
@@ -991,18 +987,6 @@ foo bar
 EOF
 , $post->post_content );
 	}
-
-	function test_post_kinds_skips_auto_generated_content() {
-		register_taxonomy( 'kind', 'post' );
-
-		$_POST = array(
-			'h' => 'entry',
-			'content' => 'foo bar',
-			'in-reply-to' => 'http://target',
-		);
-		$post = $this->check_create();
-		$this->assertEquals( 'foo bar', $post->post_content );
-}
 
 	function test_create_user_cannot_publish_posts() {
 		get_user_by( 'ID', $this->userid )->remove_role( 'editor' );
