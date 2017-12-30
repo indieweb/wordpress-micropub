@@ -82,6 +82,10 @@ class Micropub_Plugin {
 		add_action( 'send_headers', array( $cls, 'http_header' ) );
 		add_filter( 'host_meta', array( $cls, 'jrd_links' ) );
 		add_filter( 'webfinger_user_data', array( $cls, 'jrd_links' ) );
+
+		// Post Content Filter
+		add_filter( 'micropub_post_content', array( $cls, 'generate_post_content' ), 1, 2 );
+
 		// Register Setting
 		register_setting(
 			'writing', // Option Group Writing
@@ -351,13 +355,18 @@ class Micropub_Plugin {
 	 * Handle a create request.
 	 */
 	private static function create( $user_id ) {
-		$args = static::store_micropub_auth_response(
-			static::store_mf2(
-				static::store_geodata(
-					static::generate_post_content( static::mp_to_wp( static::$input ) )
-				)
-			)
-		);
+		$args = static::mp_to_wp( static::$input );
+		$args = static::store_micropub_auth_response( $args );
+
+		$post_content = isset( $args['post_content'] ) ? $args['post_content'] : '';
+		$post_content = apply_filters( 'micropub_post_content', $post_content, static::$input );
+		if ( $post_content ) {
+			$args['post_content'] = $post_content;
+		}
+
+		$args = static::store_mf2( $args );
+		$args = static::store_geodata( $args );
+
 		if ( $user_id ) {
 			$args['post_author'] = $user_id;
 		}
@@ -466,11 +475,16 @@ class Micropub_Plugin {
 		// wp_update_post sets it to the current time
 		$args['edit_date'] = true;
 
+		// Generate Post Content
+		$post_content = isset( $args['post_content'] ) ? $args['post_content'] : '';
+		$post_content = apply_filters( 'micropub_post_content', $post_content, static::$input );
+		if ( $post_content ) {
+			$args['post_content'] = $post_content;
+		}
+
 		// Store metadata from Microformats Properties
 		$args = static::store_mf2( $args );
 		$args = static::store_geodata( $args );
-		// Generate Post Content
-		$args = static::generate_post_content( $args );
 
 		if ( WP_DEBUG ) {
 			error_log( 'wp_update_post with args: ' . serialize( $args ) );
@@ -615,30 +629,9 @@ class Micropub_Plugin {
 	 * Generates and returns a post_content string suitable for wp_insert_post()
 	 * and friends.
 	 */
-	public static function generate_post_content( $args ) {
-		$props = static::$input['replace'] ?: static::$input['properties'];
+	public static function generate_post_content( $post_content, $input ) {
+		$props = $input['replace'] ?: $input['properties'];
 		$lines = array();
-
-		// Special case OwnYourSwarm's checkin property; auto generate content for
-		// it even if Post Kinds or an mf2-aware theme is installed. Discussion:
-		// https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-300805891
-		$checkin = $props['checkin'][0];
-		if ( $checkin ) {
-			$name    = $checkin['properties']['name'][0];
-			$urls    = $checkin['properties']['url'];
-			$lines[] = '<p>Checked into <a class="h-card p-location" href="' .
-				( $urls[1] ?: $urls[0] ) . '">' . $name . '</a>.</p>';
-		}
-
-		if ( $args['post_content'] &&
-			  ( current_theme_supports( 'microformats2' ) ||
-			  // Post Kinds: https://wordpress.org/plugins/indieweb-post-kinds/
-			  taxonomy_exists( 'kind' ) ) ) {
-			if ( $lines ) {
-				$args['post_content'] .= "\n" . implode( "\n", $lines );
-			}
-			return $args;
-		}
 
 		$verbs = array(
 			'like-of'     => 'Likes',
@@ -676,6 +669,14 @@ class Micropub_Plugin {
 			}
 		}
 
+		$checkin = isset( $props['checkin'] ) ? $props['checkin'][0] : null;
+		if ( $checkin ) {
+			$name    = $checkin['properties']['name'][0];
+			$urls    = $checkin['properties']['url'];
+			$lines[] = '<p>Checked into <a class="h-card p-location" href="' .
+				( $urls[1] ?: $urls[0] ) . '">' . $name . '</a>.</p>';
+		}
+
 		if ( isset( $props['rsvp'] ) ) {
 			$lines[] = '<p>RSVPs <data class="p-rsvp" value="' . $props['rsvp'][0] .
 			  '">' . $props['rsvp'][0] . '</data>.</p>';
@@ -696,8 +697,6 @@ class Micropub_Plugin {
 				$lines[] = htmlspecialchars( $content );
 			}
 			$lines[] = '</div>';
-		} elseif ( $args['post_content'] ) {
-			$lines[] = $args['post_content'];
 		}
 
 		// TODO: generate my own markup so i can include u-photo
@@ -707,9 +706,7 @@ class Micropub_Plugin {
 				break;
 			}
 		}
-
-		$args['post_content'] = implode( "\n", $lines );
-		return $args;
+		return implode( "\n", $lines );
 	}
 
 	/**
