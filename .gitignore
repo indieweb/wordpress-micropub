@@ -1,4 +1,5 @@
 private_notes
+TAGS
+vendor/*
 wordpress
 wordpress-tests-lib
-vendor/*
