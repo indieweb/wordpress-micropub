@@ -159,7 +159,7 @@ into markdown and saved to readme.md.
 ## Changelog 
 
 
-### 1.3 (unreleased) 
+### 1.3 (2017-12-31) 
 * Saves [access token response](https://tokens.indieauth.com/) in a post meta field `micropub_auth_response`.
 * Bug fix for `post_date_gmt`
 * Store timezone from published in arguments passed to micropub filter
