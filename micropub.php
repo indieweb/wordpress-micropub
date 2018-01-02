@@ -173,6 +173,10 @@ class Micropub_Plugin {
 				),
 			)
 		);
+		if ( is_wp_error( $resp ) ) {
+			static::handle_authorize_error( 502, "couldn't validate token: " . implode( ' , ', $resp->get_error_messages() ) );
+		}
+
 		$code = wp_remote_retrieve_response_code( $resp );
 		$body = wp_remote_retrieve_body( $resp );
 		parse_str( $body, $params );
