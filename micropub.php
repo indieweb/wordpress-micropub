@@ -49,7 +49,7 @@ if ( ! defined( 'MICROPUB_DRAFT_MODE' ) ) {
 	define( 'MICROPUB_DRAFT_MODE', '0' );
 }
 
-add_action( 'init', array( 'Micropub_Plugin', 'init' ) );
+add_action( 'plugins_loaded', array( 'Micropub_Plugin', 'init' ) );
 
 /**
  * Micropub Plugin Class
@@ -1093,7 +1093,7 @@ class Micropub_Plugin {
 	}
 
 	public static function header( $header, $value ) {
-		header( $header . ': ' . $value );
+		header( $header . ': ' . $value, false );
 	}
 
 	protected static function get_header( $name ) {
