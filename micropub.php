@@ -78,10 +78,14 @@ class Micropub_Plugin {
 		add_action( 'parse_query', array( $cls, 'parse_query' ) );
 
 		// endpoint discovery
-		add_action( 'wp_head', array( $cls, 'html_header' ), 99 );
-		add_action( 'send_headers', array( $cls, 'http_header' ) );
-		add_filter( 'host_meta', array( $cls, 'jrd_links' ) );
-		add_filter( 'webfinger_user_data', array( $cls, 'jrd_links' ) );
+		add_action( 'wp_head', array( $cls, 'indieauth_html_header' ), 99 );
+		add_action( 'wp_head', array( $cls, 'micropub_html_header' ), 99 );
+		add_action( 'send_headers', array( $cls, 'indieauth_http_header' ) );
+		add_action( 'send_headers', array( $cls, 'micropub_http_header' ) );
+		add_filter( 'host_meta', array( $cls, 'micropub_jrd_links' ) );
+		add_filter( 'host_meta', array( $cls, 'indieauth_jrd_links' ) );
+		add_filter( 'webfinger_user_data', array( $cls, 'micropub_jrd_links' ) );
+		add_filter( 'webfinger_user_data', array( $cls, 'indieauth_jrd_links' ) );
 
 		// Post Content Filter
 		add_filter( 'micropub_post_content', array( $cls, 'generate_post_content' ), 1, 2 );
@@ -1013,36 +1017,46 @@ class Micropub_Plugin {
 	/**
 	 * The micropub autodicovery meta tags
 	 */
-	public static function html_header() {
-		echo '<link rel="micropub" href="' . site_url( '?micropub=endpoint' ) . '">', PHP_EOL;
-		echo '<link rel="authorization_endpoint" href="' . MICROPUB_AUTHENTICATION_ENDPOINT . '">', PHP_EOL;
-		echo '<link rel="token_endpoint" href="' . MICROPUB_TOKEN_ENDPOINT . '">', PHP_EOL;
+	public static function micropub_html_header() {
+		printf( '<link rel="micropub" href="%s" />' . PHP_EOL, site_url( '?micropub=endpoint' ) );
+	}
+
+	public static function indieauth_html_header() {
+		printf( '<link rel="authorization_endpoint" href="%s" />' . PHP_EOL, get_option( 'indieauth_authorization_endpoint', MICROPUB_AUTHENTICATION_ENDPOINT ) );
+		printf( '<link rel="token_endpoint" href="%s" />' . PHP_EOL, get_option( 'indieauth_token_endpoint', MICROPUB_TOKEN_ENDPOINT ) );
 	}
 
 	/**
 	 * The micropub autodicovery http-header
 	 */
-	public static function http_header() {
-		static::header( 'Link', '<' . site_url( '?micropub=endpoint' ) . '>; rel="micropub"', false );
-		static::header( 'Link', '<' . MICROPUB_AUTHENTICATION_ENDPOINT . '>; rel="authorization_endpoint"', false );
-		static::header( 'Link', '<' . MICROPUB_TOKEN_ENDPOINT . '>; rel="token_endpoint"', false );
+	public static function micropub_http_header() {
+		static::header( 'Link', '<' . site_url( '?micropub=endpoint' ) . '>; rel="micropub"' );
+	}
+
+	public static function indieauth_http_header() {
+		static::header( 'Link', '<' . get_option( 'indieauth_authorization_endpoint', MICROPUB_AUTHENTICATION_ENDPOINT ) . '>; rel="authorization_endpoint"' );
+		static::header( 'Link', '<' . get_option( 'indieauth_token_endpoint', MICROPUB_TOKEN_ENDPOINT ) . '>; rel="token_endpoint"' );
 	}
 
 	/**
 	 * Generates webfinger/host-meta links
 	 */
-	public static function jrd_links( $array ) {
+	public static function micropub_jrd_links( $array ) {
 		$array['links'][] = array(
 			'rel'  => 'micropub',
 			'href' => site_url( '?micropub=endpoint' ),
 		);
+		return $array;
+	}
+
+	public static function indieauth_jrd_links( $array ) {
 		$array['links'][] = array(
 			'rel'  => 'authorization_endpoint',
-			'href' => MICROPUB_AUTHENTICATION_ENDPOINT,
+			'href' => get_option( 'indieauth_authorization_endpoint', MICROPUB_AUTHENTICATION_ENDPOINT ),
 		);
 		$array['links'][] = array(
 			'rel'  => 'token_endpoint',
-			'href' => MICROPUB_TOKEN_ENDPOINT,
+			'href' => get_option( 'indieauth_token_endpoint', MICROPUB_TOKEN_ENDPOINT ),
 		);
 
 		return $array;
