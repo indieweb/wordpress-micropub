@@ -77,7 +77,9 @@ WordPress has a [whitelist of file extensions that it allows in uploads](https:/
 
 ## Authentication and authorization 
 
-Supports the full OAuth2/IndieAuth authentication and authorization flow. Defaults to IndieAuth. Custom auth and token endpoints can be used by overriding the `MICROPUB_AUTHENTICATION_ENDPOINT` and `MICROPUB_TOKEN_ENDPOINT` endpoints. If the token's `me` value matches a WordPress user's URL, that user will be used. Otherwise, the token must match the site's URL, and no user will be used.
+Supports the full OAuth2/IndieAuth authentication and authorization flow. Defaults to IndieAuth. Custom auth and token endpoints can be used by overriding the `MICROPUB_AUTHENTICATION_ENDPOINT` and `MICROPUB_TOKEN_ENDPOINT` endpoints or by setting the options `indieauth_authorization_endpoint` and `indieauth_token_endpoint` which are also set by the Indieauth Plugin. 
+
+If the token's `me` value matches a WordPress user's URL, that user will be used. Otherwise, the token must match the site's URL, and no user will be used.
 
 Alternatively, you can set `MICROPUB_LOCAL_AUTH` to 1 to use WordPress's internal user login instead of tokens.
 
@@ -96,8 +98,12 @@ Install from the WordPress plugin directory or put `micropub.php` in your plugin
 These configuration options can be enabled by adding them to your wp-config.php
 
 * `define('MICROPUB_LOCAL_AUTH', '1')` - Bypasses Micropub authentication in favor of WordPress authentication
-* `define('MICROPUB_AUTHENTICATION_ENDPOINT', 'https://indieauth.com/auth')` - Define a custom authentication endpoint
+* `define('MICROPUB_AUTHENTICATION_ENDPOINT', 'https://indieauth.com/auth')` - Define a custom authentication endpoint.
 * `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` - Define a custom token endpoint
+
+These configuration options can be enabled by setting them in the WordPress options table
+* `indieauth_authorization_endpoint` - if set will override MICROPUB_AUTHENTICATION_ENDPOINT for setting a custom endpoint
+* `indieauth_token_endpoint` - if set will override MICROPUB_TOKEN_ENDPOINT for setting a custom endpoint
 
 
 ## Frequently Asked Questions 
@@ -157,6 +163,11 @@ into markdown and saved to readme.md.
 
 
 ## Changelog 
+
+
+### 1.4 (????) 
+* Separate functions that generate headers into micropub and indieauth
+* Add support for an option now used by the Indieauth plugin to set alternate token and authorization endpoints
 
 
 ### 1.3 (2017-12-31) 
