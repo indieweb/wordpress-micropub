@@ -78,15 +78,18 @@ class Micropub_Plugin {
 		add_action( 'parse_query', array( $cls, 'parse_query' ) );
 
 		// endpoint discovery
-		add_action( 'wp_head', array( $cls, 'indieauth_html_header' ), 99 );
 		add_action( 'wp_head', array( $cls, 'micropub_html_header' ), 99 );
-		add_action( 'send_headers', array( $cls, 'indieauth_http_header' ) );
 		add_action( 'send_headers', array( $cls, 'micropub_http_header' ) );
 		add_filter( 'host_meta', array( $cls, 'micropub_jrd_links' ) );
-		add_filter( 'host_meta', array( $cls, 'indieauth_jrd_links' ) );
 		add_filter( 'webfinger_user_data', array( $cls, 'micropub_jrd_links' ) );
-		add_filter( 'webfinger_user_data', array( $cls, 'indieauth_jrd_links' ) );
 
+		// Disable adding headers if local auth is set
+		if ( ! MICROPUB_LOCAL_AUTH ) {
+			add_action( 'wp_head', array( $cls, 'indieauth_html_header' ), 99 );
+			add_action( 'send_headers', array( $cls, 'indieauth_http_header' ) );
+			add_filter( 'host_meta', array( $cls, 'indieauth_jrd_links' ) );
+			add_filter( 'webfinger_user_data', array( $cls, 'indieauth_jrd_links' ) );
+		}
 		// Post Content Filter
 		add_filter( 'micropub_post_content', array( $cls, 'generate_post_content' ), 1, 2 );
 
@@ -136,12 +139,12 @@ class Micropub_Plugin {
 		}
 		static::$input = apply_filters( 'before_micropub', static::$input );
 
-		// For debug purposes be able to bypass Micropub auth with WordPress auth
+		// Be able to bypass Micropub auth with other auth
 		if ( MICROPUB_LOCAL_AUTH ) {
-			if ( ! is_user_logged_in() ) {
-				auth_redirect();
-			}
 			$user_id = get_current_user_id();
+			if ( ! $user_id ) {
+				static::handle_authorize_error( 401, 'Unauthorized' );
+			}
 		} else {
 			$user_id = static::authorize();
 		}
