@@ -81,7 +81,7 @@ Supports the full OAuth2/IndieAuth authentication and authorization flow. Defaul
 
 If the token's `me` value matches a WordPress user's URL, that user will be used. Otherwise, the token must match the site's URL, and no user will be used.
 
-Alternatively, you can set `MICROPUB_LOCAL_AUTH` to 1 to use WordPress's internal user login instead of tokens.
+Alternatively, you can set `MICROPUB_LOCAL_AUTH` to 1 to disable the plugin's authorization function, for example if you want authorization to be done by WordPress or another plugin such as the Indieauth plugin.
 
 Finally, for ease of development, if the WordPress site is running on `localhost`, it logs a warning if the access token is missing or invalid and still allows the request.
 
@@ -97,7 +97,7 @@ Install from the WordPress plugin directory or put `micropub.php` in your plugin
 
 These configuration options can be enabled by adding them to your wp-config.php
 
-* `define('MICROPUB_LOCAL_AUTH', '1')` - Bypasses Micropub authentication in favor of WordPress authentication
+* `define('MICROPUB_LOCAL_AUTH', '1')` - Disable this plugins built-in authentication.
 * `define('MICROPUB_AUTHENTICATION_ENDPOINT', 'https://indieauth.com/auth')` - Define a custom authentication endpoint.
 * `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` - Define a custom token endpoint
 
@@ -168,6 +168,8 @@ into markdown and saved to readme.md.
 ### 1.4 (????) 
 * Separate functions that generate headers into micropub and indieauth
 * Add support for an option now used by the Indieauth plugin to set alternate token and authorization endpoints
+* MICROPUB_LOCAL_AUTH configuration option adjusted to reflect that this disables the plugin built in authentication. This can hand it back to WordPress or allow another plugin to take over
+* MICROPUB_LOCAL_AUTH now disables adding auth headers to the page.
 
 
 ### 1.3 (2017-12-31) 
