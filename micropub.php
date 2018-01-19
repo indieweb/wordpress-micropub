@@ -161,6 +161,7 @@ class Micropub_Plugin {
 	/**
 	 * Validate the access token at the token endpoint.
 	 *
+	 * https://indieauth.spec.indieweb.org/#access-token-verification
 	 * If the token is valid, returns the user id to use as the post's author, or
 	 * NULL if the token only matched the site URL and no specific user.
 	 */
@@ -173,9 +174,9 @@ class Micropub_Plugin {
 		}
 
 		$resp = wp_remote_get(
-			MICROPUB_TOKEN_ENDPOINT, array(
+			get_option( 'indieauth_token_endpoint', MICROPUB_TOKEN_ENDPOINT ), array(
 				'headers' => array(
-					'Content-Type'  => 'application/x-www-form-urlencoded',
+					'Accept'        => 'application/json',
 					'Authorization' => $auth ?: 'Bearer ' . $token,
 				),
 			)
@@ -184,9 +185,9 @@ class Micropub_Plugin {
 			static::handle_authorize_error( 502, "couldn't validate token: " . implode( ' , ', $resp->get_error_messages() ) );
 		}
 
-		$code = wp_remote_retrieve_response_code( $resp );
-		$body = wp_remote_retrieve_body( $resp );
-		parse_str( $body, $params );
+		$code   = wp_remote_retrieve_response_code( $resp );
+		$body   = wp_remote_retrieve_body( $resp );
+		$params = json_decode( $body, true );
 		$scopes = explode( ' ', $params['scope'] );
 
 		if ( (int) ( $code / 100 ) !== 2 ) {
@@ -199,10 +200,9 @@ class Micropub_Plugin {
 			);
 		}
 
-		parse_str( $body, $resp );
-		$me = untrailingslashit( $resp['me'] );
+		$me = untrailingslashit( $params['me'] );
 
-		static::$micropub_auth_response = $resp;
+		static::$micropub_auth_response = $params;
 
 		// look for a user with the same url as the token's `me` value.
 		$user = static::user_url( $me );
@@ -230,6 +230,9 @@ class Micropub_Plugin {
 	 * @return null|int Return user ID if matched or null
 	**/
 	public static function user_url( $me ) {
+		if ( ! isset( $me ) ) {
+			return null;
+		}
 		$search = array(
 			'search'         => $me,
 			'search_columns' => array( 'url' ),
