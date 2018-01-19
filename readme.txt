@@ -1,9 +1,9 @@
 === Micropub ===
 Contributors: snarfed, dshanske
 Tags: micropub, publish
-Requires at least: 4.4
+Requires at least: 4.7
 Requires PHP: 5.3
-Tested up to: 4.9.1
+Tested up to: 4.9.2
 Stable tag: trunk
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
