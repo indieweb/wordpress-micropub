@@ -259,7 +259,7 @@ class Micropub_Plugin {
 
 		// check that we support all requested syndication targets
 		$synd_supported = apply_filters( 'micropub_syndicate-to', array(), $user_id );
-		$synd_requested = static::$input['properties']['syndicate-to'];
+		$synd_requested = isset( static::$input['properties']['syndicate-to'] ) ? static::$input['properties']['syndicate-to'] : array();
 		$unknown        = array_diff( $synd_requested, $synd_supported );
 
 		if ( $unknown ) {
