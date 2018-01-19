@@ -254,8 +254,8 @@ class Micropub_Plugin {
 	 */
 	public static function post_handler( $user_id ) {
 		$status = 200;
-		$action = static::$input['action'];
-		$url    = static::$input['url'];
+		$action = isset( static::$input['action'] ) ? static::$input['action'] : 'create';
+		$url    = isset( static::$input['url'] ) ? static::$input['url'] : null;
 
 		// check that we support all requested syndication targets
 		$synd_supported = apply_filters( 'micropub_syndicate-to', array(), $user_id );
