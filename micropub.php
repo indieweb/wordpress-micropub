@@ -107,6 +107,13 @@ class Micropub_Plugin {
 		);
 	}
 
+	public static function get( $array, $key, $default = array() ) {
+		if ( is_array( $array ) ) {
+			return isset( $array[ $key ] ) ? $array[ $key ] : $default;
+		}
+		return $default;
+	}
+
 	/**
 	 * Adds some query vars
 	 *
@@ -133,8 +140,8 @@ class Micropub_Plugin {
 		static::load_input();
 		if ( WP_DEBUG ) {
 			error_log(
-				'Micropub Data: ' . serialize( $_GET ) . ' ' .
-					serialize( static::$input )
+				'Micropub Data: ' . wp_json_encode( $_GET ) . ' ' .
+					wp_json_encode( static::$input )
 			);
 		}
 		static::$input = apply_filters( 'before_micropub', static::$input );
@@ -168,7 +175,7 @@ class Micropub_Plugin {
 	private static function authorize() {
 		// find the access token
 		$auth  = static::get_header( 'authorization' );
-		$token = isset( $_POST['access_token'] ) ? $_POST['access_token'] : null;
+		$token = self::get( $_POST, 'access_token' );
 		if ( ! $auth && ! $token ) {
 			static::handle_authorize_error( 401, 'missing access token' );
 		}
@@ -257,12 +264,13 @@ class Micropub_Plugin {
 	 */
 	public static function post_handler( $user_id ) {
 		$status = 200;
-		$action = isset( static::$input['action'] ) ? static::$input['action'] : 'create';
-		$url    = isset( static::$input['url'] ) ? static::$input['url'] : null;
+		$action = self::get( static::$input, 'action', 'create' );
+		$url    = self::get( static::$input, 'url' );
 
 		// check that we support all requested syndication targets
 		$synd_supported = apply_filters( 'micropub_syndicate-to', array(), $user_id );
-		$synd_requested = isset( static::$input['properties']['syndicate-to'] ) ? static::$input['properties']['syndicate-to'] : array();
+		$properties     = self::get( static::$input, 'properties' );
+		$synd_requested = self::get( $properties, 'syndicate-to' );
 		$unknown        = array_diff( $synd_requested, $synd_supported );
 
 		if ( $unknown ) {
@@ -372,7 +380,7 @@ class Micropub_Plugin {
 		$args = static::mp_to_wp( static::$input );
 		$args = static::store_micropub_auth_response( $args );
 
-		$post_content = isset( $args['post_content'] ) ? $args['post_content'] : '';
+		$post_content = self::get( $args, 'post_content', '' );
 		$post_content = apply_filters( 'micropub_post_content', $post_content, static::$input );
 		if ( $post_content ) {
 			$args['post_content'] = $post_content;
@@ -389,7 +397,7 @@ class Micropub_Plugin {
 			static::error( 400, 'Invalid Post Status' );
 		}
 		if ( WP_DEBUG ) {
-			error_log( 'wp_insert_post with args: ' . serialize( $args ) );
+			error_log( 'wp_insert_post with args: ' . wp_json_encode( $args ) );
 		}
 
 		kses_remove_filters();  // prevent sanitizing HTML tags in post_content
@@ -490,7 +498,7 @@ class Micropub_Plugin {
 		$args['edit_date'] = true;
 
 		// Generate Post Content
-		$post_content = isset( $args['post_content'] ) ? $args['post_content'] : '';
+		$post_content = self::get( $args, 'post_content', '' );
 		$post_content = apply_filters( 'micropub_post_content', $post_content, static::$input );
 		if ( $post_content ) {
 			$args['post_content'] = $post_content;
@@ -501,7 +509,7 @@ class Micropub_Plugin {
 		$args = static::store_geodata( $args );
 
 		if ( WP_DEBUG ) {
-			error_log( 'wp_update_post with args: ' . serialize( $args ) );
+			error_log( 'wp_update_post with args: ' . wp_json_encode( $args ) );
 		}
 
 		kses_remove_filters();
@@ -577,9 +585,9 @@ class Micropub_Plugin {
 			'slug'    => 'post_name',
 			'name'    => 'post_title',
 			'summary' => 'post_excerpt',
-		) as $mf2 => $wp ) {
-			if ( $props[ $mf2 ] ) {
-				$args[ $wp ] = $props[ $mf2 ][0];
+		) as $mf => $wp ) {
+			if ( isset( $props[ $mf ] ) ) {
+				$args[ $wp ] = static::get( $props[ $mf ], 0 );
 			}
 		}
 
@@ -851,8 +859,9 @@ class Micropub_Plugin {
 	 * https://codex.wordpress.org/Geodata
 	 */
 	public static function store_geodata( $args ) {
-		$location = static::$input['properties']['location'][0] ?:
-				static::$input['properties']['checkin'][0];
+		$properties = static::get( static::$input, 'properties' );
+		$location   = static::get( $properties, 'location', static::get( $properties, 'checkin' ) );
+		$location   = static::get( $location, 0, null );
 		if ( $location ) {
 			if ( ! isset( $args['meta_input'] ) ) {
 				$args['meta_input'] = array();
@@ -906,9 +915,7 @@ class Micropub_Plugin {
 	public static function store_micropub_auth_response( $args ) {
 		$micropub_auth_response = static::$micropub_auth_response;
 		if ( $micropub_auth_response || ( is_assoc_array( $micropub_auth_response ) ) ) {
-			if ( ! isset( $args['meta_input'] ) ) {
-				$args['meta_input'] = array();
-			}
+			$args['meta_input']                           = self::get( $args, 'meta_input' );
 			$args['meta_input']['micropub_auth_response'] = $micropub_auth_response;
 		}
 		return $args;
@@ -925,20 +932,19 @@ class Micropub_Plugin {
 	 */
 	public static function store_mf2( $args ) {
 		$props = static::$input['properties'];
-		if ( $props ) {
-			if ( ! isset( $args['meta_input'] ) ) {
-				$args['meta_input'] = array();
-			}
-			$type = static::$input['type'];
+		if ( ! isset( $args['ID'] ) && $props ) {
+			$args['meta_input'] = self::get( $args, 'meta_input' );
+			$type               = static::$input['type'];
 			if ( $type ) {
 				$args['meta_input']['mf2_type'] = $type;
 			}
 			foreach ( $props as $key => $val ) {
 				$args['meta_input'][ 'mf2_' . $key ] = $val;
 			}
+			return $args;
 		}
 
-		$replace = static::$input['replace'];
+		$replace = static::get( static::$input, 'replace', null );
 		if ( $replace ) {
 			foreach ( $replace as $prop => $val ) {
 				update_post_meta( $args['ID'], 'mf2_' . $prop, $val );
@@ -946,7 +952,7 @@ class Micropub_Plugin {
 		}
 
 		$meta = get_post_meta( $args['ID'] );
-		$add  = static::$input['add'];
+		$add  = static::get( static::$input, 'add', null );
 		if ( $add ) {
 			foreach ( $add as $prop => $val ) {
 				$key = 'mf2_' . $prop;
@@ -955,7 +961,7 @@ class Micropub_Plugin {
 			}
 		}
 
-		$delete = static::$input['delete'];
+		$delete = static::get( static::$input, 'delete', null );
 		if ( $delete ) {
 			if ( is_assoc_array( $delete ) ) {
 				foreach ( $delete as $prop => $to_delete ) {
@@ -1087,9 +1093,7 @@ class Micropub_Plugin {
 				} elseif ( 'access_token' === $key ) {
 					continue;
 				} else {
-					if ( ! isset( static::$input['properties'] ) ) {
-						static::$input['properties'] = array();
-					}
+					static::$input['properties']         = self::get( static::$input, 'properties' );
 					static::$input['properties'][ $key ] =
 					( is_array( $val ) && ! is_assoc_array( $val ) )
 					? $val : array( $val );
