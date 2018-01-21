@@ -84,7 +84,7 @@ class Micropub_Plugin {
 		add_filter( 'webfinger_user_data', array( $cls, 'micropub_jrd_links' ) );
 
 		// Disable adding headers if local auth is set
-		if ( ! MICROPUB_LOCAL_AUTH ) {
+		if ( MICROPUB_LOCAL_AUTH  || ! class_exists( 'IndieAuth_Plugin' ) ) {
 			add_action( 'wp_head', array( $cls, 'indieauth_html_header' ), 99 );
 			add_action( 'send_headers', array( $cls, 'indieauth_http_header' ) );
 			add_filter( 'host_meta', array( $cls, 'indieauth_jrd_links' ) );
@@ -140,7 +140,7 @@ class Micropub_Plugin {
 		static::$input = apply_filters( 'before_micropub', static::$input );
 
 		// Be able to bypass Micropub auth with other auth
-		if ( MICROPUB_LOCAL_AUTH ) {
+		if ( MICROPUB_LOCAL_AUTH || class_exists( 'IndieAuth_Plugin' ) ) {
 			$user_id = get_current_user_id();
 			if ( ! $user_id ) {
 				static::handle_authorize_error( 401, 'Unauthorized' );
