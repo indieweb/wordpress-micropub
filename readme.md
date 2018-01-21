@@ -81,7 +81,8 @@ Supports the full OAuth2/IndieAuth authentication and authorization flow. Defaul
 
 If the token's `me` value matches a WordPress user's URL, that user will be used. Otherwise, the token must match the site's URL, and no user will be used.
 
-Alternatively, you can set `MICROPUB_LOCAL_AUTH` to 1 to disable the plugin's authorization function, for example if you want authorization to be done by WordPress or another plugin such as the Indieauth plugin.
+Alternatively, you can set `MICROPUB_LOCAL_AUTH` to 1 to disable the plugin's authorization function, for example if you want authorization to be done by WordPress or another plugin. It will also 
+be disabled if the IndieAuth plugin is installed.
 
 Finally, for ease of development, if the WordPress site is running on `localhost`, it logs a warning if the access token is missing or invalid and still allows the request.
 
