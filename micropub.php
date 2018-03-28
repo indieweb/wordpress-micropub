@@ -84,7 +84,7 @@ class Micropub_Plugin {
 		add_filter( 'webfinger_user_data', array( $cls, 'micropub_jrd_links' ) );
 
 		// Disable adding headers if local auth is set
-		if ( MICROPUB_LOCAL_AUTH  || ! class_exists( 'IndieAuth_Plugin' ) ) {
+		if ( MICROPUB_LOCAL_AUTH || ! class_exists( 'IndieAuth_Plugin' ) ) {
 			add_action( 'wp_head', array( $cls, 'indieauth_html_header' ), 99 );
 			add_action( 'send_headers', array( $cls, 'indieauth_http_header' ) );
 			add_filter( 'host_meta', array( $cls, 'indieauth_jrd_links' ) );
@@ -537,7 +537,7 @@ class Micropub_Plugin {
 			}
 		}
 		if ( ! isset( $props['post-status'] ) ) {
-			return get_option( 'micropub_default_post_status' );
+			return get_option( 'micropub_default_post_status', MICROPUB_DRAFT_MODE ? 'draft' : 'publish' );
 		} else {
 			//  According to the proposed specification these are the only two properties supported.
 			// https://indieweb.org/Micropub-extensions#Post_Status
