@@ -533,9 +533,13 @@ class Micropub_Plugin {
 	}
 
 	private static function post_status( $mf2 ) {
-		$props          = $mf2['properties'];
-		$visibilitylist = array( array( 'private' ), array( 'public' ) );
+		$props = $mf2['properties'];
+		// If both are not set immediately return
+		if ( ! isset( $props['post-status'] ) && ! isset( $props['visibility'] ) ) {
+			return get_option( 'micropub_default_post_status', MICROPUB_DRAFT_MODE ? 'draft' : 'publish' );
+		}
 		if ( isset( $props['visibility'] ) ) {
+			$visibilitylist = array( array( 'private' ), array( 'public' ) );
 			if ( ! in_array( $props['visibility'], $visibilitylist, true ) ) {
 				// Returning null will cause the server to return a 400 error
 				return null;
@@ -544,9 +548,7 @@ class Micropub_Plugin {
 				return 'private';
 			}
 		}
-		if ( ! isset( $props['post-status'] ) ) {
-			return get_option( 'micropub_default_post_status', MICROPUB_DRAFT_MODE ? 'draft' : 'publish' );
-		} else {
+		if ( isset( $props['post-status'] ) ) {
 			//  According to the proposed specification these are the only two properties supported.
 			// https://indieweb.org/Micropub-extensions#Post_Status
 			// For now these are the only two we will support even though WordPress defaults to 8 and allows custom
