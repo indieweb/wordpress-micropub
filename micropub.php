@@ -7,7 +7,7 @@
  * Author: Ryan Barrett
  * Author URI: https://snarfed.org/
  * Text Domain: micropub
- * Version: 1.3
+ * Version: 1.4
  */
 
 /* See README for supported filters and actions.
@@ -70,6 +70,8 @@ class Micropub_Plugin {
 	public static function init() {
 		$cls = get_called_class();
 
+		add_action( 'admin_init', array( $cls, 'admin_init' ) );
+
 		// register endpoint
 		// (I originally used add_rewrite_endpoint() to serve on /micropub instead
 		// of ?micropub=endpoint, but that had problems. details in
@@ -102,9 +104,24 @@ class Micropub_Plugin {
 				'description'       => 'Default Post Status for Micropub Server',
 				'sanitize_callback' => 'sanitize_text_field',
 				'show_in_rest'      => false,
-				'default'           => MICROPUB_DRAFT_MODE ? 'draft' : 'publish', // If not set can be set with deprecated property
+				'default'           => static::default_post_status(),
 			)
 		);
+	}
+
+	public static function admin_init() {
+		$cls = get_called_class();
+		add_settings_field(
+			'micropub_writing_settings',
+			__( 'Default Status for Micropub Posts', 'micropub' ),
+			array( $cls, 'writing_settings' ),
+			'writing',
+			'default'
+		);
+	}
+
+	public static function writing_settings() {
+		load_template( plugin_dir_path( __FILE__ ) . 'templates/micropub-writing-settings.php' );
 	}
 
 	public static function get( $array, $key, $default = array() ) {
@@ -532,11 +549,19 @@ class Micropub_Plugin {
 		static::respond( $code, $msg );
 	}
 
+	private static function default_post_status() {
+		return MICROPUB_DRAFT_MODE ? 'draft' : 'publish';
+	}
+
 	private static function post_status( $mf2 ) {
 		$props = $mf2['properties'];
 		// If both are not set immediately return
 		if ( ! isset( $props['post-status'] ) && ! isset( $props['visibility'] ) ) {
-			return get_option( 'micropub_default_post_status', MICROPUB_DRAFT_MODE ? 'draft' : 'publish' );
+			$status = get_option( 'micropub_default_post_status', static::default_post_status() );
+			if ( ! in_array( $status, array( 'publish', 'draft', 'private' ), true ) ) {
+				return static::default_post_status();
+			}
+			return $status;
 		}
 		if ( isset( $props['visibility'] ) ) {
 			$visibilitylist = array( array( 'private' ), array( 'public' ) );

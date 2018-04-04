@@ -1391,5 +1391,31 @@ EOF;
 			'error_description' => 'Invalid Post Status' ) );
 	}
 
+	function test_create_empty_default_status() {
+		add_option( 'micropub_default_post_status', '' );
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+  		$input = Recorder::$input = array(
+			'type' => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array( 'This is a test' )
+			)
+		);
+		$post = self::check_create();
+		$this->assertEquals( 'publish', $post->post_status );
+	}
+
+	function test_create_publish_default_status() {
+		add_option( 'micropub_default_post_status', 'publish' );
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+  		$input = Recorder::$input = array(
+			'type' => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array( 'This is a test' )
+			)
+		);
+		$post = self::check_create();
+		$this->assertEquals( 'publish', $post->post_status );
+	}
+
 
 }
