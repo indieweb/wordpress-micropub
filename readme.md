@@ -17,6 +17,18 @@ Supports the [full W3C Micropub CR spec](https://www.w3.org/TR/micropub/) as of 
 This project is placed in the public domain. You may also use it under the [CC0 license](http://creativecommons.org/publicdomain/zero/1.0/).
 
 
+## Scope 
+
+Supports the following [scope](https://indieweb.org/scope) parameters requested by Micropub clients.
+* post (legacy) - Grants all user delegated access
+* create - Allows the client to create posts on behalf of the user
+* update - Allows the client to update posts on behalf of the user
+* delete - Allows the client to delete posts on behalf of the user
+* indelete - Allows the client to undelete posts on behalf of the user
+
+Does not currently support the 'media' scope due lack of adoption by clients. At this time, create or update grants permission for file uploads.
+
+
 ## WordPress details 
 
 
@@ -169,6 +181,10 @@ into markdown and saved to readme.md.
 
 
 ## Changelog 
+
+
+### 1.4.2 (2018-04-19) 
+* Enforce scopes
 
 
 ### 1.4.1 (2018-04-15) 
