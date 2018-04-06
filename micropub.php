@@ -291,11 +291,11 @@ class Micropub_Plugin {
 			$uids[] = self::get( $syn, 'uid' );
 		}
 		$properties     = self::get( static::$input, 'properties' );
-		$synd_requested = self::get( $properties, 'syndicate-to' );
+		$synd_requested = self::get( $properties, 'mp-syndicate-to' );
 		$unknown        = array_diff( $synd_requested, $uids );
 
 		if ( $unknown ) {
-			static::error( 400, 'Unknown syndicate-to targets: ' . implode( ', ', $unknown ) );
+			static::error( 400, 'Unknown mp-syndicate-to targets: ' . implode( ', ', $unknown ) );
 
 		} elseif ( ! $url || 'create' === $action ) { // create
 			if ( $user_id && ! user_can( $user_id, 'publish_posts' ) ) {
@@ -362,7 +362,6 @@ class Micropub_Plugin {
 			switch ( static::$input['q'] ) {
 				case 'config':
 				case 'syndicate-to':
-				case 'mp-syndicate-to':
 					// return empty syndication target with filter
 					$syndicate_tos = apply_filters( 'micropub_syndicate-to', array(), $user_id );
 					$resp          = array( 'syndicate-to' => $syndicate_tos );
