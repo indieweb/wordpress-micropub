@@ -286,9 +286,13 @@ class Micropub_Plugin {
 
 		// check that we support all requested syndication targets
 		$synd_supported = apply_filters( 'micropub_syndicate-to', array(), $user_id );
+		$uids           = array();
+		foreach ( $synd_supported as $syn ) {
+			$uids[] = self::get( $syn, 'uid' );
+		}
 		$properties     = self::get( static::$input, 'properties' );
 		$synd_requested = self::get( $properties, 'syndicate-to' );
-		$unknown        = array_diff( $synd_requested, $synd_supported );
+		$unknown        = array_diff( $synd_requested, $uids );
 
 		if ( $unknown ) {
 			static::error( 400, 'Unknown syndicate-to targets: ' . implode( ', ', $unknown ) );

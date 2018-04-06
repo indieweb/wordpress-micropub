@@ -374,7 +374,14 @@ class MicropubTest extends WP_UnitTestCase {
 	}
 
 	public static function syndications( $synd_urls, $user_id ) {
-		return array( 'instagram', 'twitter' );
+		return array( 
+			array(
+			       	'name' => 'Instagram',
+				'uid' => 'instagram'),
+			array(
+				'name' => 'Twitter',
+				'uid' => 'twitter' )
+		);
 	}
 
 	function test_create_with_supported_syndicate_to() {
