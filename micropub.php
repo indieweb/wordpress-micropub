@@ -368,6 +368,12 @@ class Micropub_Plugin {
 					$syndicate_tos = apply_filters( 'micropub_syndicate-to', array(), $user_id );
 					$resp          = array( 'syndicate-to' => $syndicate_tos );
 					break;
+				case 'category':
+					$resp = array_merge( 
+						get_tags( array( 'fields' => 'names' ) ), 
+						get_terms( array( 'taxonomy' => 'category', 'fields' => 'names' ) ) 
+					);
+					break;
 				case 'source':
 					$post_id = url_to_postid( static::$input['url'] );
 					if ( ! $post_id ) {

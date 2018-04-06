@@ -293,6 +293,18 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->check( 200, self::$mf2 );
 	}
 
+	function test_query_category() {
+		$_POST = self::$post;
+		$post = $this->check_create();
+		$_GET = array(
+			'q' => 'category'
+		);
+		wp_set_post_tags( $post->ID, 'Tag' );
+		wp_create_categories( array( 'Category' ), $post->ID );
+		$this->check( 200, array( 'Tag', 'Category' ) );
+	}
+
+
 	function test_query_source_with_properties() {
 		$_POST = self::$post;
 		$post = $this->check_create();
