@@ -612,7 +612,7 @@ class Micropub_Plugin {
 		$args  = array();
 
 		foreach ( array(
-			'slug'    => 'post_name',
+			'mp-slug' => 'post_name',
 			'name'    => 'post_title',
 			'summary' => 'post_excerpt',
 		) as $mf => $wp ) {
