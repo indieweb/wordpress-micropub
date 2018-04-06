@@ -72,7 +72,7 @@ class MicropubTest extends WP_UnitTestCase {
 	protected static $post = array(
 		'h' => 'entry',
 		'content' => 'my<br>content',
-		'slug' => 'my_slug',
+		'mp-slug' => 'my_slug',
 		'name' => 'my name',
 		'summary' => 'my summary',
 		'category' => array( 'tag1', 'tag4' ),
@@ -85,7 +85,7 @@ class MicropubTest extends WP_UnitTestCase {
 		'type' => array( 'h-entry' ),
 		'properties' => array(
 			'content' => array( 'my<br>content' ),
-			'slug' => array( 'my_slug' ),
+			'mp-slug' => array( 'my_slug' ),
 			'name' => array( 'my name' ),
 			'summary' => array( 'my summary' ),
 			'category' => array( 'tag1', 'tag4' ),
@@ -1056,7 +1056,7 @@ EOF;
 			'type' => array( 'h-entry' ),
 			'properties' => array(
 				'content' => array( 'new<br>content' ),
-				'slug' => array( 'my_slug' ),
+				'mp-slug' => array( 'my_slug' ),
 				'name' => array( 'my name' ),
 				'category' => array( 'tag1', 'tag4', 'add tag' ),
 				'syndication' => array( 'http://synd/1', 'http://synd/2' ),
