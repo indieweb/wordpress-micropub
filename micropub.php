@@ -885,13 +885,43 @@ class Micropub_Plugin {
 	 * https://ownyourswarm.p3k.io/docs#checkins
 	 *
 	 * WordPress geo data is stored in post meta: geo_address (free text),
-	 * geo_latitude, and geo_longitude:
+	 * geo_latitude, geo_longitude, and geo_public:
 	 * https://codex.wordpress.org/Geodata
+	 * It is noted that should the HTML5 style geolocation properties of altitude, accuracy, speed, and heading are
+	 * used they would use the same geo prefix. Simple Location stores these when available using accuracy to estimate
+	 * map zoom when displayed.
 	 */
 	public static function store_geodata( $args ) {
 		$properties = static::get( static::$input, 'properties' );
 		$location   = static::get( $properties, 'location', static::get( $properties, 'checkin' ) );
 		$location   = static::get( $location, 0, null );
+		// Location-visibility is an experimental property https://indieweb.org/Micropub-extensions#Location_Visibility
+		// It attempts to mimic the geo_public property
+		$visibility = static::get( $properties, 'location-visibility', null );
+		if ( $visibility ) {
+			$visibility = array_pop( $visibility );
+			if ( ! isset( $args['meta_input'] ) ) {
+				$args['meta_input'] = array();
+			}
+			switch ( $visibility ) {
+				// Currently supported by https://github.com/dshanske/simple-location as part of the Geodata store noted in codex link above
+				// Public indicates coordinates, map, and textual description displayed
+				case 'public':
+					$args['meta_input']['geo_public'] = 1;
+					break;
+				// Private indicates no display
+				case 'private':
+					$args['meta_input']['geo_public'] = 0;
+					break;
+				// Protected which is not in the original geodata spec is used by Simple Location to indicate textual description only
+				case 'protected':
+					$args['meta_input']['geo_public'] = 2;
+					break;
+				default:
+					static::error( 400, 'unsupported location visibility ' . $visibility );
+
+			}
+		}
 		if ( $location ) {
 			if ( ! isset( $args['meta_input'] ) ) {
 				$args['meta_input'] = array();
@@ -920,17 +950,24 @@ class Micropub_Plugin {
 				}
 				$args['meta_input']['geo_latitude']  = $props['latitude'][0];
 				$args['meta_input']['geo_longitude'] = $props['longitude'][0];
+				$args['meta_input']['geo_altitude']  = $props['altitude'][0];
 			} elseif ( 'geo:' === substr( $location, 0, 4 ) ) {
 				// Geo URI format:
 				// http://en.wikipedia.org/wiki/Geo_URI#Example
-				// https://indiewebcamp.com/micropub##location
+				// https://indieweb.org/Micropub#h-entry
 				//
 				// e.g. geo:37.786971,-122.399677;u=35
-				$geo                                 = explode( ':', substr( urldecode( $location ), 4 ) );
-				$geo                                 = explode( ';', $geo[0] );
+				$geo = explode( ':', substr( urldecode( $location ), 4 ) );
+				$geo = explode( ';', $geo[0] );
+				// Store the accuracy/uncertainty
+				$args['meta_input']['geo_accuracy']  = substr( $geo[1], 2 );
 				$coords                              = explode( ',', $geo[0] );
 				$args['meta_input']['geo_latitude']  = trim( $coords[0] );
 				$args['meta_input']['geo_longitude'] = trim( $coords[1] );
+				// Geo URI optionally allows for altitude to be stored as a third csv
+				if ( isset( $coords[2] ) ) {
+					$args['meta_input']['geo_altitude'] = trim( $coords[2] );
+				}
 			} elseif ( 'http' !== substr( $location, 0, 4 ) ) {
 				$args['meta_input']['geo_address'] = $location;
 			}
