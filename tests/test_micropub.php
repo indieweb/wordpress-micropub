@@ -406,6 +406,22 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->check( 400, 'Unknown mp-syndicate-to targets: facebook' );
 	}
 
+	function syndicate_trigger( $id, $syns ) {
+		add_post_meta( $id, 'testing', $syns );
+	}
+
+	function test_create_syn_hook() {
+		add_filter( 'micropub_syndicate-to', array( $this, 'syndications' ) );
+		add_action( 'micropub_syndication', array( $this, 'syndicate_trigger' ), 10, 2 );
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+		Recorder::$input = static::$mf2;
+		Recorder::$input['properties']['mp-syndicate-to'] = array( 'twitter' );
+		Recorder::$micropub_auth_response = static::$micropub_auth_response;
+		$post = self::check_create();
+		$this->assertEquals( array( 'twitter' ), get_post_meta( $post->ID, 'testing', true ) );		
+	}
+
+
 	function test_create_content_html_post() {
 		$_POST = array(
 			'h' => 'entry',
