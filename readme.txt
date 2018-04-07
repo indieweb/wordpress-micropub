@@ -46,11 +46,15 @@ Called to generate the list of `syndicate-to` targets to return in response to a
 
 $resp defaults to null. If the return value is non-null, it should be an associative array that is encoded as JSON and will be returned in place of the normal micropub response.
 
-...and one hook:
+...and two hooks:
 
 `after_micropub( $input, $wp_args = null)`
 
 Called after handling a Micropub request. Not called if the request fails (ie doesn't return HTTP 2xx).
+
+`micropub_syndication( $ID, $syndicate_to )`
+
+Called only if there are syndication targets $syndicate_to for post $ID. $syndicate_to will be an array of UIDs that are verified as one or more of the UIDs added using the `micropub_syndicate-to` filter.
 
 Arguments:
 
@@ -171,6 +175,7 @@ into markdown and saved to readme.md.
 * MICROPUB_LOCAL_AUTH now disables adding auth headers to the page.
 * Fix post status issue by checking for valid defaults
 * Add configuration option under writing settings to set default post status
+* Add `micropub_syndication` hook that only fires on a request to syndicate to make it easier for third-party plugins to hook in
 
 = 1.3 (2017-12-31) =
 * Saves [access token response](https://tokens.indieauth.com/) in a post meta field `micropub_auth_response`.

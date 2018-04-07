@@ -346,7 +346,9 @@ class Micropub_Plugin {
 		} else {
 			static::error( 400, 'unknown action ' . $action );
 		}
-
+		if ( ! empty( $synd_requested ) ) {
+			do_action( 'micropub_syndication', $args['ID'], $synd_requested );
+		}
 		do_action( 'after_micropub', static::$input, $args );
 		static::respond( $status, null, $args );
 	}
