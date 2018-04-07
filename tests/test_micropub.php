@@ -504,6 +504,7 @@ class MicropubTest extends WP_UnitTestCase {
 
 		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ) );
 		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ) );
+		$this->assertEquals( '25000', get_post_meta( $post->ID, 'geo_altitude', true ) );
 		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_address', true ) );
 	}
 
@@ -525,16 +526,61 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_address', true ) );
 	}
 
+	function test_create_location_geo_with_altitude() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+		Recorder::$input = static::$mf2;
+		Recorder::$input['properties']['location'] = array( 'geo:42.361,-71.092,1500;u=25000' );
+		$post = self::check_create();
+
+		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ) );
+		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ) );
+		$this->assertEquals( '1500', get_post_meta( $post->ID, 'geo_altitude', true ) );
+	}
+
 	function test_create_location_plain_text() {
 		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
 		Recorder::$input = static::$mf2;
 		Recorder::$input['properties']['location'] = array( 'foo bar baz' );
 		$post = self::check_create();
-
 		$this->assertEquals( 'foo bar baz', get_post_meta( $post->ID, 'geo_address', true ) );
 		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_latitude', true ) );
 		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_longitude', true ) );
 	}
+
+	function test_create_location_visibility_private() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+		Recorder::$input = static::$mf2;
+		Recorder::$input['properties']['location-visibility'] = array( 'private' );
+		$post = self::check_create();
+		$this->assertEquals( 0, get_post_meta( $post->ID, 'geo_public', true ) );
+
+	}
+
+	function test_create_location_visibility_public() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+		Recorder::$input = static::$mf2;
+		Recorder::$input['properties']['location-visibility'] = array( 'public' );
+		$post = self::check_create();
+		$this->assertEquals( 1, get_post_meta( $post->ID, 'geo_public', true ) );
+
+	}
+
+	function test_create_location_visibility_unsupported() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+		Recorder::$input = static::$mf2;
+		Recorder::$input['properties']['location-visibility'] = array( 'bleh' );
+		$this->check( 400, 'unsupported location visibility bleh' )	;
+	}
+
+
+	function test_create_location_visibility_none() {
+		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
+		Recorder::$input = static::$mf2;
+		$post = self::check_create();
+		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_public', true ) );
+
+	}
+
 
 	// checkin isn't a standard mf2 property yet, but OwnYourSwarm uses it.
 	// https://ownyourswarm.p3k.io/docs#checkins
