@@ -168,7 +168,7 @@ into markdown and saved to readme.md.
 
 == Changelog ==
 
-= 1.4 (????) =
+= 1.4 (2018-04-08) =
 * Separate functions that generate headers into micropub and IndieAuth
 * Add support for an option now used by the IndieAuth plugin to set alternate token and authorization endpoints
 * MICROPUB_LOCAL_AUTH configuration option adjusted to reflect that this disables the plugin built in authentication. This can hand it back to WordPress or allow another plugin to take over
