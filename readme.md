@@ -171,6 +171,10 @@ into markdown and saved to readme.md.
 ## Changelog 
 
 
+### 1.4.1 (2018-04-15) 
+* Version bump due some individuals not getting template file
+
+
 ### 1.4 (2018-04-08) 
 * Separate functions that generate headers into micropub and IndieAuth
 * Add support for an option now used by the IndieAuth plugin to set alternate token and authorization endpoints
