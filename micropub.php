@@ -64,7 +64,6 @@ class Micropub_Plugin {
 	// associative array, populated by authorize().
 	protected static $micropub_auth_response;
 
-
 	// Array of Scopes
 	protected static $scopes;
 
@@ -174,6 +173,10 @@ class Micropub_Plugin {
 			global $indieauth_scopes;
 			if ( ! empty( $indieauth_scopes ) ) {
 				static::$scopes = $indieauth_scopes;
+			}
+			global $indieauth_token;
+			if ( ! empty( $indieauth_token ) ) {
+				static::$micropub_auth_response = $indieauth_token;
 			}
 			if ( ! $user_id ) {
 				static::handle_authorize_error( 401, 'Unauthorized' );
