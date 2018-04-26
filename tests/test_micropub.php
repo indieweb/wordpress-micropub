@@ -23,6 +23,7 @@ class Recorder extends Micropub_Plugin {
 	public static $response_headers = array();
 	public static $download_url_filenames;
 	public static $downloaded_urls;
+	public static $scopes;
 
 	public static function init() {
 		remove_filter( 'query_vars', array( 'Micropub_Plugin', 'query_var' ) );
@@ -98,10 +99,13 @@ class MicropubTest extends WP_UnitTestCase {
 	protected static $micropub_auth_response = array(
 		'me'    =>  'http://tacos.com', // taken from WordPress' tests/user.php
 		'client_id' =>  'https://example.com',
-		'scope' =>  'post',
+		'scope' =>  'create update',
 		'issued_at' =>   1399155608,
 		'nonce' => 501884823,
 	);
+
+	// Scope defaulting to legacy params
+	protected static $scopes = array( 'post' );
 
 	protected static $geo = array(
 		'type' => array('h-geo'),
@@ -135,6 +139,7 @@ class MicropubTest extends WP_UnitTestCase {
 		$_POST = array();
 		$_GET = array();
 		$_FILES = array();
+		Recorder::$scopes = static::$scopes;
 		Recorder::$request_headers = array();
 		Recorder::$input = NULL;
 		Recorder::$downloaded_urls = array();
@@ -345,7 +350,24 @@ class MicropubTest extends WP_UnitTestCase {
 		self::check_create_basic();
 	}
 
+	function test_create_post_without_create_scope() {
+		Recorder::$micropub_auth_response = static::$micropub_auth_response;
+		Recorder::$scopes = array( 'update' );
+                $_POST = self::$post;
+                $this->check( 403, array( 'error' => 'insufficient_scope',
+                        'error_description' => 'scope insufficient to create posts' ) );
+	}
+
+	function test_create_post_with_create_scope() {
+		Recorder::$request_headers = array( 'Content-type' => 'application/x-www-form-urlencoded' );
+		$_POST = self::$post;
+		Recorder::$micropub_auth_response = static::$micropub_auth_response;
+		Recorder::$scopes = array( 'create' );
+		self::check_create_basic();
+	}
+
 	function test_create_basic_json() {
+		Recorder::$scopes = static::$scopes;
 		Recorder::$request_headers = array( 'content-type' => 'application/json; charset=utf-8' );
 		Recorder::$input = static::$mf2;
 		Recorder::$micropub_auth_response = static::$micropub_auth_response;
