@@ -1,0 +1,20 @@
+notifications:
+  on_success: never
+  on_failure: change
+
+language: php
+php:
+  # - 5.3
+  # - 5.4
+  - 5.5.9
+  - 5.6
+  - 7.0
+
+env:
+  - WP_CORE_DIR=$HOME/wordpress WP_TESTS_DIR=$HOME/wordpress-tests-lib PATH=$HOME/.composer/vendor/bin:$PATH
+
+before_script:
+  - composer install
+  - ./bin/install-wp-tests.sh test root '' localhost
+  - sed -i.bak "s/wordpress' );$/wordpress\/' );/" ~/wordpress-tests-lib/wp-tests-config.php
+

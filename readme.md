@@ -3,7 +3,7 @@ A [Micropub](http://micropub.net/) server plugin. Available in the WordPress plu
 
 ## Description 
 
-[![Circle CI](https://circleci.com/gh/snarfed/wordpress-micropub.svg?style=svg)](https://circleci.com/gh/snarfed/wordpress-micropub)
+[![Travis CI](https://travis-ci.org/snarfed/wordpress-micropub.svg?branch=master)](https://travis-ci.org/snarfed/wordpress-micropub)
 
 > Micropub is an open API standard that is used to create posts on one's own domain using third-party clients. Web apps and native apps (e.g. iPhone, Android) can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com.
 
