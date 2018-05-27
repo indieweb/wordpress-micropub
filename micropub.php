@@ -1218,7 +1218,7 @@ class Micropub_Plugin {
 	protected static function respond( $code, $resp = null, $args = null ) {
 		status_header( $code );
 		static::header( 'Content-Type', 'application/json' );
-		exit( $resp ? wp_json_encode( $resp ) : '' );
+		exit( $resp ? wp_json_encode( $resp ) : '{}' );
 	}
 
 	public static function header( $header, $value ) {
