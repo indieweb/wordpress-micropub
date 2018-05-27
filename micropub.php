@@ -7,7 +7,7 @@
  * Author: Ryan Barrett
  * Author URI: https://snarfed.org/
  * Text Domain: micropub
- * Version: 1.4.2
+ * Version: 1.4.3
  */
 
 /* See README for supported filters and actions.

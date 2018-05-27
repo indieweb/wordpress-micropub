@@ -183,6 +183,11 @@ into markdown and saved to readme.md.
 ## Changelog 
 
 
+### 1.4.3 (2018-05-27) 
+* Change scopes to filter
+* Get token response when IndieAuth plugin is installed
+
+
 ### 1.4.2 (2018-04-19) 
 * Enforce scopes
 
