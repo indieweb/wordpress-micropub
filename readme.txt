@@ -3,7 +3,7 @@ Contributors: snarfed, dshanske
 Tags: micropub, publish
 Requires at least: 4.7
 Requires PHP: 5.3
-Tested up to: 4.9.5
+Tested up to: 4.9.6
 Stable tag: trunk
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
@@ -178,6 +178,10 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 1.4.3 (2018-05-27) =
+* Change scopes to filter
+* Get token response when IndieAuth plugin is installed
 
 = 1.4.2 (2018-04-19) =
 * Enforce scopes

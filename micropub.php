@@ -7,7 +7,7 @@
  * Author: Ryan Barrett
  * Author URI: https://snarfed.org/
  * Text Domain: micropub
- * Version: 1.4.2
+ * Version: 1.4.3
  */
 
 /* See README for supported filters and actions.
@@ -63,7 +63,6 @@ class Micropub_Plugin {
 
 	// associative array, populated by authorize().
 	protected static $micropub_auth_response;
-
 
 	// Array of Scopes
 	protected static $scopes;
@@ -170,11 +169,11 @@ class Micropub_Plugin {
 		// Be able to bypass Micropub auth with other auth
 		if ( MICROPUB_LOCAL_AUTH || class_exists( 'IndieAuth_Plugin' ) ) {
 			$user_id = get_current_user_id();
-			// The WordPress IndieAuth plugin uses a global variable named $indieauth_scopes to store this info
-			global $indieauth_scopes;
-			if ( ! empty( $indieauth_scopes ) ) {
-				static::$scopes = $indieauth_scopes;
-			}
+
+			// The WordPress IndieAuth plugin uses filters for this
+			static::$scopes = apply_filters( 'indieauth_scopes', null );
+			static::$micropub_auth_response = apply_filters( 'indieauth_response',  null );
+			
 			if ( ! $user_id ) {
 				static::handle_authorize_error( 401, 'Unauthorized' );
 			}
