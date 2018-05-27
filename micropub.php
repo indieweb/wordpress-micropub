@@ -171,8 +171,8 @@ class Micropub_Plugin {
 			$user_id = get_current_user_id();
 
 			// The WordPress IndieAuth plugin uses filters for this
-			static::$scopes = apply_filters( 'indieauth_scopes', null );
-			static::$micropub_auth_response = apply_filters( 'indieauth_response',  null );
+			static::$scopes = apply_filters( 'indieauth_scopes', static::$scopes );
+			static::$micropub_auth_response = apply_filters( 'indieauth_response',  static::$micropub_auth_response );
 			
 			if ( ! $user_id ) {
 				static::handle_authorize_error( 401, 'Unauthorized' );
