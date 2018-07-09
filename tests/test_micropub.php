@@ -15,7 +15,7 @@ function write_temp_file( $contents, $extension = '' ) {
 }
 
 
-class Recorder extends Micropub_Plugin {
+class Recorder extends Micropub_Endpoint {
 	public static $status;
 	public static $response;
 	public static $input;
@@ -26,8 +26,8 @@ class Recorder extends Micropub_Plugin {
 	public static $scopes;
 
 	public static function init() {
-		remove_filter( 'query_vars', array( 'Micropub_Plugin', 'query_var' ) );
-		remove_action( 'parse_query', array( 'Micropub_Plugin', 'parse_query' ) );
+		remove_filter( 'query_vars', array( 'Micropub_Endpoint', 'query_var' ) );
+		remove_action( 'parse_query', array( 'Micropub_Endpoint', 'parse_query' ) );
 		parent::init();
 	}
 
