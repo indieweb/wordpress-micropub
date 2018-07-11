@@ -38,9 +38,6 @@ class Micropub_Authorize {
 		// The WordPress IndieAuth plugin uses priority 30
 		add_filter( 'determine_current_user', array( $cls, 'determine_current_user' ), 31 );
 
-		// IndieAuth Plugin uses priority 9		
-		add_filter( 'indieauth_scopes', array( $cls, 'indieauth_scopes' ), 11 );
-		add_filter( 'indieauth_response', array( $cls, 'indieauth_response' ), 11 );
 	}
 
 	public static function indieauth_scopes( $scopes ) {
@@ -167,6 +164,10 @@ class Micropub_Authorize {
 
 		// look for a user with the same url as the token's `me` value.
 		$user = static::user_url( $me );
+
+		// IndieAuth Plugin uses priority 9		
+		add_filter( 'indieauth_scopes', array( $cls, 'indieauth_scopes' ), 11 );
+		add_filter( 'indieauth_response', array( $cls, 'indieauth_response' ), 11 );
 
 		if ( $user ) {
 			return $user;
