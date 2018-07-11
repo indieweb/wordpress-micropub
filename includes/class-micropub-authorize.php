@@ -19,11 +19,11 @@ add_action( 'plugins_loaded', array( 'Micropub_Authorize', 'init' ) );
  */
 class Micropub_Authorize {
 
-	// associative array, populated by authorize().
-	protected static $micropub_auth_response;
+	// associative array, populated by determine_current_user.
+	protected static $micropub_auth_response = array();
 
 	// Array of Scopes
-	protected static $scopes;
+	protected static $scopes = array();
 
 	/**
 	 * Initialize the plugin.
@@ -37,6 +37,10 @@ class Micropub_Authorize {
 		add_filter( 'webfinger_user_data', array( $cls, 'jrd_links' ) );
 		// The WordPress IndieAuth plugin uses priority 30
 		add_filter( 'determine_current_user', array( $cls, 'determine_current_user' ), 31 );
+
+		// IndieAuth Plugin uses priority 9		
+		add_filter( 'indieauth_scopes', array( $cls, 'indieauth_scopes' ), 11 );
+		add_filter( 'indieauth_response', array( $cls, 'indieauth_response' ), 11 );
 	}
 
 	public static function indieauth_scopes( $scopes ) {
@@ -119,7 +123,7 @@ class Micropub_Authorize {
 			return $user_id;
 		}
 
-		// Only try to authenticate if this is the Micropub endpoint
+		// Since this runs on the built-in determine_current user filter only try to authenticate if this is the Micropub endpoint
 		if ( ! empty( get_query_var( 'micropub' ) ) ) {
 			return $user_id;
 		}
@@ -164,8 +168,6 @@ class Micropub_Authorize {
 		// look for a user with the same url as the token's `me` value.
 		$user = static::user_url( $me );
 
-		add_filter( 'indieauth_scopes', array( $cls, 'indieauth_scopes' ), 11 );
-		add_filter( 'indieauth_response', array( $cls, 'indieauth_response' ), 11 );
 		if ( $user ) {
 			return $user;
 		}

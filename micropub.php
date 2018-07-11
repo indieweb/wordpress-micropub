@@ -29,7 +29,7 @@
  */
 
 if ( ! defined( 'MICROPUB_LOCAL_AUTH' ) ) {
-	        define( 'MICROPUB_LOCAL_AUTH', '0' );
+	define( 'MICROPUB_LOCAL_AUTH', '0' );
 }
 
 register_activation_hook( __FILE__, array( 'Micropub_Admin', 'activate' ) );

@@ -134,7 +134,10 @@ If that doesn't work, [try this line](https://github.com/georgestephanis/applica
 
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-If that doesn't work either, you may need to ask your hosting provider to whitelist the `Authorization` header for your account. If they refuse, you can [pass it through Apache with an alternate name](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299569822), but [you'll need to edit this plugin's code to read from that alternate name](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299569822).
+If that doesn't work either, you may need to ask your hosting provider to whitelist the `Authorization` header for your account. If they refuse, you can [pass it through Apache with an alternate name](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299569822). The plugin searches for the header in REDIRECT_HTTP_AUTHORIZATION, as some FastCGI implementations store the header in this location.
+
+If you are getting an `Unauthorized` error despite passing a valid access token then your WordPress installation may not be able to match your user account with the provided URL. The easiest way to 
+resolve is to add the URL you are using as the URL in your user profile. 
 
 
 ## Upgrade Notice 
@@ -181,6 +184,14 @@ into markdown and saved to readme.md.
 
 
 ## Changelog 
+
+
+### 2.0.0 (2018-xx-xx) 
+* Split plugin into files by functionality
+* Change authorization to integrate with WordPress mechanisms for login
+* Reject where the URL cannot be matched with a user account
+* Use `indieauth_scopes` and `indieauth_response` originally added for IndieAuth integration to be used by built in auth as well
+* Improve handling of access tokens in headers to cover additional cases
 
 
 ### 1.4.3 (2018-05-27) 
