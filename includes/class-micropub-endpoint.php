@@ -1,21 +1,5 @@
 <?php
 
-/* For debugging purposes this will bypass Micropub authentication
- * in favor of WordPress authentication
- * Using this to test querying(q=) parameters quickly
- */
-if ( ! defined( 'MICROPUB_LOCAL_AUTH' ) ) {
-	define( 'MICROPUB_LOCAL_AUTH', '0' );
-}
-
-// Allows for a custom Authentication and Token Endpoint
-if ( ! defined( 'MICROPUB_AUTHENTICATION_ENDPOINT' ) ) {
-	define( 'MICROPUB_AUTHENTICATION_ENDPOINT', 'https://indieauth.com/auth' );
-}
-if ( ! defined( 'MICROPUB_TOKEN_ENDPOINT' ) ) {
-	define( 'MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token' );
-}
-
 add_action( 'plugins_loaded', array( 'Micropub_Endpoint', 'init' ) );
 
 /**
@@ -101,20 +85,17 @@ class Micropub_Endpoint {
 		}
 		static::$input = apply_filters( 'before_micropub', static::$input );
 
-		// Be able to bypass Micropub auth with other auth
-		if ( MICROPUB_LOCAL_AUTH || class_exists( 'IndieAuth_Plugin' ) ) {
-			$user_id = get_current_user_id();
-
-			// The WordPress IndieAuth plugin uses filters for this
-			static::$scopes                 = apply_filters( 'indieauth_scopes', static::$scopes );
-			static::$micropub_auth_response = apply_filters( 'indieauth_response', static::$micropub_auth_response );
-
-			if ( ! $user_id ) {
-				static::handle_authorize_error( 401, 'Unauthorized' );
-			}
-		} else {
-			$user_id = static::authorize();
+		$user_id = get_current_user_id();
+		if ( is_wp_error( $user_id ) ) {
+			static::handle_authorize_error( 401, $user_id->get_error_message() );
 		}
+
+		if ( ! $user_id ) {
+			static::handle_authorize_error( 401, 'Unauthorized' );
+		}
+
+		static::$scopes                 = apply_filters( 'indieauth_scopes', static::$scopes );
+		static::$micropub_auth_response = apply_filters( 'indieauth_response', static::$micropub_auth_response );
 
 		if ( 'GET' === $_SERVER['REQUEST_METHOD'] && isset( static::$input['q'] ) ) {
 			static::query_handler( $user_id );
@@ -123,70 +104,6 @@ class Micropub_Endpoint {
 		} else {
 			static::error( 400, 'Unknown Micropub request' );
 		}
-	}
-
-	/**
-	 * Validate the access token at the token endpoint.
-	 *
-	 * https://indieauth.spec.indieweb.org/#access-token-verification
-	 * If the token is valid, returns the user id to use as the post's author, or
-	 * NULL if the token only matched the site URL and no specific user.
-	 */
-	private static function authorize() {
-		// find the access token
-		$auth  = static::get_header( 'authorization' );
-		$token = self::get( $_POST, 'access_token' );
-		if ( ! $auth && ! $token ) {
-			static::handle_authorize_error( 401, 'missing access token' );
-		}
-
-		$resp = wp_remote_get(
-			get_option( 'indieauth_token_endpoint', MICROPUB_TOKEN_ENDPOINT ), array(
-				'headers' => array(
-					'Accept'        => 'application/json',
-					'Authorization' => $auth ?: 'Bearer ' . $token,
-				),
-			)
-		);
-		if ( is_wp_error( $resp ) ) {
-			static::handle_authorize_error( 502, "couldn't validate token: " . implode( ' , ', $resp->get_error_messages() ) );
-		}
-
-		$code           = wp_remote_retrieve_response_code( $resp );
-		$body           = wp_remote_retrieve_body( $resp );
-		$params         = json_decode( $body, true );
-		static::$scopes = explode( ' ', $params['scope'] );
-
-		if ( (int) ( $code / 100 ) !== 2 ) {
-			static::handle_authorize_error(
-				$code, 'invalid access token: ' . $body
-			);
-		} elseif ( empty( static::$scopes ) ) {
-			static::handle_authorize_error(
-				401, 'access token is missing scope'
-			);
-		}
-
-		$me = untrailingslashit( $params['me'] );
-
-		static::$micropub_auth_response = $params;
-
-		// look for a user with the same url as the token's `me` value.
-		$user = static::user_url( $me );
-		if ( $user ) {
-			return $user;
-		}
-
-		// no user with that url. if the token is for this site itself, allow it and
-		// post as the default user
-		$home = untrailingslashit( home_url() );
-		if ( $home !== $me ) {
-			static::handle_authorize_error(
-				401, 'access token URL ' . $me . " doesn't match site " . $home . ' or any user'
-			);
-		}
-
-		return null;
 	}
 
 	/**
@@ -201,33 +118,6 @@ class Micropub_Endpoint {
 			return true;
 		}
 		return in_array( $scope, static::$scopes, true );
-	}
-
-	/**
-	 * Try to match a user with a URL with or without trailing slash.
-	 *
-	 * @param string $me URL to match
-	 *
-	 * @return null|int Return user ID if matched or null
-	**/
-	public static function user_url( $me ) {
-		if ( ! isset( $me ) ) {
-			return null;
-		}
-		$search = array(
-			'search'         => $me,
-			'search_columns' => array( 'url' ),
-		);
-		$users  = get_users( $search );
-
-		$search['search'] = $me . '/';
-		$users            = array_merge( $users, get_users( $search ) );
-		foreach ( $users as $user ) {
-			if ( untrailingslashit( $user->user_url ) === $me ) {
-				return $user->ID;
-			}
-		}
-		return null;
 	}
 
 
