@@ -173,13 +173,7 @@ class Micropub_Authorize {
 			return $user;
 		}
 
-		// no user with that url. if the token is for this site itself, allow it and
-		// post as the default user
-		$home = untrailingslashit( home_url() );
-		if ( $home !== $me ) {
-			return $user_id;
-		}
-		return $user;
+		return $user_id;
 	}
 
 	private static function authorize_error( $code, $msg ) {
