@@ -203,6 +203,10 @@ class Micropub_Endpoint {
 		static::respond( $status, null, $args );
 	}
 
+	private static function get_syndicate_targets( $user_id ) {
+		return apply_filters( 'micropub_syndicate-to', array(), $user_id );
+	}
+
 	/**
 	 * Handle queries to the micropub endpoint
 	 *
@@ -213,10 +217,14 @@ class Micropub_Endpoint {
 		if ( ! $resp ) {
 			switch ( static::$input['q'] ) {
 				case 'config':
+					$resp = array( 
+							'syndicate-to' => static::get_syndicate_targets( $user_id ),
+							'media-endpoint' => rest_url( '/micropub/1.0/media' )
+						);
+					break;	
 				case 'syndicate-to':
-					// return empty syndication target with filter
-					$syndicate_tos = apply_filters( 'micropub_syndicate-to', array(), $user_id );
-					$resp          = array( 'syndicate-to' => $syndicate_tos );
+					// return syndication targets with filter
+					$resp          = array( 'syndicate-to' => static::get_syndicate_targets( $user_id ) );
 					break;
 				case 'category':
 					$resp = array_merge(

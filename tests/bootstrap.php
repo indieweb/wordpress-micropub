@@ -4,6 +4,7 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_WARNING);
 
 define( 'MICROPUB_LOCAL_AUTH', true );
 define( 'WP_DEBUG', false );
+define( 'DIR_TESTDATA', dirname( __FILE__ ) . '/data' );
 
 $_tests_dir = getenv( 'WP_TESTS_DIR' );
 if ( ! $_tests_dir ) {

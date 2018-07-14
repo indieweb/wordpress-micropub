@@ -37,10 +37,15 @@ register_activation_hook( __FILE__, array( 'Micropub_Admin', 'activate' ) );
 // Admin Menu Functions
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-admin.php';
 
-
 if ( MICROPUB_LOCAL_AUTH || ! class_exists( 'IndieAuth_Plugin' ) ) {
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-authorize.php';
 }
+
+// Error Handling Class
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-error.php';
+
+// Media Endpoint and Handling Functions
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-media.php';
 
 // Server Functions
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-endpoint.php';
