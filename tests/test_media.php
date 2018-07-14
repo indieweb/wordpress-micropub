@@ -5,6 +5,7 @@ class Micropub_Media_Test extends WP_UnitTestCase {
 	
 
 	protected static $author_id;
+	protected static $subscriber_id;
 	protected static $scopes;
 
 	public static function scopes( $scope ) {
@@ -17,6 +18,12 @@ class Micropub_Media_Test extends WP_UnitTestCase {
 				'role' => 'author',
 			)
 		);
+		self::$subscriber_id      = $factory->user->create(
+			array(
+				'role' => 'subscriber',
+			)
+		);
+
 	}
 	public static function wpTearDownAfterClass() {
 		self::delete_user( self::$author_id );
@@ -76,6 +83,15 @@ class Micropub_Media_Test extends WP_UnitTestCase {
 		$response = rest_get_server()->dispatch( self::upload_request() );
 		$data     = $response->get_data();
 		$this->assertEquals( 401, $response->get_status(), wp_json_encode( $data ) );
+	}
+
+	public function test_upload_file_with_scope_but_insufficient_permissions() {
+		static::$scopes = array( 'create' );
+		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ) );
+		wp_set_current_user( self::$subscriber_id );
+		$response = rest_get_server()->dispatch( self::upload_request() );
+		$data     = $response->get_data();
+		$this->assertEquals( 403, $response->get_status(), wp_json_encode( $data ) );
 	}
 
 

@@ -6,8 +6,8 @@ add_action( 'plugins_loaded', array( 'Micropub_Media', 'init' ) );
  * Micropub Media Class
  */
 class Micropub_Media {
-	
-	protected static $scopes = array();
+
+	protected static $scopes                 = array();
 	protected static $micropub_auth_response = array();
 
 	/**
@@ -59,7 +59,7 @@ class Micropub_Media {
 		return $file;
 	}
 
-       /**
+	/**
 	* Check scope
 	*
 	* @param array $scope
@@ -67,19 +67,38 @@ class Micropub_Media {
 	* @return boolean
 	**/
 	protected static function check_scopes( $scopes ) {
-		return ! empty( array_intersect( $scopes, static::$scopes ) );
+		$intersect = array_intersect( $scopes, static::$scopes );
+		return ! empty( $intersect );
+	}
+
+
+	/**
+	 * Checks if a given request has access to create an attachment.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_Micropub_Error|true Boolean true if the attachment may be created, or a WP_Micropub_Error if not.
+	 */
+	protected static function permissions_check( $request ) {
+		if ( ! current_user_can( 'upload_files' ) ) {
+			return new WP_Micropub_Error( 'forbidden', 'User is not permitted to upload files', 403 );
+		}
+		if ( ! self::check_scopes( array( 'create', 'media' ) ) ) {
+			return new WP_Micropub_Error( 'insufficient_scope', 'Token Does Not Meet Requirements for Upload', 401 );
+		}
+
+		return true;
 	}
 
 	public static function upload_handler( $request ) {
 		static::$scopes                 = apply_filters( 'indieauth_scopes', static::$scopes );
 		static::$micropub_auth_response = apply_filters( 'indieauth_response', static::$micropub_auth_response );
-		
-		if ( ! self::check_scopes( array( 'create', 'media' ) ) ) {
-			return new WP_Micropub_Error( 'insufficient_scope', 'Token Does Not Meet Requirements for Upload', 401 );
-		}
-		
 
-		// Get the file via $_FILES or raw data.
+		$permission = static::permissions_check( $request );
+		if ( is_micropub_error( $permission ) ) {
+			return $permission;
+		}
+
+		// Get the file via $_FILES
 		$files   = $request->get_file_params();
 		$headers = $request->get_headers();
 		if ( empty( $files ) ) {
