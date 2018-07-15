@@ -191,7 +191,7 @@ class Micropub_Authorize {
 
 	/**
 	 * Try to match a user with a URL with or without trailing slash.
-	 *
+	 * TODO: Rename function to something more descriptive
 	 * @param string $me URL to match
 	 *
 	 * @return null|int Return user ID if matched or null
