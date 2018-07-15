@@ -121,7 +121,8 @@ class Micropub_Authorize {
 		}
 
 		// Since this runs on the built-in determine_current user filter only try to authenticate if this is the Micropub endpoint
-		if ( ! empty( get_query_var( 'micropub' ) ) ) {
+		$micropub = get_query_var( 'micropub' );
+		if ( empty( $micropub ) ) {
 			return $user_id;
 		}
 
@@ -163,7 +164,7 @@ class Micropub_Authorize {
 		static::$micropub_auth_response = $params;
 
 		// look for a user with the same url as the token's `me` value.
-		$user = static::user_url( $me );
+		$user_id = static::user_url( $me );
 
 		// IndieAuth Plugin uses priority 9
 		// TODO: These filters are added here to ensure that they are loaded after the scope is set
@@ -171,11 +172,11 @@ class Micropub_Authorize {
 		add_filter( 'indieauth_scopes', array( $cls, 'indieauth_scopes' ), 11 );
 		add_filter( 'indieauth_response', array( $cls, 'indieauth_response' ), 11 );
 
-		if ( $user ) {
-			return $user;
+		if ( $user_id ) {
+			return $user_id;
 		}
-
-		return $user_id;
+		// Nothing was found return 0 to indicate no privileges given
+		return 0;
 	}
 
 	private static function authorize_error( $code, $msg ) {
@@ -183,7 +184,7 @@ class Micropub_Authorize {
 			'forbidden',
 			$msg,
 			array(
-				'status' => $code
+				'status' => $code,
 			)
 		);
 	}
