@@ -34,6 +34,7 @@ class Micropub_Media {
 	}
 
 	// Based on WP_REST_Attachments_Controller function of the same name
+	// TODO: Hook main endpoint functionality into and extend to use this class
 
 	public static function upload_from_file( $files, $name ) {
 
@@ -89,6 +90,7 @@ class Micropub_Media {
 		return true;
 	}
 
+	// Handles requests to the Media Endpoint
 	public static function upload_handler( $request ) {
 		static::$scopes                 = apply_filters( 'indieauth_scopes', static::$scopes );
 		static::$micropub_auth_response = apply_filters( 'indieauth_response', static::$micropub_auth_response );
