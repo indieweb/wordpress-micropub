@@ -129,7 +129,7 @@ class Micropub_Authorize {
 		$auth  = static::get_authorization_header();
 		$token = self::get( $_POST, 'access_token' );
 		if ( ! $auth && ! $token ) {
-			static::authorize_error( 401, 'missing access token' );
+			return static::authorize_error( 401, 'missing access token' );
 		}
 
 		$resp = wp_remote_get(
