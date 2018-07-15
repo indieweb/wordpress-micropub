@@ -165,7 +165,9 @@ class Micropub_Authorize {
 		// look for a user with the same url as the token's `me` value.
 		$user = static::user_url( $me );
 
-		// IndieAuth Plugin uses priority 9		
+		// IndieAuth Plugin uses priority 9
+		// TODO: These filters are added here to ensure that they are loaded after the scope is set
+		// However future changes will change the order so this is no longer needed
 		add_filter( 'indieauth_scopes', array( $cls, 'indieauth_scopes' ), 11 );
 		add_filter( 'indieauth_response', array( $cls, 'indieauth_response' ), 11 );
 
