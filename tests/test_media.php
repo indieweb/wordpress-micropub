@@ -72,8 +72,9 @@ class Micropub_Media_Test extends WP_UnitTestCase {
 		$this->assertNotEquals( 0, attachment_url_to_postid( $data['url'] ), sprintf( '%1$s is not an attachment', $data['url'] ) );
 		// Test that a valid URL is returned in the Location Header
 		$headers = $response->get_headers();
-		$this->assertNotEquals( 0, attachment_url_to_postid( $headers['Location'] ), sprintf( '%1$s is not an attachment', $headers['Location'] ) );
-
+		$attachment_id = attachment_url_to_postid( $headers['Location'] );
+		$this->assertNotEquals( 0, $attachment_id, sprintf( '%1$s is not an attachment', $headers['Location'] ) );
+		$this->assertEquals( 'image/jpeg', get_post_mime_type( $attachment_id ) );
 	}
 
 	public function test_empty_upload() {
