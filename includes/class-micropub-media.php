@@ -68,8 +68,6 @@ class Micropub_Media {
 	* @return boolean
 	**/
 	protected static function check_scopes( $scopes ) {
-		$intersect = array_intersect( $scopes, static::$scopes );
-		return ! empty( $intersect );
 	}
 
 
@@ -83,7 +81,8 @@ class Micropub_Media {
 		if ( ! current_user_can( 'upload_files' ) ) {
 			return new WP_Micropub_Error( 'forbidden', 'User is not permitted to upload files', 403 );
 		}
-		if ( ! self::check_scopes( array( 'create', 'media' ) ) ) {
+		$intersect = array_intersect( array( 'create', 'media' ), static::$scopes );
+		if ( empty( $intersect ) ) {
 			return new WP_Micropub_Error( 'insufficient_scope', 'Token Does Not Meet Requirements for Upload', 401 );
 		}
 
