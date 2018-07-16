@@ -32,6 +32,10 @@ if ( ! defined( 'MICROPUB_LOCAL_AUTH' ) ) {
 	define( 'MICROPUB_LOCAL_AUTH', '0' );
 }
 
+if ( ! defined( 'MICROPUB_NAMESPACE' ) ) {
+	define( 'MICROPUB_NAMESPACE', 'micropub/1.0' );
+}
+
 register_activation_hook( __FILE__, array( 'Micropub_Admin', 'activate' ) );
 
 // Admin Menu Functions

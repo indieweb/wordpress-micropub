@@ -24,7 +24,7 @@ class Micropub_Media {
 	public static function register_route() {
 		$cls = get_called_class();
 		register_rest_route(
-			'micropub/1.0', '/media', array(
+			MICROPUB_NAMESPACE, '/media', array(
 				array(
 					'methods'  => WP_REST_Server::CREATABLE,
 					'callback' => array( $cls, 'upload_handler' ),

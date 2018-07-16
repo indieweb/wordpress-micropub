@@ -219,7 +219,7 @@ class Micropub_Endpoint {
 				case 'config':
 					$resp = array( 
 							'syndicate-to' => static::get_syndicate_targets( $user_id ),
-							'media-endpoint' => rest_url( '/micropub/1.0/media' )
+							'media-endpoint' => rest_url( MICROPUB_NAMESPACE . '/media' )
 						);
 					break;	
 				case 'syndicate-to':
