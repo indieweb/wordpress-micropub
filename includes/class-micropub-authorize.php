@@ -164,7 +164,7 @@ class Micropub_Authorize {
 		static::$micropub_auth_response = $params;
 
 		// look for a user with the same url as the token's `me` value.
-		$user_id = static::user_url( $me );
+		$user_id = static::url_to_user( $me );
 
 		// IndieAuth Plugin uses priority 9
 		// TODO: These filters are added here to ensure that they are loaded after the scope is set
@@ -191,28 +191,96 @@ class Micropub_Authorize {
 
 	/**
 	 * Try to match a user with a URL with or without trailing slash.
-	 * TODO: Rename function to something more descriptive
+	 *
 	 * @param string $me URL to match
 	 *
-	 * @return null|int Return user ID if matched or null
+	 * @return int Return user ID if matched or 0
 	**/
-	public static function user_url( $me ) {
-		if ( ! isset( $me ) ) {
-			return null;
+	public static function url_to_user( $me ) {
+		if ( empty( $me ) ) {
+			return 0;
 		}
+		if ( ( 'https' === wp_parse_url( home_url(), PHP_URL_SCHEME ) ) && ( wp_parse_url( home_url(), PHP_URL_HOST ) === wp_parse_url( $me, PHP_URL_HOST ) ) ) {
+			$me = set_url_scheme( $me, 'https' );
+		}
+		$me = trailingslashit( $me );
+		// Try to save the expense of a search query if the URL is the site URL
+		if ( home_url( '/' ) === $identifier ) {
+			// Use the Indieweb settings to set the default author
+			if ( class_exists( 'Indieweb_Plugin' ) && ( get_option( 'iw_single_author' ) || ! is_multi_author() ) ) {
+				return get_option( 'iw_default_author' );
+			}
+			$users = get_users(
+				array(
+					'who'    => 'authors',
+					'fields' => 'ID',
+				)
+			);
+			if ( 1 === count( $users ) ) {
+				return $users[0];
+			}
+		}
+		// Check if this is a author post URL
+		$user_id = static::url_to_author( $me );
+		if ( 0 !== $user_id ) {
+			return $user_id;
+		}
+
 		$search = array(
 			'search'         => $me,
 			'search_columns' => array( 'url' ),
 		);
 		$users  = get_users( $search );
 
-		$search['search'] = $me . '/';
+		$search['search'] = untrailingslashit( $me );
 		$users            = array_merge( $users, get_users( $search ) );
 		foreach ( $users as $user ) {
 			if ( untrailingslashit( $user->user_url ) === $me ) {
 				return $user->ID;
 			}
 		}
-		return null;
+		return 0;
 	}
+
+	/**
+	 * Examine a url and try to determine the author ID it represents.
+	 *
+	 *
+	 * @param string $url Permalink to check.
+	 *
+	 * @return $user_id, or 0 on failure.
+	 */
+	private static function url_to_author( $url ) {
+		global $wp_rewrite;
+		// check if url hase the same host
+		if ( wp_parse_url( site_url(), PHP_URL_HOST ) !== wp_parse_url( $url, PHP_URL_HOST ) ) {
+			return null;
+		}
+		// first, check to see if there is a 'author=N' to match against
+		if ( preg_match( '/[?&]author=(\d+)/i', $url, $values ) ) {
+			$id = absint( $values[1] );
+			if ( $id ) {
+				return $id;
+			}
+		}
+		// check to see if we are using rewrite rules
+		$rewrite = $wp_rewrite->wp_rewrite_rules();
+		// not using rewrite rules, and 'author=N' method failed, so we're out of options
+		if ( empty( $rewrite ) ) {
+			return null;
+		}
+		// generate rewrite rule for the author url
+		$author_rewrite = $wp_rewrite->get_author_permastruct();
+		$author_regexp  = str_replace( '%author%', '', $author_rewrite );
+		// match the rewrite rule with the passed url
+		if ( preg_match( '/https?:\/\/(.+)' . preg_quote( $author_regexp, '/' ) . '([^\/]+)/i', $url, $match ) ) {
+			$user = get_user_by( 'slug', $match[2] );
+			if ( $user ) {
+				return $user->ID;
+			}
+		}
+		return 0;
+	}
+
+
 }
