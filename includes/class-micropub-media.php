@@ -119,7 +119,8 @@ class Micropub_Media {
 
 		$attachment = get_post( $id );
 
-		// Include admin functions to get access to wp_generate_attachment_metadata().
+		// Include admin functions to get access to wp_generate_attachment_metadata(). These functions are included here
+		// as these functions are not normally loaded externally as is the practice in similar areas of WordPress.
 		require_once ABSPATH . 'wp-admin/includes/admin.php';
 
 		wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $file['file'] ) );
