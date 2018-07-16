@@ -61,17 +61,6 @@ class Micropub_Media {
 	}
 
 	/**
-	* Check scope
-	*
-	* @param array $scope
-	*
-	* @return boolean
-	**/
-	protected static function check_scopes( $scopes ) {
-	}
-
-
-	/**
 	 * Checks if a given request has access to create an attachment.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
