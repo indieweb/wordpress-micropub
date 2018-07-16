@@ -76,6 +76,16 @@ class Micropub_Media_Test extends WP_UnitTestCase {
 
 	}
 
+	public function test_empty_upload() {
+		static::$scopes = array( 'create' );
+		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ) );
+		wp_set_current_user( self::$author_id );
+		$request = new WP_REST_Request( 'POST', '/micropub/1.0/media' );
+		$response = rest_get_server()->dispatch( $request );
+		$data     = $response->get_data();
+		$this->assertEquals( 400, $response->get_status(), wp_json_encode( $data ) );
+	}
+
 	public function test_upload_file_without_scope() {
 		static::$scopes = array();
 		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ) );
