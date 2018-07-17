@@ -278,7 +278,7 @@ class MicropubTest extends WP_UnitTestCase {
 
 		// Check to ensure default options are still working
 		$_GET['q'] = 'config';
-		$expected = array( 'syndicate-to' => array() );
+		$expected = array( 'syndicate-to' => array(), 'media-endpoint' => 'http://example.org/wp-json/micropub/1.0/media' );
 		$this->check( 200, $expected );
 
 		$this->assertEquals( $_GET, static::$before_micropub_input );
