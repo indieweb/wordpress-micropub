@@ -205,7 +205,7 @@ class Micropub_Authorize {
 		}
 		$me = trailingslashit( $me );
 		// Try to save the expense of a search query if the URL is the site URL
-		if ( home_url( '/' ) === $identifier ) {
+		if ( home_url( '/' ) === $me ) {
 			// Use the Indieweb settings to set the default author
 			if ( class_exists( 'Indieweb_Plugin' ) && ( get_option( 'iw_single_author' ) || ! is_multi_author() ) ) {
 				return get_option( 'iw_default_author' );
@@ -228,14 +228,14 @@ class Micropub_Authorize {
 
 		$search = array(
 			'search'         => $me,
-			'search_columns' => array( 'url' ),
+			'search_columns' => array( 'user_url' ),
 		);
 		$users  = get_users( $search );
 
 		$search['search'] = untrailingslashit( $me );
 		$users            = array_merge( $users, get_users( $search ) );
 		foreach ( $users as $user ) {
-			if ( untrailingslashit( $user->user_url ) === $me ) {
+			if ( untrailingslashit( $user->user_url ) === untrailingslashit( $me ) ) {
 				return $user->ID;
 			}
 		}
@@ -254,7 +254,7 @@ class Micropub_Authorize {
 		global $wp_rewrite;
 		// check if url hase the same host
 		if ( wp_parse_url( site_url(), PHP_URL_HOST ) !== wp_parse_url( $url, PHP_URL_HOST ) ) {
-			return null;
+			return 0;
 		}
 		// first, check to see if there is a 'author=N' to match against
 		if ( preg_match( '/[?&]author=(\d+)/i', $url, $values ) ) {
@@ -267,7 +267,7 @@ class Micropub_Authorize {
 		$rewrite = $wp_rewrite->wp_rewrite_rules();
 		// not using rewrite rules, and 'author=N' method failed, so we're out of options
 		if ( empty( $rewrite ) ) {
-			return null;
+			return 0;
 		}
 		// generate rewrite rule for the author url
 		$author_rewrite = $wp_rewrite->get_author_permastruct();
