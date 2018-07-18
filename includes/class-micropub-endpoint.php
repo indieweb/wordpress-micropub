@@ -844,21 +844,11 @@ class Micropub_Endpoint {
 		printf( '<link rel="micropub" href="%s" />' . PHP_EOL, site_url( '?micropub=endpoint' ) );
 	}
 
-	public static function indieauth_html_header() {
-		printf( '<link rel="authorization_endpoint" href="%s" />' . PHP_EOL, get_option( 'indieauth_authorization_endpoint', MICROPUB_AUTHENTICATION_ENDPOINT ) );
-		printf( '<link rel="token_endpoint" href="%s" />' . PHP_EOL, get_option( 'indieauth_token_endpoint', MICROPUB_TOKEN_ENDPOINT ) );
-	}
-
 	/**
 	 * The micropub autodicovery http-header
 	 */
 	public static function micropub_http_header() {
 		static::header( 'Link', '<' . site_url( '?micropub=endpoint' ) . '>; rel="micropub"' );
-	}
-
-	public static function indieauth_http_header() {
-		static::header( 'Link', '<' . get_option( 'indieauth_authorization_endpoint', MICROPUB_AUTHENTICATION_ENDPOINT ) . '>; rel="authorization_endpoint"' );
-		static::header( 'Link', '<' . get_option( 'indieauth_token_endpoint', MICROPUB_TOKEN_ENDPOINT ) . '>; rel="token_endpoint"' );
 	}
 
 	/**
@@ -869,19 +859,6 @@ class Micropub_Endpoint {
 			'rel'  => 'micropub',
 			'href' => site_url( '?micropub=endpoint' ),
 		);
-		return $array;
-	}
-
-	public static function indieauth_jrd_links( $array ) {
-		$array['links'][] = array(
-			'rel'  => 'authorization_endpoint',
-			'href' => get_option( 'indieauth_authorization_endpoint', MICROPUB_AUTHENTICATION_ENDPOINT ),
-		);
-		$array['links'][] = array(
-			'rel'  => 'token_endpoint',
-			'href' => get_option( 'indieauth_token_endpoint', MICROPUB_TOKEN_ENDPOINT ),
-		);
-
 		return $array;
 	}
 
