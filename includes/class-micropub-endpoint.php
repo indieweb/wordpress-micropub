@@ -885,6 +885,25 @@ class Micropub_Endpoint {
 		return $array;
 	}
 
+	/* Takes form encoded input and converts to json encoded input */
+	protected static function form_to_json( $data ) {
+		foreach ( $data as $key => $val ) {
+			if ( 'action' === $key || 'url' === $key ) {
+				$input[ $key ] = $val;
+			} elseif ( 'h' === $key ) {
+				$input['type'] = array( 'h-' . $val );
+			} elseif ( 'access_token' === $key ) {
+				continue;
+			} else {
+				$input['properties']         = self::get( $input, 'properties' );
+				$input['properties'][ $key ] =
+				( is_array( $val ) && wp_is_numeric_array( $val ) )
+				? $val : array( $val );
+			}
+		}
+		return $input;
+	}
+
 	protected static function load_input() {
 		$content_type = explode( ';', static::get_header( 'Content-Type' ) );
 		$content_type = $content_type[0];
@@ -895,21 +914,7 @@ class Micropub_Endpoint {
 		} elseif ( ! $content_type ||
 			   'application/x-www-form-urlencoded' === $content_type ||
 			   'multipart/form-data' === $content_type ) {
-			static::$input = array();
-			foreach ( $_POST as $key => $val ) {
-				if ( 'action' === $key || 'url' === $key ) {
-					static::$input[ $key ] = $val;
-				} elseif ( 'h' === $key ) {
-					static::$input['type'] = array( 'h-' . $val );
-				} elseif ( 'access_token' === $key ) {
-					continue;
-				} else {
-					static::$input['properties']         = self::get( static::$input, 'properties' );
-					static::$input['properties'][ $key ] =
-					( is_array( $val ) && ! is_assoc_array( $val ) )
-					? $val : array( $val );
-				}
-			}
+			static::$input = static::form_to_json( $_POST );
 		} else {
 			static::error( 400, 'unsupported content type ' . $content_type );
 		}
