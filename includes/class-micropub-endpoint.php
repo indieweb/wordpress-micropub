@@ -37,13 +37,6 @@ class Micropub_Endpoint {
 		add_filter( 'host_meta', array( $cls, 'micropub_jrd_links' ) );
 		add_filter( 'webfinger_user_data', array( $cls, 'micropub_jrd_links' ) );
 
-		// Disable adding headers if local auth is set
-		if ( MICROPUB_LOCAL_AUTH || ! class_exists( 'IndieAuth_Plugin' ) ) {
-			add_action( 'wp_head', array( $cls, 'indieauth_html_header' ), 99 );
-			add_action( 'send_headers', array( $cls, 'indieauth_http_header' ) );
-			add_filter( 'host_meta', array( $cls, 'indieauth_jrd_links' ) );
-			add_filter( 'webfinger_user_data', array( $cls, 'indieauth_jrd_links' ) );
-		}
 	}
 
 	public static function get( $array, $key, $default = array() ) {
