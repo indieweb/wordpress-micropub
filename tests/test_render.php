@@ -5,14 +5,6 @@
 
 class MicropubRenderTest extends WP_UnitTestCase {
 
-	public static function setUpBeforeClass() {
-		WP_UnitTestCase::setUpBeforeClass();
-	}
-
-	public function setUp() {
-		parent::setUp();
-	}
-
 	function test_create_checkin_autogenerates_checkin_text_with_content() {
 		$input = array(
 			'type' => array( 'h-entry' ),
@@ -33,15 +25,17 @@ class MicropubRenderTest extends WP_UnitTestCase {
 			$post_content );
 	}
 
-/*
-	function check_create_content_html() {
-		$post = $this->check_create();
-		$this->assertEquals( 'HTML content test', $post->post_title );
-		// check that HTML in content isn't sanitized
-		$this->assertEquals( "<div class=\"e-content\">\n<h1>HTML content!</h1><p>coolio.</p>\n</div>", $post->post_content );
+	function check_econtent() {
+		$content = '\n<h1>HTML content!</h1><p>coolio.</p>\n';
+		$input = array(
+			'properties' => array(
+				'content' => array( $content )
+			) );
+		$post_content = Micropub_Render::generate_post_content( 'something', $input );
+		$this->assertEquals( "<div class=\"e-content\">\n<h1>HTML content!</h1><p>coolio.</p>\n</div>", $post_content );
 	}
- */
-	function _test_create_interaction_json( $property ) {
+
+	function create_interaction_json( $property ) {
 		$input = array(
 			'properties' => array(
 				$property => array( 'http://target' ),
@@ -50,20 +44,20 @@ class MicropubRenderTest extends WP_UnitTestCase {
 	}
 
 	function test_create_reply() {
-		$input = $this->_test_create_interaction_json( 'in-reply-to' ); 
+		$input = $this->create_interaction_json( 'in-reply-to' ); 
 		$post_content = Micropub_Render::generate_post_content( '', $input );
 		$this->assertEquals( '<p>In reply to <a class="u-in-reply-to" href="http://target">http://target</a>.</p>', $post_content );
 
 	}
 
 	function test_create_like() {
-		$input = $this->_test_create_interaction_json( 'like-of' );
+		$input = $this->create_interaction_json( 'like-of' );
 		$post_content = Micropub_Render::generate_post_content( '', $input );
 		$this->assertEquals( '<p>Likes <a class="u-like-of" href="http://target">http://target</a>.</p>', $post_content );
 	}
 
 	function test_create_repost() {
-		$input = $this->_test_create_interaction_json( 'repost-of' );
+		$input = $this->create_interaction_json( 'repost-of' );
 		$post_content = Micropub_Render::generate_post_content( '', $input );
 		$this->assertEquals( '<p>Reposted <a class="u-repost-of" href="http://target">http://target</a>.</p>', $post_content );
 	}
