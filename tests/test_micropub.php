@@ -210,6 +210,14 @@ class MicropubTest extends WP_UnitTestCase {
 		return $post;
 	}
 
+       function check_create_content_html() {
+               $post = $this->check_create();
+               $this->assertEquals( 'HTML content test', $post->post_title );
+               // check that HTML in content isn't sanitized
+               $this->assertEquals( "<div class=\"e-content\">\n<h1>HTML content!</h1><p>coolio.</p>\n</div>", $post->post_content );
+       }
+
+
 	function query_source( $post_id ) {
 		$_GET = array(
 			'q' => 'source',
@@ -641,35 +649,6 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( '<p>Checked into <a class="h-card p-location" href="http:/a/place">A Place</a>.</p>', $post->post_content );
 	}
 
-	function test_create_checkin_autogenerates_checkin_text_with_content() {
-		Recorder::$request_headers = array( 'content-type' => 'application/json' );
-		Recorder::$input = array(
-			'type' => array( 'h-entry' ),
-			'properties' => array(
-				'content' => array( 'something' ),
-				'checkin' => array( array(
-					'properties' => array(
-						'name' => array( 'Place' ),
-						'url' => array( 'http://place' ),
-					),
-				) ),
-			),
-		);
-		$post = self::check_create();
-
-		$this->assertEquals( 'Place', get_post_meta( $post->ID, 'geo_address', true ) );
-		$this->assertEquals( "<p>Checked into <a class=\"h-card p-location\" href=\"http://place\">Place</a>.</p>\n" .
-			"<div class=\"e-content\">\nsomething\n</div>",
-			$post->post_content );
-	}
-
-	function check_create_content_html() {
-		$post = $this->check_create();
-		$this->assertEquals( 'HTML content test', $post->post_title );
-		// check that HTML in content isn't sanitized
-		$this->assertEquals( "<div class=\"e-content\">\n<h1>HTML content!</h1><p>coolio.</p>\n</div>", $post->post_content );
-	}
-
 	function test_create_with_photo() {
 		$this->_test_create_with_upload('photo', 'image', 'jpg');
 	}
@@ -877,218 +856,6 @@ class MicropubTest extends WP_UnitTestCase {
 		$this->assertEquals( '4.wav', current( $media )->post_title);
 		$this->assertEquals( '5.ogg', next( $media )->post_title);
 		$this->assertEquals( '6.mp3', next( $media )->post_title);
-	}
-
-	function test_create_reply_post() {
-		$this->_test_create_interaction_post(
-			'in-reply-to', '<p>In reply to <a class="u-in-reply-to" href="http://target">http://target</a>.</p>' );
-	}
-
-	function test_create_reply_json() {
-		Recorder::$request_headers = array( 'content-type' => 'application/json' );
-		$this->_test_create_interaction_json(
-			'in-reply-to', '<p>In reply to <a class="u-in-reply-to" href="http://target">http://target</a>.</p>' );
-	}
-
-	function test_create_like_post() {
-		$this->_test_create_interaction_post(
-			'like-of', '<p>Likes <a class="u-like-of" href="http://target">http://target</a>.</p>' );
-	}
-
-	function test_create_like_json() {
-		Recorder::$request_headers = array( 'content-type' => 'application/json' );
-		$this->_test_create_interaction_json(
-			'like-of', '<p>Likes <a class="u-like-of" href="http://target">http://target</a>.</p>' );
-	}
-
-	function test_create_repost_post() {
-		$this->_test_create_interaction_post(
-			'repost-of', '<p>Reposted <a class="u-repost-of" href="http://target">http://target</a>.</p>' );
-	}
-
-	function test_create_repost_json() {
-		Recorder::$request_headers = array( 'content-type' => 'application/json' );
-		$this->_test_create_interaction_json(
-			'repost-of', '<p>Reposted <a class="u-repost-of" href="http://target">http://target</a>.</p>' );
-	}
-
-	function _test_create_interaction_post( $property, $content ) {
-		$_POST = array( $property => 'http://target' );
-		$post = $this->check_create_interaction( $property, $content );
-	}
-
-	function _test_create_interaction_json( $property, $content ) {
-		Recorder::$input = array(
-			'properties' => array(
-				$property => array( 'http://target' ),
-			) );
-		$post = $this->check_create_interaction( $property, $content );
-	}
-
-	function check_create_interaction( $property, $content ) {
-		$post = $this->check_create();
-		$this->assertEquals( '', $post->post_title );
-		$this->assertEquals( $content, $post->post_content );
-		$this->assertEquals( array(
-			'properties' => array(
-				$property => array( 'http://target' ),
-			) ),
-			$this->query_source( $post->ID ) );
-	}
-
-	function test_create_event_post() 	{
-		$_POST = array(
-			'h' => 'event',
-			'name' => 'My Event',
-			'start' => '2013-06-30 12:00:00',
-			'end' => '2013-06-31 18:00:00',
-			'location' => 'http://a/place',
-			'description' => 'some stuff',
-		);
-		$this->check_create_event();
-	}
-
-	function test_create_event_json() {
-		Recorder::$request_headers = array( 'content-type' => 'application/json' );
-		Recorder::$input = array(
-			'type' => array( 'h-event' ),
-			'properties' => array(
-				'name' => array( 'My Event' ),
-				'start' => array( '2013-06-30 12:00:00' ),
-				'end' => array( '2013-06-31 18:00:00' ),
-				'location' => array( 'http://a/place' ),
-				'description' => array( 'some stuff' ),
-			) );
-		$this->check_create_event();
-	}
-
-	function check_create_event() {
-		$post = $this->check_create();
-		$this->assertEquals( 'My Event', $post->post_title );
-		$this->assertEquals( <<<EOF
-<div class="h-event">
-<h1 class="p-name">My Event</h1>
-<p>
-<time class="dt-start" datetime="2013-06-30 12:00:00">2013-06-30 12:00:00</time>
-to
-<time class="dt-end" datetime="2013-06-31 18:00:00">2013-06-31 18:00:00</time>
-at <a class="p-location" href="http://a/place">http://a/place</a>.
-</p>
-<p class="p-description">some stuff</p>
-</div>
-EOF
-, $post->post_content );
-
-		$mf2 = $this->query_source( $post->ID );
-		$this->assertEquals( array( 'h-event' ), $mf2['type'] );
-		$this->assertEquals( array( '2013-06-30 12:00:00' ), $mf2['properties']['start'] );
-		$this->assertEquals( array( '2013-06-31 18:00:00' ), $mf2['properties']['end'] );
-	}
-
-	function test_create_rsvp_post() {
-		$_POST = array(
-			'h' => 'entry',
-			'rsvp' => 'maybe',
-			'in-reply-to' => 'http://target',
-		);
-		$this->check_create_rsvp();
-	}
-
-	function test_create_rsvp_json() {
-		Recorder::$request_headers = array( 'content-type' => 'application/json' );
-		Recorder::$input = array(
-			'type' => array( 'h-entry' ),
-			'properties' => array(
-				'rsvp' => array( 'maybe' ),
-				'in-reply-to' => array( 'http://target' ),
-			) );
-		$this->check_create_rsvp();
-	}
-
-	function check_create_rsvp() {
-		$post = $this->check_create();
-		$this->assertEquals( array(
-			'type' => array( 'h-entry' ),
-			'properties' => array(
-				'in-reply-to' => array( 'http://target' ),
-				'rsvp' => array( 'maybe' ),
-			) ),
-			$this->query_source( $post->ID ) );
-		$this->assertEquals( <<<EOF
-<p>In reply to <a class="u-in-reply-to" href="http://target">http://target</a>.</p>
-<p>RSVPs <data class="p-rsvp" value="maybe">maybe</data>.</p>
-EOF
-, $post->post_content );
-	}
-
-	function test_create_bookmark() {
-		Recorder::$request_headers = array( 'content-type' => 'application/json' );
-		Recorder::$input = array(
-			'type' => array( 'h-entry' ),
-			'properties' => array(
-				'bookmark-of' => array( 'http://target' ),
-			) );
-		$post = $this->check_create();
-		$this->assertEquals( <<<EOF
-<p>Bookmarked <a class="u-bookmark-of" href="http://target">http://target</a>.</p>
-EOF
-, $post->post_content );
-	}
-	
-	// While the specification allows for nested properties, currently the Post Kinds
-	// plugin hooks into the Micropub plugin to enhance a URL in a like, bookmark, etc.
-	// by parsing the URL and trying to find the page title among other things and adds
-	// it into the input properties.
-	// https://github.com/dshanske/indieweb-post-kinds/blob/master/readme.md
-	function test_create_nested_bookmark() {
-		Recorder::$request_headers = array( 'content-type' => 'application/json' );
-		Recorder::$input = array(
-			'type' => array( 'h-entry' ),
-			'properties' => array(
-				'bookmark-of' => array(
-					'name' => 'Target',
-					'url' => 'http://target'
-				)
-			) );
-		$post = $this->check_create();
-		$this->assertEquals( <<<EOF
-<p>Bookmarked <a class="u-bookmark-of" href="http://target">Target</a>.</p>
-EOF
-, $post->post_content );
-	}
-
-	function test_create_multiple_bookmark_urls() {
-		Recorder::$request_headers = array( 'content-type' => 'application/json' );
-		Recorder::$input = array(
-			'type' => array( 'h-entry' ),
-			'properties' => array(
-				'bookmark-of' => array(
-					'http://target',
-					'http://tarjet'
-				)
-			) );
-		$post = $this->check_create();
-		$this->assertEquals( <<<EOF
-<p>Bookmarked <a class="u-bookmark-of" href="http://target">http://target</a>.</p>
-EOF
-, $post->post_content );
-	}
-
-
-	function test_merges_auto_generated_content() {
-		$_POST = array(
-			'h' => 'entry',
-			'content' => 'foo bar',
-			'in-reply-to' => 'http://target',
-		);
-		$post = $this->check_create();
-		$this->assertEquals( <<<EOF
-<p>In reply to <a class="u-in-reply-to" href="http://target">http://target</a>.</p>
-<div class="e-content">
-foo bar
-</div>
-EOF
-, $post->post_content );
 	}
 
 	function test_create_user_cannot_publish_posts() {
