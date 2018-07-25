@@ -35,7 +35,7 @@ class MicropubRenderTest extends WP_UnitTestCase {
 		$this->assertEquals( "<div class=\"e-content\">\n<h1>HTML content!</h1><p>coolio.</p>\n</div>", $post_content );
 	}
 
-	function create_interaction_json( $property ) {
+	function create_interaction( $property ) {
 		$input = array(
 			'properties' => array(
 				$property => array( 'http://target' ),
@@ -44,25 +44,25 @@ class MicropubRenderTest extends WP_UnitTestCase {
 	}
 
 	function test_create_reply() {
-		$input = $this->create_interaction_json( 'in-reply-to' ); 
+		$input = $this->create_interaction( 'in-reply-to' ); 
 		$post_content = Micropub_Render::generate_post_content( '', $input );
 		$this->assertEquals( '<p>In reply to <a class="u-in-reply-to" href="http://target">http://target</a>.</p>', $post_content );
 
 	}
 
 	function test_create_like() {
-		$input = $this->create_interaction_json( 'like-of' );
+		$input = $this->create_interaction( 'like-of' );
 		$post_content = Micropub_Render::generate_post_content( '', $input );
 		$this->assertEquals( '<p>Likes <a class="u-like-of" href="http://target">http://target</a>.</p>', $post_content );
 	}
 
 	function test_create_repost() {
-		$input = $this->create_interaction_json( 'repost-of' );
+		$input = $this->create_interaction( 'repost-of' );
 		$post_content = Micropub_Render::generate_post_content( '', $input );
 		$this->assertEquals( '<p>Reposted <a class="u-repost-of" href="http://target">http://target</a>.</p>', $post_content );
 	}
 
-	function test_create_event_json() {
+	function test_create_event() {
 		$input = array(
 			'type' => array( 'h-event' ),
 			'properties' => array(
