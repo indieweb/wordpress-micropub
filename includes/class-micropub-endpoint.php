@@ -857,7 +857,7 @@ class Micropub_Endpoint {
 	}
 
 	/* Takes form encoded input and converts to json encoded input */
-	protected static function form_to_json( $data ) {
+	public static function form_to_json( $data ) {
 		$input = array();
 		foreach ( $data as $key => $val ) {
 			if ( 'action' === $key || 'url' === $key ) {
