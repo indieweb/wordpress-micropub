@@ -30,8 +30,8 @@ class Micropub_Endpoint {
 		add_filter( 'host_meta', array( $cls, 'micropub_jrd_links' ) );
 		add_filter( 'webfinger_user_data', array( $cls, 'micropub_jrd_links' ) );
 
-				// register endpoint
-				add_action( 'rest_api_init', array( $cls, 'register_route' ) );
+		// register endpoint
+		add_action( 'rest_api_init', array( $cls, 'register_route' ) );
 
 	}
 
@@ -88,8 +88,8 @@ class Micropub_Endpoint {
 				} else {
 					static::$input['properties']         = self::get( static::$input, 'properties' );
 					static::$input['properties'][ $key ] =
-					( is_array( $val ) && wp_is_numeric_array( $val ) )
-					? $val : array( $val );
+						( is_array( $val ) && wp_is_numeric_array( $val ) )
+						? $val : array( $val );
 				}
 			}
 		} else {
@@ -134,7 +134,7 @@ class Micropub_Endpoint {
 
 		$action = self::get( static::$input, 'action', 'create' );
 		if ( ! self::check_scope( $action ) ) {
-			return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'scope onsufficient to %1$s posts', $action ), 403 );
+			return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'scope insufficient to %1$s posts', $action ), 403 );
 		}
 
 		$url = self::get( static::$input, 'url' );
@@ -151,7 +151,7 @@ class Micropub_Endpoint {
 		$unknown        = array_diff( $synd_requested, $uids );
 
 		if ( $unknown ) {
-			return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'Unknown mp-syndicate-to targets: %1$s', implode( ', ', $unknown ) ), 400 );
+			return new WP_Micropub_Error( 'invalid_request', sprintf( 'Unknown mp-syndicate-to targets: %1$s', implode( ', ', $unknown ) ), 400 );
 
 		} elseif ( ! $url || 'create' === $action ) { // create
 			if ( $user_id && ! user_can( $user_id, 'publish_posts' ) ) {
@@ -179,7 +179,7 @@ class Micropub_Endpoint {
 
 		} elseif ( 'undelete' === $action ) { // undelete
 			if ( $user_id && ! user_can( $user_id, 'publish_posts' ) ) {
-				return new WP_Micropub_Error( 'forbidden', sprintf( 'user id %1$s cannot undelete posts', $user_id ), 403 );
+				return new WP_Micropub_Error( 'invalid_request', sprintf( 'user id %1$s cannot undelete posts', $user_id ), 400 );
 			}
 			$found = false;
 			// url_to_postid() doesn't support posts in trash, so look for
@@ -274,7 +274,7 @@ class Micropub_Endpoint {
 		}
 
 		do_action( 'after_micropub', static::$input, null );
-		return rest_ensure_response( $resp );
+		return new WP_REST_Response( $resp, 200 );
 	}
 
 	/*
