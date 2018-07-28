@@ -35,9 +35,24 @@ class Micropub_Authorize {
 		add_action( 'send_headers', array( $cls, 'http_header' ) );
 		add_filter( 'host_meta', array( $cls, 'jrd_links' ) );
 		add_filter( 'webfinger_user_data', array( $cls, 'jrd_links' ) );
+		add_filter( 'rest_index', array( $cls, 'rest_index' ) );
+
+
 		// The WordPress IndieAuth plugin uses priority 30
 		add_filter( 'determine_current_user', array( $cls, 'determine_current_user' ), 31 );
 
+	}
+
+	public static function rest_index( $response ) {
+		$data = $response->get_data();
+		$data['authentication']['indieauth'] = array(
+			'endpoints' => array(
+				'authorization' => get_option( 'indieauth_authorization_endpoint', MICROPUB_AUTHENTICATION_ENDPOINT ),
+				'token' => get_option( 'indieauth_token_endpoint', MICROPUB_TOKEN_ENDPOINT )
+			)
+		);
+		$response->set_data( $data );
+		return $response;
 	}
 
 	public static function indieauth_scopes( $scopes ) {
