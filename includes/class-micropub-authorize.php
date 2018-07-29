@@ -25,6 +25,9 @@ class Micropub_Authorize {
 	// Array of Scopes
 	protected static $scopes = array();
 
+	// Error
+	protected static $error = null;
+
 	/**
 	 * Initialize the plugin.
 	 */
@@ -37,22 +40,48 @@ class Micropub_Authorize {
 		add_filter( 'webfinger_user_data', array( $cls, 'jrd_links' ) );
 		add_filter( 'rest_index', array( $cls, 'rest_index' ) );
 
-
 		// The WordPress IndieAuth plugin uses priority 30
 		add_filter( 'determine_current_user', array( $cls, 'determine_current_user' ), 31 );
+		add_filter( 'rest_authentication_errors', array( $cls, 'rest_authentication_errors' ), 10 );
+		add_filter( 'rest_post_dispatch', array( $cls, 'return_oauth_error' ), 10, 3 );
 
 	}
 
+	public static function return_oauth_error( $result, $server, $request ) {
+		if ( '/micropub/1.0/endpoint' !== $request->get_route() ) {
+			return $result;
+		}
+		if ( is_micropub_error( static::$error ) ) {
+			return static::$error;
+		}
+
+		return $result;
+	}
+
 	public static function rest_index( $response ) {
-		$data = $response->get_data();
+		$data                                = $response->get_data();
 		$data['authentication']['indieauth'] = array(
 			'endpoints' => array(
 				'authorization' => get_option( 'indieauth_authorization_endpoint', MICROPUB_AUTHENTICATION_ENDPOINT ),
-				'token' => get_option( 'indieauth_token_endpoint', MICROPUB_TOKEN_ENDPOINT )
-			)
+				'token'         => get_option( 'indieauth_token_endpoint', MICROPUB_TOKEN_ENDPOINT ),
+			),
 		);
 		$response->set_data( $data );
 		return $response;
+	}
+
+	public static function rest_authentication_errors( $error = null ) {
+		if ( $error ) {
+			return $error;
+		}
+		if ( is_wp_error( static::$error ) ) {
+			return static::$error;
+		}
+		if ( is_micropub_error( static::$error ) ) {
+			return static::$error->to_wp_error();
+		}
+		return null;
+
 	}
 
 	public static function indieauth_scopes( $scopes ) {
@@ -135,17 +164,12 @@ class Micropub_Authorize {
 			return $user_id;
 		}
 
-		// Since this runs on the built-in determine_current user filter only try to authenticate if this is the Micropub endpoint
-		$micropub = get_query_var( 'micropub' );
-		if ( empty( $micropub ) ) {
-			return $user_id;
-		}
-
 		// find the access token
 		$auth  = static::get_authorization_header();
 		$token = self::get( $_POST, 'access_token' );
 		if ( ! $auth && ! $token ) {
-			return static::authorize_error( 401, 'missing access token' );
+			static::$error = new WP_Micropub_Error( 'unauthorized', 'missing access token', 401 );
+			return $user_id;
 		}
 
 		$resp = wp_remote_get(
@@ -157,7 +181,8 @@ class Micropub_Authorize {
 			)
 		);
 		if ( is_wp_error( $resp ) ) {
-			return $resp;
+			static::$error = $resp;
+			return $user_id;
 		}
 
 		$code           = wp_remote_retrieve_response_code( $resp );
@@ -166,13 +191,11 @@ class Micropub_Authorize {
 		static::$scopes = explode( ' ', $params['scope'] );
 
 		if ( (int) ( $code / 100 ) !== 2 ) {
-			return static::authorize_error(
-				$code, 'invalid access token: ' . $body
-			);
+			static::$error = new WP_Micropub_Error( 'invalid_request', 'invalid access token', 403 );
+			return $user_id;
 		} elseif ( empty( static::$scopes ) ) {
-			return static::authorize_error(
-				401, 'access token is missing scope'
-			);
+			static::$error = new WP_Micropub_Error( 'insufficient_scope', 'access token is missing scope', 401 );
+			return $user_id;
 		}
 
 		$me                             = untrailingslashit( $params['me'] );
@@ -192,16 +215,6 @@ class Micropub_Authorize {
 		}
 		// Nothing was found return 0 to indicate no privileges given
 		return 0;
-	}
-
-	private static function authorize_error( $code, $msg ) {
-		return new WP_Error(
-			'forbidden',
-			$msg,
-			array(
-				'status' => $code,
-			)
-		);
 	}
 
 	/**

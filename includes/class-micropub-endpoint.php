@@ -33,7 +33,22 @@ class Micropub_Endpoint {
 		// register endpoint
 		add_action( 'rest_api_init', array( $cls, 'register_route' ) );
 
+		add_filter( 'rest_request_after_callbacks', array( $cls, 'return_micropub_error' ), 10, 3 );
+
 	}
+
+	public static function return_micropub_error( $response, $handler, $request ) {
+		if ( '/micropub/1.0/endpoint' !== $request->get_route() ) {
+				return $response;
+		}
+		if ( is_wp_error( $response ) ) {
+			return micropub_wp_error( $response );
+		}
+		return $response;
+	}
+
+
+
 
 	public static function get( $array, $key, $default = array() ) {
 		if ( is_array( $array ) ) {
@@ -47,15 +62,33 @@ class Micropub_Endpoint {
 		register_rest_route(
 			MICROPUB_NAMESPACE, '/endpoint', array(
 				array(
-					'methods'  => WP_REST_Server::CREATABLE,
-					'callback' => array( $cls, 'post_handler' ),
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $cls, 'post_handler' ),
+					'permission_callback' => array( $cls, 'check_post_permissions' ),
+
 				),
 				array(
-					'methods'  => WP_REST_Server::READABLE,
-					'callback' => array( $cls, 'query_handler' ),
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $cls, 'query_handler' ),
+					'permission_callback' => array( $cls, 'check_query_permissions' ),
+
 				),
 			)
 		);
+	}
+
+	public static function check_query_permissions( $request ) {
+		if ( ! current_user_can( 'read' ) ) {
+			return new WP_Error( 'forbidden', 'Unauthorized', array( 'status' => 403 ) );
+		}
+		return true;
+	}
+
+	public static function check_post_permissions( $request ) {
+		if ( ! current_user_can( 'publish_posts' ) ) {
+			return new WP_Error( 'forbidden', 'Unauthorized', array( 'status' => 403 ) );
+		}
+		return true;
 	}
 
 	/**
@@ -77,23 +110,12 @@ class Micropub_Endpoint {
 		} elseif ( ! $content_type ||
 			'application/x-www-form-urlencoded' === $content_type ||
 			'multipart/form-data' === $content_type ) {
-			static::$input = array();
-			foreach ( $request->get_body_params() as $key => $val ) {
-				if ( 'action' === $key || 'url' === $key ) {
-					static::$input[ $key ] = $val;
-				} elseif ( 'h' === $key ) {
-					static::$input['type'] = array( 'h-' . $val );
-				} elseif ( 'access_token' === $key ) {
-					continue;
-				} else {
-					static::$input['properties']         = self::get( static::$input, 'properties' );
-					static::$input['properties'][ $key ] =
-						( is_array( $val ) && wp_is_numeric_array( $val ) )
-						? $val : array( $val );
-				}
-			}
+				static::$input = self::form_to_json( $request->get_body_params() );
 		} else {
 			return new WP_Micropub_Error( 'invalid_request', 'Unsupported Content Type: ' . $content_type, 400 );
+		}
+		if ( empty( static::$input ) ) {
+			return new WP_Micropub_Error( 'invalid_request', 'No input provided', 400 );
 		}
 		if ( WP_DEBUG ) {
 			error_log(
@@ -125,12 +147,12 @@ class Micropub_Endpoint {
 	 * @param WP_REST_Request $request.
 	 */
 	public static function post_handler( $request ) {
-		$user_id = get_current_user_id();
-		if ( ! $user_id ) {
-			return new WP_Micropub_Error( 'unauthorized', 'Unauthorized', 401 );
-		}
+		$user_id  = get_current_user_id();
 		$response = new WP_REST_Response();
-		static::load_input( $request );
+		$load     = static::load_input( $request );
+		if ( is_micropub_error( $load ) ) {
+			return $load;
+		}
 
 		$action = self::get( static::$input, 'action', 'create' );
 		if ( ! self::check_scope( $action ) ) {
@@ -221,9 +243,6 @@ class Micropub_Endpoint {
 	 */
 	public static function query_handler( $request ) {
 		$user_id = get_current_user_id();
-		if ( ! get_current_user_id() ) {
-			return new WP_Micropub_Error( 'unauthorized', 'Unauthorized', 401 );
-		}
 		static::load_input( $request );
 
 		$resp = apply_filters( 'micropub_query', null, static::$input );
