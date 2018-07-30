@@ -180,14 +180,15 @@ class Micropub_Endpoint {
 				return new WP_Micropub_Error( 'forbidden', sprintf( 'user id %1$s cannot publish posts', $user_id ), 403 );
 			}
 			$args = static::create( $user_id );
-			$response->set_status( 201 );
-			$response->header( 'Location', get_permalink( $args['ID'] ) );
-
+			if ( ! is_micropub_error( $args ) ) {
+				$response->set_status( 201 );
+				$response->header( 'Location', get_permalink( $args['ID'] ) );
+			}
 		} elseif ( 'update' === $action || ! $action ) { // update
 			if ( $user_id && ! user_can( $user_id, 'edit_posts' ) ) {
 				return new WP_Micropub_Error( 'forbidden', sprintf( 'user id %1$s cannot edit posts', $user_id ), 403 );
 			}
-			$args = static::update();
+			$args = static::update( static::$input );
 
 		} elseif ( 'delete' === $action ) { // delete
 			if ( $user_id && ! user_can( $user_id, 'delete_posts' ) ) {
@@ -217,12 +218,15 @@ class Micropub_Endpoint {
 				}
 			}
 			if ( ! $found ) {
-				return new WP_Micropub_Error( 'forbidden', sprintf( 'deleted post %1$s not found', $url ), 400 );
+				return new WP_Micropub_Error( 'invalid_request', sprintf( 'deleted post %1$s not found', $url ), 400 );
 			}
 
 			// unknown action
 		} else {
 			return new WP_Micropub_Error( 'invalid_request', sprintf( 'unknown action %1$s', $action ), 400 );
+		}
+		if ( is_micropub_error( $args ) ) {
+			return $args;
 		}
 		if ( ! empty( $synd_requested ) ) {
 			do_action( 'micropub_syndication', $args['ID'], $synd_requested );
@@ -311,6 +315,9 @@ class Micropub_Endpoint {
 
 		$args = static::store_mf2( $args );
 		$args = static::store_geodata( $args );
+		if ( is_micropub_error( $args ) ) {
+			return $args;
+		}
 
 		if ( $user_id ) {
 			$args['post_author'] = $user_id;
@@ -337,15 +344,15 @@ class Micropub_Endpoint {
 	 * This really needs a db transaction! But we can't assume the underlying
 	 * MySQL db is InnoDB and supports transactions. :(
 	 */
-	private static function update() {
-		$post_id = url_to_postid( static::$input['url'] );
+	private static function update( $input ) {
+		$post_id = url_to_postid( $input['url'] );
 		$args    = get_post( $post_id, ARRAY_A );
 		if ( ! $args ) {
 			return new WP_Micropub_Error( 'invalid_request', sprintf( '%1$s not found', $input['url'] ), 400 );
 		}
 
 		// add
-		$add = static::$input['add'];
+		$add = $input['add'];
 		if ( $add ) {
 			if ( ! is_array( $add ) ) {
 				return new WP_Micropub_Error( 'invalid_request', 'add must be an object', 400 );
@@ -371,7 +378,7 @@ class Micropub_Endpoint {
 		}
 
 		// replace
-		$replace = static::$input['replace'];
+		$replace = $input['replace'];
 		if ( $replace ) {
 			if ( ! is_array( $replace ) ) {
 				return new WP_Micropub_Error( 'invalid_request', 'replace must be an object', 400 );
@@ -383,7 +390,7 @@ class Micropub_Endpoint {
 		}
 
 		// delete
-		$delete = static::$input['delete'];
+		$delete = $input['delete'];
 		if ( $delete ) {
 			if ( is_assoc_array( $delete ) ) {
 				if ( array_diff( array_keys( $delete ), array( 'category', 'syndication' ) ) ) {
