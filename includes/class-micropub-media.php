@@ -60,6 +60,43 @@ class Micropub_Media {
 		return $file;
 	}
 
+	public static function upload_from_url( $url ) {
+		if ( ! wp_http_validate_url( $url ) ) {
+			return new WP_Micropub_Error( 'invalid_request', 'Invalid Media URL', 400 );
+		}
+
+		$tmp = download_url( $url );
+		if ( is_wp_error( $tmp ) ) {
+			return new WP_Micropub_Error( 'invalid_request', $tmp->get_message(), 400 );
+		}
+		$file_array = array(
+			'name'     => basename( $url ),
+			'tmp_name' => $tmp,
+			'error'    => 0,
+			'size'     => filesize( $tmp ),
+		);
+		$overrides  = array(
+			/*
+			 * Tells WordPress to not look for the POST form fields that would
+			 * normally be present, default is true, we downloaded the file from
+			 * a remote server, so there will be no form fields.
+			 */
+				'test_form' => false,
+
+			// Setting this to false lets WordPress allow empty files, not recommended.
+			'test_size'     => true,
+
+			// A properly uploaded file will pass this test. There should be no reason to override this one.
+			'test_upload'   => true,
+		);
+		// Move the temporary file into the uploads directory.
+		$file = wp_handle_sideload( $file_array, $overrides );
+		if ( isset( $file['error'] ) ) {
+			return new WP_Micropub_Error( 'invalid_request', $file['error'], 500 );
+		}
+		return $file;
+	}
+
 	/**
 	 * Checks if a given request has access to create an attachment.
 	 *
@@ -76,6 +113,40 @@ class Micropub_Media {
 		}
 
 		return true;
+	}
+
+	protected static function insert_attachment( $file, $post_id = 0 ) {
+		$args = array(
+			'post_mime_type' => $file['type'],
+			'guid'           => $file['url'],
+			'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $file['file'] ) ),
+			'post_parent'    => $post_id,
+		);
+
+		$id = wp_insert_attachment( $args, $file['file'], 0, true );
+
+		if ( is_wp_error( $id ) ) {
+			if ( 'db_update_error' === $id->get_error_code() ) {
+				return new WP_Micropub_Error( 'invalid_request', 'Database Error On Upload', 500 );
+			} else {
+				return new WP_Micropub_Error( 'invalid_request', $id->get_error_message(), 400 );
+			}
+		}
+
+		// Include admin functions to get access to wp_generate_attachment_metadata(). These functions are included here
+		// as these functions are not normally loaded externally as is the practice in similar areas of WordPress.
+		require_once ABSPATH . 'wp-admin/includes/admin.php';
+
+		wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $file['file'] ) );
+		return $id;
+	}
+
+	public static function attach_media( $attachment_id, $post_id ) {
+		$post = array(
+			'ID'          => $attachment_id,
+			'post_parent' => $post_id,
+		);
+		return wp_update_post( $post, true );
 	}
 
 	// Handles requests to the Media Endpoint
@@ -100,32 +171,11 @@ class Micropub_Media {
 		if ( is_micropub_error( $file ) ) {
 			return $file;
 		}
+		$id = self::insert_attachment( $file );
 
-		$args = array(
-			'post_mime_type' => $file['type'],
-			'guid'           => $file['url'],
-			'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $file['file'] ) ),
-		);
-
-		$id = wp_insert_attachment( $args, $file['file'], 0, true );
-
-		if ( is_wp_error( $id ) ) {
-			if ( 'db_update_error' === $id->get_error_code() ) {
-				return new WP_Micropub_Error( 'invalid_request', 'Database Error On Upload', 500 );
-			} else {
-				return new WP_Micropub_Error( 'invalid_request', $id->get_error_message(), 400 );
-			}
-		}
-
-		$attachment = get_post( $id );
-
-		// Include admin functions to get access to wp_generate_attachment_metadata(). These functions are included here
-		// as these functions are not normally loaded externally as is the practice in similar areas of WordPress.
-		require_once ABSPATH . 'wp-admin/includes/admin.php';
-
-		wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $file['file'] ) );
-		$url         = wp_get_attachment_url( $id );
-		$data        = wp_get_attachment_metadata( $id );
+		$url  = wp_get_attachment_url( $id );
+		$data = wp_get_attachment_metadata( $id );
+		add_post_meta( $id, 'micropub_auth_response', static::$micropub_auth_response );
 		$data['url'] = $url;
 		$data['id']  = $id;
 		$response    = new WP_REST_Response(
@@ -137,5 +187,28 @@ class Micropub_Media {
 		);
 		return $response;
 	}
+
+	public static function media_sideload_url( $url, $post_id = 0 ) {
+		// Check to see if URL is already in the media library
+		$id = attachment_url_to_postid( $url );
+		if ( ! $id ) {
+			return $id;
+		}
+		static::$scopes = apply_filters( 'indieauth_scopes', static::$scopes );
+		$permission     = static::permissions_check( $request );
+		if ( is_micropub_error( $permission ) ) {
+			return $permission;
+		}
+
+		$file = self::upload_from_url( $url );
+		if ( is_micropub_error( $file ) ) {
+			return $file;
+		}
+
+		return self::insert_attachment( $file, $post_id );
+	}
+
+
+
 
 }
