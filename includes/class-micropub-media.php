@@ -36,7 +36,7 @@ class Micropub_Media {
 	// Based on WP_REST_Attachments_Controller function of the same name
 	// TODO: Hook main endpoint functionality into and extend to use this class
 
-	public static function upload_from_file( $files, $name ) {
+	public static function upload_from_file( $files, $name = null ) {
 
 		// Pass off to WP to handle the actual upload.
 		$overrides = array(
@@ -51,7 +51,11 @@ class Micropub_Media {
 		/** Include admin functions to get access to wp_handle_upload() */
 		require_once ABSPATH . 'wp-admin/includes/admin.php';
 
-		$file = wp_handle_upload( $files[ $name ], $overrides );
+		if ( $name && isset( $files[ $name ] ) && is_array( $files[ $name ] ) ) {
+			$files = $files[ $name ];
+		}
+
+		$file = wp_handle_upload( $files, $overrides );
 
 		if ( isset( $file['error'] ) ) {
 			return new WP_Micropub_Error( 'invalid_request', $file['error'], 500 );
@@ -60,11 +64,28 @@ class Micropub_Media {
 		return $file;
 	}
 
+	// Takes an array of files and converts it for use with wp_handle_upload
+	public static function file_array( $files ) {
+		if ( ! is_array( $files['name'] ) ) {
+			return $files;
+		}
+		$count    = count( $files['name'] );
+		$newfiles = array();
+		for ( $i = 0; $i < $count; ++$i ) {
+			$newfiles[] = array(
+				'name'     => $files['name'][ $i ],
+				'tmp_name' => $files['tmp_name'][ $i ],
+				'size'     => $files['size'][ $i ],
+			);
+		}
+		return $newfiles;
+	}
+
 	public static function upload_from_url( $url ) {
 		if ( ! wp_http_validate_url( $url ) ) {
 			return new WP_Micropub_Error( 'invalid_request', 'Invalid Media URL', 400 );
 		}
-
+		require_once ABSPATH . 'wp-admin/includes/file.php';
 		$tmp = download_url( $url );
 		if ( is_wp_error( $tmp ) ) {
 			return new WP_Micropub_Error( 'invalid_request', $tmp->get_message(), 400 );
@@ -115,11 +136,14 @@ class Micropub_Media {
 		return true;
 	}
 
-	protected static function insert_attachment( $file, $post_id = 0 ) {
+	protected static function insert_attachment( $file, $post_id = 0, $title = null ) {
+		if ( ! $title ) {
+			$title = preg_replace( '/\.[^.]+$/', '', basename( $file['file'] ) );
+		}
 		$args = array(
 			'post_mime_type' => $file['type'],
 			'guid'           => $file['url'],
-			'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $file['file'] ) ),
+			'post_title'     => $title,
 			'post_parent'    => $post_id,
 		);
 
@@ -188,19 +212,23 @@ class Micropub_Media {
 		return $response;
 	}
 
-	public static function media_sideload_url( $url, $post_id = 0 ) {
+	public static function media_sideload_url( $url, $post_id = 0, $title = null ) {
 		// Check to see if URL is already in the media library
 		$id = attachment_url_to_postid( $url );
-		if ( ! $id ) {
+		if ( $id ) {
 			return $id;
-		}
-		static::$scopes = apply_filters( 'indieauth_scopes', static::$scopes );
-		$permission     = static::permissions_check( $request );
-		if ( is_micropub_error( $permission ) ) {
-			return $permission;
 		}
 
 		$file = self::upload_from_url( $url );
+		if ( is_micropub_error( $file ) ) {
+			return $file;
+		}
+
+		return self::insert_attachment( $file, $post_id, $title );
+	}
+
+	public static function media_handle_upload( $file, $post_id = 0 ) {
+		$file = self::upload_from_file( $file );
 		if ( is_micropub_error( $file ) ) {
 			return $file;
 		}

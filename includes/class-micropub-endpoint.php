@@ -12,6 +12,9 @@ class Micropub_Endpoint {
 	// associative array, read from JSON or form-encoded input. populated by load_input().
 	protected static $input;
 
+	// file array populated by load_input
+	protected static $files;
+
 	// associative array, populated by authorize().
 	protected static $micropub_auth_response;
 
@@ -34,7 +37,6 @@ class Micropub_Endpoint {
 		add_action( 'rest_api_init', array( $cls, 'register_route' ) );
 
 		add_filter( 'rest_request_after_callbacks', array( $cls, 'return_micropub_error' ), 10, 3 );
-
 	}
 
 	public static function return_micropub_error( $response, $handler, $request ) {
@@ -101,7 +103,8 @@ class Micropub_Endpoint {
 	protected static function load_input( $request ) {
 		static::$scopes                 = apply_filters( 'indieauth_scopes', static::$scopes );
 		static::$micropub_auth_response = apply_filters( 'indieauth_response', static::$micropub_auth_response );
-		$content_type                   = $request->get_header( 'content-type' );
+		$content_type                   = $request->get_content_type();
+		$content_type                   = $content_type['value'];
 
 		if ( 'GET' === $request->get_method() ) {
 			static::$input = $request->get_query_params();
@@ -111,6 +114,7 @@ class Micropub_Endpoint {
 			'application/x-www-form-urlencoded' === $content_type ||
 			'multipart/form-data' === $content_type ) {
 				static::$input = self::form_to_json( $request->get_body_params() );
+				static::$files = $request->get_file_params();
 		} else {
 			return new WP_Micropub_Error( 'invalid_request', 'Unsupported Content Type: ' . $content_type, 400 );
 		}
@@ -584,56 +588,28 @@ class Micropub_Endpoint {
 			$props   = static::$input['properties'];
 			$att_ids = array();
 
-			if ( isset( $_FILES[ $field ] ) || isset( $props[ $field ] ) ) {
-				require_once ABSPATH . 'wp-admin/includes/image.php';
-				require_once ABSPATH . 'wp-admin/includes/file.php';
-				require_once ABSPATH . 'wp-admin/includes/media.php';
-
-				if ( isset( $_FILES[ $field ] ) ) {
-					$overrides = array(
-						'action'    => 'allow_file_outside_uploads_dir',
-						'test_form' => false,
-					);
-
-					$files = $_FILES[ $field ];
+			if ( isset( static::$files[ $field ] ) || isset( $props[ $field ] ) ) {
+				if ( isset( static::$files[ $field ] ) ) {
+					$files = static::$files[ $field ];
 					if ( is_array( $files['name'] ) ) {
-						$count = count( $files['name'] );
-						for ( $i = 0; $i < $count; ++$i ) {
-							$_FILES = array(
-								$field => array(
-									'name'     => $files['name'][ $i ],
-									'tmp_name' => $files['tmp_name'][ $i ],
-									// 'type' => $files['type'][ $i ],
-									// 'error' => $files['error'][ $i ],
-									'size'     => $files['size'][ $i ],
-								),
-							);
+						$files = Micropub_Media::file_array( $files );
+						foreach ( $files as $file ) {
 							$att_ids[] = static::check_error(
-								media_handle_upload(
-									$field, $post_id, array(), $overrides
-								)
+								Micropub_Media::media_handle_upload( $file, $post_id )
 							);
 						}
 					} else {
 						$att_ids[] = static::check_error(
-							media_handle_upload(
-								$field, $post_id, array(), $overrides
-							)
+							Micropub_Media::media_handle_upload( $files, $post_id )
 						);
 					}
 				} elseif ( isset( $props[ $field ] ) ) {
 					foreach ( $props[ $field ] as $val ) {
 						$url       = is_array( $val ) ? $val['value'] : $val;
-						$filename  = static::check_error( static::download_url( $url ) );
-						$file      = array(
-							'name'     => basename( $url ),
-							'tmp_name' => $filename,
-							'size'     => filesize( $filename ),
-						);
-						$desc      = is_array( $val ) ? $val['alt'] : $file['name'];
+						$desc      = is_array( $val ) ? $val['alt'] : null;
 						$att_ids[] = static::check_error(
-							media_handle_sideload(
-								$file, $post_id, $desc
+							Micropub_Media::media_sideload_url(
+								$url, $post_id, $desc
 							)
 						);
 					}
@@ -641,6 +617,9 @@ class Micropub_Endpoint {
 
 				$att_urls = array();
 				foreach ( $att_ids as $id ) {
+					if ( is_micropub_error( $id ) ) {
+						return $id;
+					}
 					$att_urls[] = wp_get_attachment_url( $id );
 				}
 				add_post_meta( $post_id, 'mf2_' . $field, $att_urls, true );
@@ -902,13 +881,6 @@ class Micropub_Endpoint {
 		return $input;
 	}
 
-	/** Wrappers for WordPress/PHP functions so we can mock them for unit tests.
-	 **/
-	protected static function read_input() {
-		return file_get_contents( 'php://input' );
-	}
-
-
 	protected static function get_header( $name ) {
 		if ( ! static::$request_headers ) {
 			$headers                 = getallheaders();
@@ -922,11 +894,6 @@ class Micropub_Endpoint {
 
 	public static function header( $header, $value ) {
 		header( $header . ': ' . $value, false );
-	}
-
-
-	protected static function download_url( $url ) {
-		return static::check_error( download_url( $url ) );
 	}
 }
 

@@ -61,6 +61,17 @@ class Micropub_Media_Test extends WP_UnitTestCase {
 		return $request;
 	}
 
+	public function test_media_handle_upload() {
+		$file_array = array(
+			'file' => file_get_contents( $this->test_file ),
+			'name' => 'canola.jpg',
+			'size' => filesize( $this->test_file ),
+			'tmp_name' => $this->test_file
+		);
+		$id = Micropub_Media::media_handle_upload( $file_array );
+		$this->assertInternalType( "int", $id );
+	}
+
 	public function test_upload_file_with_scope() {
 		static::$scopes = array( 'create' );
 		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ) );
