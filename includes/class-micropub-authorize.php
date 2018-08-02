@@ -25,7 +25,7 @@ class Micropub_Authorize {
 	// Array of Scopes
 	protected static $scopes = array();
 
-	// Error
+	// This allows more detailed error messages to be passed as otherwise the normal message is not detailed enough for debugging
 	protected static $error = null;
 
 	/**
