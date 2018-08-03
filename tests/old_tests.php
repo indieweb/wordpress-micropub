@@ -1,6 +1,7 @@
 <?php
 
 /** Unit tests for the Micropub class.
+ * TODO: Remove this file once new testing is complete
  */
 
 function write_temp_file( $contents, $extension = '' ) {
