@@ -8,7 +8,8 @@
 	"squizlabs/php_codesniffer": "*",
         "wimg/php-compatibility": "*",
         "wp-coding-standards/wpcs": "*",
-        "wpreadme2markdown/wp2md": "*"
+        "wpreadme2markdown/wp2md": "*",
+        "phpunit/phpunit": "^6.5"
     },
     "prefer-stable" : true,
     "scripts": {
