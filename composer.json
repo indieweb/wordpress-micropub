@@ -5,10 +5,10 @@
     },
     "require-dev": {
         "dealerdirect/phpcodesniffer-composer-installer": "^0.4",
-	"squizlabs/php_codesniffer": "^2.2 || ^3.0.2",
-        "wimg/php-compatibility": "dev-master",
-        "wp-coding-standards/wpcs": "dev-master",
-        "wpreadme2markdown/wp2md": "^3.0"
+	"squizlabs/php_codesniffer": "*",
+        "wimg/php-compatibility": "*",
+        "wp-coding-standards/wpcs": "*",
+        "wpreadme2markdown/wp2md": "*"
     },
     "prefer-stable" : true,
     "scripts": {

@@ -840,6 +840,7 @@ class Micropub_Endpoint {
 	 * The micropub autodicovery meta tags
 	 */
 	public static function micropub_html_header() {
+		// phpcs:ignore
 		printf( '<link rel="micropub" href="%s" />' . PHP_EOL, static::get_micropub_endpoint() );
 	}
 
