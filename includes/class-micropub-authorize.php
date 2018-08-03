@@ -43,11 +43,11 @@ class Micropub_Authorize {
 		// The WordPress IndieAuth plugin uses priority 30
 		add_filter( 'determine_current_user', array( $cls, 'determine_current_user' ), 31 );
 		add_filter( 'rest_authentication_errors', array( $cls, 'rest_authentication_errors' ), 10 );
-		add_filter( 'rest_post_dispatch', array( $cls, 'return_oauth_error' ), 10, 3 );
+		add_filter( 'rest_post_dispatch', array( $cls, 'return_micropub_error' ), 10, 3 );
 
 	}
 
-	public static function return_oauth_error( $result, $server, $request ) {
+	public static function return_micropub_error( $result, $server, $request ) {
 		if ( '/micropub/1.0/endpoint' !== $request->get_route() ) {
 			return $result;
 		}

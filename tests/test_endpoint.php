@@ -18,7 +18,8 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		'published' => '2016-01-01T04:01:23-08:00',
 		'location'  => 'geo:42.361,-71.092;u=25000',
 	);
-		// JSON mf2 input
+
+	// JSON mf2 input
 	protected static $mf2 = array(
 		'type'       => array( 'h-entry' ),
 		'properties' => array(
@@ -31,7 +32,8 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 			'location'  => array( 'geo:42.361,-71.092;u=25000' ),
 		),
 	);
-		// Micropub Auth Response, based on https://tokens.indieauth.com/
+
+	// Micropub Auth Response, based on https://tokens.indieauth.com/
 	protected static $micropub_auth_response = array(
 		'me'        => 'http://tacos.com', // taken from WordPress' tests/user.php
 		'client_id' => 'https://example.com',
@@ -51,7 +53,8 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 			'altitude'  => array( '25000' ),
 		),
 	);
-			// WordPress wp_insert_post/wp_update_post $args
+
+	// WordPress wp_insert_post/wp_update_post $args
 	protected static $wp_args = array(
 		'post_name'    => 'my_slug',
 		'post_title'   => 'my name',
