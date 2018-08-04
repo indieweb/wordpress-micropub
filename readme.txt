@@ -19,7 +19,7 @@ A [Micropub](http://micropub.net/) server plugin. Available in the WordPress plu
 
 Once you've installed and activated the plugin, try using [Quill](http://quill.p3k.io/) to create a new post on your site. It walks you through the steps and helps you troubleshoot if you run into any problems. After that, try other clients like [OwnYourGram](http://ownyourgram.com/), [OwnYourCheckin](https://ownyourcheckin.wirres.net/), [MobilePub](http://indiewebcamp.com/MobilePub), and [Teacup](https://teacup.p3k.io/).
 
-Supports the [full W3C Micropub CR spec](https://www.w3.org/TR/micropub/) as of 2016-10-18, except for the optional media endpoint. Media may be uploaded directly to the wordpress-micropub endpoint as multipart/form-data, or sideloaded from URLs.
+Supports the [full W3C Micropub CR spec](https://www.w3.org/TR/micropub/) as of version 2.0.0
 
 == License ==
 
@@ -120,7 +120,7 @@ These configuration options can be enabled by adding them to your wp-config.php
 * `define('MICROPUB_LOCAL_AUTH', '1')` - Disable this plugins built-in authentication.
 * `define('MICROPUB_AUTHENTICATION_ENDPOINT', 'https://indieauth.com/auth')` - Define a custom authentication endpoint.
 * `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` - Define a custom token endpoint
-* `define('MICROPUB_NAMESPACE', 'micropub' )` - By default the namespace for micropub is micropub. This would allow you to change this for your endpoint
+* `define('MICROPUB_NAMESPACE', 'micropub/1.0' )` - By default the namespace for micropub is micropub/1.0. This would allow you to change this for your endpoint
 
 These configuration options can be enabled by setting them in the WordPress options table or will appear under General if you install the IndieAuth plugin.
 * `indieauth_authorization_endpoint` - if set will override MICROPUB_AUTHENTICATION_ENDPOINT for setting a custom endpoint
@@ -190,6 +190,7 @@ into markdown and saved to readme.md.
 * Split plugin into files by functionality
 * Change authorization to integrate with WordPress mechanisms for login
 * Reject where the URL cannot be matched with a user account
+* Rewrite using REST API
 * Use `indieauth_scopes` and `indieauth_response` originally added for IndieAuth integration to be used by built in auth as well
 * Improve handling of access tokens in headers to cover additional cases
 * Add Media Endpoint
