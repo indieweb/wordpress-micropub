@@ -49,8 +49,16 @@ class Micropub_Endpoint {
 		return $response;
 	}
 
+	public static function log_error( $message, $name = 'Micropub' ) {
+		if ( empty( $message ) ) {
+			return false;
+		}
+		if ( is_array( $message ) || is_object( $message ) ) {
+			$message = wp_json_encode( $message );
+		}
 
-
+		return error_log( sprintf( '%1$s: %2$s', $name, $message ) ); // phpcs:ignore
+	}
 
 	public static function get( $array, $key, $default = array() ) {
 		if ( is_array( $array ) ) {
@@ -122,10 +130,8 @@ class Micropub_Endpoint {
 			return new WP_Micropub_Error( 'invalid_request', 'No input provided', 400 );
 		}
 		if ( WP_DEBUG ) {
-			error_log(
-				'Micropub Data: ' . wp_json_encode( $request->get_query_params() ) . ' ' .
-					wp_json_encode( static::$input )
-			);
+			static::log_error( $request->get_query_params(), 'Micropub Query Parameters' );
+			static::log_error( static::$input, 'Micropub Input' );
 		}
 		static::$input = apply_filters( 'before_micropub', static::$input );
 	}
@@ -331,7 +337,7 @@ class Micropub_Endpoint {
 			return new WP_Micropub_Error( 'invalid_request', 'Invalid Post Status', 400 );
 		}
 		if ( WP_DEBUG ) {
-			error_log( 'wp_insert_post with args: ' . wp_json_encode( $args ) );
+			static::log_error( $args, 'wp_insert_post with args' );
 		}
 
 		kses_remove_filters();  // prevent sanitizing HTML tags in post_content
@@ -443,7 +449,7 @@ class Micropub_Endpoint {
 		$args = static::store_geodata( $args );
 
 		if ( WP_DEBUG ) {
-			error_log( 'wp_update_post with args: ' . wp_json_encode( $args ) );
+			static::log_error( $args, 'wp_update_post with args' );
 		}
 
 		kses_remove_filters();
@@ -840,6 +846,7 @@ class Micropub_Endpoint {
 	 * The micropub autodicovery meta tags
 	 */
 	public static function micropub_html_header() {
+		// phpcs:ignore
 		printf( '<link rel="micropub" href="%s" />' . PHP_EOL, static::get_micropub_endpoint() );
 	}
 

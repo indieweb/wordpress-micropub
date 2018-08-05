@@ -3,3 +3,4 @@ TAGS
 vendor/*
 wordpress
 wordpress-tests-lib
+composer.lock

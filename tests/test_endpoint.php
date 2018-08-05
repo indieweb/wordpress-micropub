@@ -135,8 +135,8 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		return $response->get_data();
 	}
 
-	public function check( $response, $status, $expected ) {
-		$this->assertEquals( $status, $response->get_status(), 'Status: ' . $response->get_status );
+	public function check( $response, $status, $expected = null ) {
+		$this->assertEquals( $status, $response->get_status(), 'Response: ' . wp_json_encode( $response ) );
 		$encoded = $response->get_data();
 		if ( is_array( $expected ) ) {
 			$this->assertEquals( $expected, $encoded, 'Array Equals: ' . wp_json_encode( $encoded ) );
@@ -150,7 +150,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 
 	public function check_create( $request ) {
 		$response = $this->dispatch( $request, static::$author_id );
-		$response = $this->check( $response, 201 );
+		$response = $this->check( $response, 201, null );
 		$posts    = wp_get_recent_posts( null, OBJECT );
 		$this->assertEquals( 1, count( $posts ) );
 		$post    = $posts[0];
@@ -194,7 +194,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 	public function test_create_post_without_create_scope() {
 		static::$scopes = array( 'update' );
 		$response       = $this->dispatch( self::create_form_request( static::$post ), static::$author_id );
-		self::check( $response, 403 );
+		self::check( $response, 403, 'scope insufficient to create posts' );
 		// Set Back to Default
 		static::$scopes = array( 'post' );
 	}
@@ -218,7 +218,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 	}
 
 	public function test_create_with_supported_syndicate_to() {
-		add_filter( 'micropub_syndicate-to', array( $this, 'syndications' ) );
+		add_filter( 'micropub_syndicate-to', array( $this, 'syndications' ), 10, 2 );
 		$input                                  = static::$mf2;
 		$input['properties']['mp-syndicate-to'] = array( 'twitter' );
 		$response                               = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -226,11 +226,11 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 	}
 
 	public function test_create_with_unsupported_syndicate_to() {
-		add_filter( 'micropub_syndicate-to', array( $this, 'syndications' ) );
+		add_filter( 'micropub_syndicate-to', array( $this, 'syndications' ), 10, 2 );
 		$input                                  = static::$mf2;
 		$input['properties']['mp-syndicate-to'] = array( 'twitter', facebook );
 		$response                               = $this->dispatch( self::create_json_request( $input ), static::$author_id );
-		self::check( $response, 400 );
+		self::check( $response, 400, 'Unknown mp-syndicate-to targets: facebook' );
 	}
 
 	function syndicate_trigger( $id, $syns ) {
@@ -238,7 +238,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 	}
 
 	public function test_create_syn_hook() {
-		add_filter( 'micropub_syndicate-to', array( $this, 'syndications' ) );
+		add_filter( 'micropub_syndicate-to', array( $this, 'syndications' ), 10, 2 );
 		add_action( 'micropub_syndication', array( $this, 'syndicate_trigger' ), 10, 2 );
 		$input                                  = static::$mf2;
 		$input['properties']['mp-syndicate-to'] = array( 'twitter' );
@@ -327,7 +327,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		$input['properties']['location-visibility'] = array( 'bleh' );
 				$response                           = $this->dispatch( self::create_json_request( $input ), static::$author_id );
 
-		$this->check( $response, 400 );
+		$this->check( $response, 400, 'unsupported location visibility' );
 	}
 	public function test_create_location_visibility_none() {
 		$input = static::$mf2;

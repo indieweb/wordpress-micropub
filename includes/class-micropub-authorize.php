@@ -100,8 +100,8 @@ class Micropub_Authorize {
 			static::header( 'Link', '<' . get_option( 'indieauth_token_endpoint', MICROPUB_TOKEN_ENDPOINT ) . '>; rel="token_endpoint"' );
 	}
 	public static function html_header() {
-			printf( '<link rel="authorization_endpoint" href="%s" />' . PHP_EOL, get_option( 'indieauth_authorization_endpoint', MICROPUB_AUTHENTICATION_ENDPOINT ) );
-			printf( '<link rel="token_endpoint" href="%s" />' . PHP_EOL, get_option( 'indieauth_token_endpoint', MICROPUB_TOKEN_ENDPOINT ) );
+			printf( '<link rel="authorization_endpoint" href="%s" />' . PHP_EOL, esc_url( get_option( 'indieauth_authorization_endpoint', MICROPUB_AUTHENTICATION_ENDPOINT ) ) ); // phpcs:ignore
+			printf( '<link rel="token_endpoint" href="%s" />' . PHP_EOL, esc_url ( get_option( 'indieauth_token_endpoint', MICROPUB_TOKEN_ENDPOINT ) ) ); // phpcs:ignore
 	}
 
 	public static function jrd_links( $array ) {
@@ -166,7 +166,7 @@ class Micropub_Authorize {
 
 		// find the access token
 		$auth  = static::get_authorization_header();
-		$token = self::get( $_POST, 'access_token' );
+		$token = self::get( $_POST, 'access_token' ); // phpcs:ignore
 		if ( ! $auth && ! $token ) {
 			static::$error = new WP_Micropub_Error( 'unauthorized', 'missing access token', 401 );
 			return $user_id;

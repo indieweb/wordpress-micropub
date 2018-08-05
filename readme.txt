@@ -3,7 +3,7 @@ Contributors: snarfed, dshanske
 Tags: micropub, publish
 Requires at least: 4.7
 Requires PHP: 5.3
-Tested up to: 4.9.6
+Tested up to: 4.9.8
 Stable tag: trunk
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
@@ -19,7 +19,7 @@ A [Micropub](http://micropub.net/) server plugin. Available in the WordPress plu
 
 Once you've installed and activated the plugin, try using [Quill](http://quill.p3k.io/) to create a new post on your site. It walks you through the steps and helps you troubleshoot if you run into any problems. After that, try other clients like [OwnYourGram](http://ownyourgram.com/), [OwnYourCheckin](https://ownyourcheckin.wirres.net/), [MobilePub](http://indiewebcamp.com/MobilePub), and [Teacup](https://teacup.p3k.io/).
 
-Supports the [full W3C Micropub CR spec](https://www.w3.org/TR/micropub/) as of 2016-10-18, except for the optional media endpoint. Media may be uploaded directly to the wordpress-micropub endpoint as multipart/form-data, or sideloaded from URLs.
+Supports the [full W3C Micropub CR spec](https://www.w3.org/TR/micropub/) as of version 2.0.0.
 
 == License ==
 
@@ -32,9 +32,8 @@ Supports the following [scope](https://indieweb.org/scope) parameters requested 
 * create - Allows the client to create posts on behalf of the user
 * update - Allows the client to update posts on behalf of the user
 * delete - Allows the client to delete posts on behalf of the user
-* indelete - Allows the client to undelete posts on behalf of the user
-
-Does not currently support the 'media' scope due lack of adoption by clients. At this time, create or update grants permission for file uploads.
+* undelete - Allows the client to undelete posts on behalf of the user
+* media  - Supports media for the media endpoint, but create or update also give media upload permissions
 
 == WordPress details ==
 
@@ -78,28 +77,30 @@ Stores [microformats2](http://microformats.org/wiki/microformats2) properties in
 
 Does *not* support multithreading. PHP doesn't really either, so it generally won't matter, but just for the record.
 
-Supports Experimental Properties for [Post Status](https://indieweb.org/Micropub-extensions#Post_Status) and [Visibility](https://indieweb.org/Micropub-extensions#Visibility). Visibility can be either
-`public` or `private`. Setting it to `private` will set the post status to private. Post Status may be set to either `published` or `draft`. If visibility or post status are not set to one of these 
-options, the plugin will return HTTP 400 with body:
+Supports Experimental Properties:
+* [Post Status](https://indieweb.org/Micropub-extensions#Post_Status) - Either `published` or `draft`
+* [Visibility](https://indieweb.org/Micropub-extensions#Visibility) - Either `public` or `private`.
+* [Location Visiblity](https://indieweb.org/Micropub-extensions#Location_Visibility) - Either `public`, `private`, or `protected`
+
+If an experimental property is not set to one of these options, the plugin will return HTTP 400 with body:
 
     {
       "error": "invalid_request",
-      "error_description": "Invalid Post Status"
     }
 
 WordPress has a [whitelist of file extensions that it allows in uploads](https://codex.wordpress.org/Uploading_Files#About_Uploading_Files_on_Dashboard). If you upload a file in a Micropub extension that doesn't have an allowed extension, the plugin will return HTTP 400 with body:
 
     {
-      "error": "invalid request",
+      "error": "invalid_request",
       "error_description": "Sorry, this file is not permitted for security reasons."
     }
 
 
 == Authentication and authorization ==
 
-Supports the full OAuth2/IndieAuth authentication and authorization flow. Defaults to IndieAuth. Custom auth and token endpoints can be used by overriding the `MICROPUB_AUTHENTICATION_ENDPOINT` and `MICROPUB_TOKEN_ENDPOINT` endpoints or by setting the options `indieauth_authorization_endpoint` and `indieauth_token_endpoint` which are also set by the IndieAuth Plugin. 
+Supports the full OAuth2/IndieAuth authentication and authorization flow. Defaults to IndieAuth. Custom auth and token endpoints can be used by overriding the `MICROPUB_AUTHENTICATION_ENDPOINT` and `MICROPUB_TOKEN_ENDPOINT` endpoints or by setting the options `indieauth_authorization_endpoint` and `indieauth_token_endpoint`.
 
-If the token's `me` value matches a WordPress user's URL, that user will be used. Otherwise, the token must match the site's URL, and no user will be used.
+If the token's `me` value matches a WordPress user's or author post URL, that user will be used. If there is only one site author that will be matched otherwise.
 
 Alternatively, you can set `MICROPUB_LOCAL_AUTH` to 1 to disable the plugin's authorization function, for example if you want authorization to be done by WordPress or another plugin. It will also 
 be disabled if the IndieAuth plugin is installed.
@@ -109,7 +110,7 @@ Finally, for ease of development, if the WordPress site is running on `localhost
 
 == Installation ==
 
-Install from the WordPress plugin directory or put `micropub.php` in your plugin directory. No setup needed.
+Install from the WordPress plugin directory. No setup needed.
 
 
 == Configuration Options ==
@@ -119,11 +120,12 @@ These configuration options can be enabled by adding them to your wp-config.php
 * `define('MICROPUB_LOCAL_AUTH', '1')` - Disable this plugins built-in authentication.
 * `define('MICROPUB_AUTHENTICATION_ENDPOINT', 'https://indieauth.com/auth')` - Define a custom authentication endpoint.
 * `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` - Define a custom token endpoint
+* `define('MICROPUB_NAMESPACE', 'micropub/1.0' )` - By default the namespace for micropub is micropub/1.0. This would allow you to change this for your endpoint
 
 These configuration options can be enabled by setting them in the WordPress options table or will appear under General if you install the IndieAuth plugin.
 * `indieauth_authorization_endpoint` - if set will override MICROPUB_AUTHENTICATION_ENDPOINT for setting a custom endpoint
 * `indieauth_token_endpoint` - if set will override MICROPUB_TOKEN_ENDPOINT for setting a custom endpoint
-* `micropub_default_post_status` - if set, Micropub posts will be set to this status by default( publish, draft, or private ). Can also be set in the Writing settings.
+* `micropub_default_post_status` - if set, Micropub posts will be set to this status by default( publish, draft, or private ). Can also be set on the settings page.
 
 == Frequently Asked Questions ==
 
@@ -154,9 +156,13 @@ The canonical repo is http://github.com/snarfed/wordpress-micropub . Feedback an
 
 To add a new release to the WordPress plugin directory, run `push.sh`.
 
-To set up your local environment to run the unit tests:
+To set up your local environment to run the unit tests and set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https://make.wordpress.org/core/handbook/coding-standards/php/) and [PHP 5.3 Compatibility](https://github.com/wimg/PHPCompatibility):
 
-1. Install [PHPUnit](https://github.com/sebastianbergmann/phpunit#installation), e.g. `brew install homebrew/php/wp-cli phpunit` with Homebrew on Mac OS X.
+1. Install [Composer](https://getcomposer.org). Composer is only used for development and is not required to run the plugin.
+1. Run `composer install` which will install PHP Codesniffer, PHPUnit, the standards required, and all dependencies.
+
+To configure PHPUnit
+
 1. Install and start MySQL. (You may already have it.)
 1. Run `./bin/install-wp-tests.sh wordpress_micropub_test root '' localhost` to download WordPress and [its unit test library](https://develop.svn.wordpress.org/trunk/tests/phpunit/), into `/tmp` and `./temp` by default, and create a MySQL db to test against. [Background here](http://wp-cli.org/docs/plugin-unit-tests/). Feel free to use a MySQL user other than `root`. You can set the `WP_CORE_DIR` and `WP_TESTS_DIR` environment variables to change where WordPress and its test library are installed. For example, I put them both in the repo dir.
 1. Open `wordpress-tests-lib/wp-tests-config.php` and add a slash to the end of the ABSPATH value. No clue why it leaves off the slash; it doesn't work without it.
@@ -172,8 +178,6 @@ To set up your local environment to run the unit tests:
 
 To set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https://make.wordpress.org/core/handbook/coding-standards/php/) and [PHP 5.3 Compatibility](https://github.com/wimg/PHPCompatibility):
 
-1. Install [Composer](https://getcomposer.org).
-1. Run `composer install` which will install all dependencies for PHP Codesniffer and the standards required
 1. To list coding standard issues in a file, run `phpcs --standard=phpcs.xml`
 1. If you want to try to automatically fix issues, run `phpcbf` with the same arguments as `phpcs`.
 
@@ -186,8 +190,13 @@ into markdown and saved to readme.md.
 * Split plugin into files by functionality
 * Change authorization to integrate with WordPress mechanisms for login
 * Reject where the URL cannot be matched with a user account
+* Rewrite using REST API
 * Use `indieauth_scopes` and `indieauth_response` originally added for IndieAuth integration to be used by built in auth as well
 * Improve handling of access tokens in headers to cover additional cases
+* Add Media Endpoint
+* Improve error handling
+* Ensure compliance with Micropub spec
+* Update composer dependencies and include PHPUnit as a development dependency
 
 = 1.4.3 (2018-05-27) =
 * Change scopes to filter
