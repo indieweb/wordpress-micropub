@@ -49,16 +49,14 @@ class Micropub_Endpoint {
 		return $response;
 	}
 
-	public static function log_error( $message, $name = '' ) {
+	public static function log_error( $message, $name = 'Micropub' ) {
 		if ( empty( $message ) ) {
 			return false;
 		}
 		if ( is_array( $message ) || is_object( $message ) ) {
 			$message = wp_json_encode( $message );
 		}
-		if ( ! is_string( $name ) || empty( $name ) ) {
-			$name = 'Micropub: ';
-		}
+
 		return error_log( sprintf( '%1$s: %2$s', $name, $message ) ); // phpcs:ignore
 	}
 
