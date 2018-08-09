@@ -42,7 +42,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		'nonce'     => 501884823,
 	);
 
-	// Scope defaulting to legacy params
+	// Scope defaulting to legacy
 	protected static $scopes = array( 'post' );
 
 	protected static $geo = array(
@@ -148,8 +148,11 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		return $response;
 	}
 
-	public function check_create( $request ) {
-		$response = $this->dispatch( $request, static::$author_id );
+	public function check_create( $request, $user_id = null ) {
+		if ( ! $user_id ) {
+			$user_id = static::$author_id;
+		}
+		$response = $this->dispatch( $request, $user_id );
 		$response = $this->check( $response, 201, null );
 		$posts    = wp_get_recent_posts( null, OBJECT );
 		$this->assertEquals( 1, count( $posts ) );
@@ -198,6 +201,15 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		// Set Back to Default
 		static::$scopes = array( 'post' );
 	}
+
+	public function test_create_post_subscriber_id() {
+		static::$scopes = array( 'create' );
+		$response       = $this->dispatch( self::create_form_request( static::$post ), static::$subscriber_id );
+		self::check( $response, 403, sprintf( 'user id %1$s cannot create posts', static::$subscriber_id ) );
+		// Set Back to Default
+		static::$scopes = array( 'post' );
+	}
+ 
 
 	public function test_form_to_json_encode() {
 		$output = Micropub_Endpoint::form_to_json( static::$post );
@@ -578,7 +590,7 @@ EOF;
 			'url'    => 'http://example.org/?p=' . $post_id,
 		);
 		$response = $this->dispatch( self::create_form_request( $POST ), static::$author_id );
-		$this->check( $response, 400, 'unknown action' );
+		$this->check( $response, 400, 'Unknown Action' );
 	}
 
 	// https://github.com/snarfed/wordpress-micropub/issues/57#issuecomment-302965336

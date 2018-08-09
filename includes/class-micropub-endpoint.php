@@ -87,7 +87,31 @@ class Micropub_Endpoint {
 		);
 	}
 
+
+	public static function get_action( $request ) {
+		$action = $request->get_param( 'action' );
+		return $action ? $action : 'create';
+	}
+
+	public static function load_auth() {
+		static::$micropub_auth_response = apply_filters( 'indieauth_response', static::$micropub_auth_response );
+		static::$scopes                 = apply_filters( 'indieauth_scopes', static::$scopes );
+	}
+
+	public static function get_client_id() {
+		return self::get( static::$micropub_auth_response, 'client_id', false );
+	}
+
+	public static function get_me() {
+		return self::get( static::$micropub_auth_response, 'me', false );
+	}
+
 	public static function check_query_permissions( $request ) {
+		self::load_auth();
+		$query = $request->get_param( 'q' );
+		if ( ! $query ) {
+			return new WP_Error( 'invalid_request', 'Missing Query Parameter', array( 'status' => 400 ) );
+		}
 		if ( ! current_user_can( 'read' ) ) {
 			return new WP_Error( 'forbidden', 'Unauthorized', array( 'status' => 403 ) );
 		}
@@ -95,11 +119,15 @@ class Micropub_Endpoint {
 	}
 
 	public static function check_post_permissions( $request ) {
-		if ( ! current_user_can( 'publish_posts' ) ) {
-			return new WP_Error( 'forbidden', 'Unauthorized', array( 'status' => 403 ) );
+		self::load_auth();
+		$action     = self::get_action( $request );
+		$permission = self::check_scope( $action, get_current_user_id() );
+		if ( is_micropub_error( $permission ) ) {
+			return $permission->to_wp_error();
 		}
-		return true;
+		return $permission;
 	}
+
 
 	/**
 	 * Parse the micropub request and render the document
@@ -109,10 +137,8 @@ class Micropub_Endpoint {
 	 * @uses apply_filter() Calls 'before_micropub' on the default request
 	 */
 	protected static function load_input( $request ) {
-		static::$scopes                 = apply_filters( 'indieauth_scopes', static::$scopes );
-		static::$micropub_auth_response = apply_filters( 'indieauth_response', static::$micropub_auth_response );
-		$content_type                   = $request->get_content_type();
-		$content_type                   = $content_type['value'];
+		$content_type = $request->get_content_type();
+		$content_type = $content_type['value'];
 
 		if ( 'GET' === $request->get_method() ) {
 			static::$input = $request->get_query_params();
@@ -140,14 +166,38 @@ class Micropub_Endpoint {
 	 * Check scope
 	 *
 	 * @param string $scope
+	 * @param id $user_id. If supplied will check user permissions
 	 *
-	 * @return boolean
+	 * @return boolean|WP_Micropub_Error
 	**/
-	protected static function check_scope( $scope ) {
-		if ( in_array( 'post', static::$scopes, true ) ) {
+	protected static function check_scope( $scope, $user_id = null ) {
+		$inscope = in_array( $scope, static::$scopes, true ) || in_array( 'post', static::$scopes, true );
+		if ( ! $inscope ) {
+			return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'scope insufficient to %1$s posts', $scope ), 403, static::$scopes );
+		}
+		if ( ! $user_id ) {
 			return true;
 		}
-		return in_array( $scope, static::$scopes, true );
+		switch ( $scope ) {
+			case 'update':
+				if ( ! user_can( $user_id, 'edit_posts' ) ) {
+					return new WP_Micropub_Error( 'forbidden', sprintf( 'user id %1$s cannot update posts', $user_id ), 403 );
+				}
+				return true;
+			case 'undelete':
+			case 'delete':
+				if ( ! user_can( $user_id, 'delete_posts' ) ) {
+					return new WP_Micropub_Error( 'forbidden', sprintf( 'user id %1$s cannot delete posts', $user_id ), 403 );
+				}
+				return true;
+			case 'create':
+				if ( ! user_can( $user_id, 'publish_posts' ) ) {
+					return new WP_Micropub_Error( 'forbidden', sprintf( 'user id %1$s cannot create posts', $user_id ), 403 );
+				}
+				return true;
+			default:
+				return new WP_Micropub_Error( 'invalid_request', 'Unknown Action', 400 );
+		}
 	}
 
 
@@ -165,11 +215,7 @@ class Micropub_Endpoint {
 		}
 
 		$action = self::get( static::$input, 'action', 'create' );
-		if ( ! self::check_scope( $action ) ) {
-			return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'scope insufficient to %1$s posts', $action ), 403 );
-		}
-
-		$url = self::get( static::$input, 'url' );
+		$url    = self::get( static::$input, 'url' );
 
 		// check that we support all requested syndication targets
 		$synd_supported = self::get_syndicate_targets( $user_id );
@@ -186,24 +232,15 @@ class Micropub_Endpoint {
 			return new WP_Micropub_Error( 'invalid_request', sprintf( 'Unknown mp-syndicate-to targets: %1$s', implode( ', ', $unknown ) ), 400 );
 
 		} elseif ( ! $url || 'create' === $action ) { // create
-			if ( $user_id && ! user_can( $user_id, 'publish_posts' ) ) {
-				return new WP_Micropub_Error( 'forbidden', sprintf( 'user id %1$s cannot publish posts', $user_id ), 403 );
-			}
 			$args = static::create( $user_id );
 			if ( ! is_micropub_error( $args ) ) {
 				$response->set_status( 201 );
 				$response->header( 'Location', get_permalink( $args['ID'] ) );
 			}
 		} elseif ( 'update' === $action || ! $action ) { // update
-			if ( $user_id && ! user_can( $user_id, 'edit_posts' ) ) {
-				return new WP_Micropub_Error( 'forbidden', sprintf( 'user id %1$s cannot edit posts', $user_id ), 403 );
-			}
 			$args = static::update( static::$input );
 
 		} elseif ( 'delete' === $action ) { // delete
-			if ( $user_id && ! user_can( $user_id, 'delete_posts' ) ) {
-				return new WP_Micropub_Error( 'forbidden', sprintf( 'user id %1$s cannot delete posts', $user_id ), 403 );
-			}
 			$args = get_post( url_to_postid( $url ), ARRAY_A );
 			if ( ! $args ) {
 				return new WP_Micropub_Error( 'invalid_request', sprintf( '%1$s not found', $url ), 400 );
@@ -211,9 +248,6 @@ class Micropub_Endpoint {
 			static::check_error( wp_trash_post( $args['ID'] ) );
 
 		} elseif ( 'undelete' === $action ) { // undelete
-			if ( $user_id && ! user_can( $user_id, 'publish_posts' ) ) {
-				return new WP_Micropub_Error( 'invalid_request', sprintf( 'user id %1$s cannot undelete posts', $user_id ), 400 );
-			}
 			$found = false;
 			// url_to_postid() doesn't support posts in trash, so look for
 			// it ourselves, manually.
