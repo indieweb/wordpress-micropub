@@ -175,7 +175,8 @@ class Micropub_Endpoint {
 		if ( ! $inscope ) {
 			return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'scope insufficient to %1$s posts', $scope ), 403, static::$scopes );
 		}
-		if ( ! $user_id ) {
+		// Because 0 is a user
+		if ( is_null( $user_id ) ) {
 			return true;
 		}
 		switch ( $scope ) {
