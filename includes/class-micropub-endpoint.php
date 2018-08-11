@@ -362,7 +362,7 @@ class Micropub_Endpoint {
 		}
 
 		// add
-		$add = $input['add'];
+		$add = self::get( $input, 'add', false );
 		if ( $add ) {
 			if ( ! is_array( $add ) ) {
 				return new WP_Micropub_Error( 'invalid_request', 'add must be an object', 400 );
@@ -388,7 +388,7 @@ class Micropub_Endpoint {
 		}
 
 		// replace
-		$replace = $input['replace'];
+		$replace = self::get( $input, 'replace', false );
 		if ( $replace ) {
 			if ( ! is_array( $replace ) ) {
 				return new WP_Micropub_Error( 'invalid_request', 'replace must be an object', 400 );
@@ -400,7 +400,7 @@ class Micropub_Endpoint {
 		}
 
 		// delete
-		$delete = $input['delete'];
+		$delete = self::get( $input, 'delete', false );
 		if ( $delete ) {
 			if ( is_assoc_array( $delete ) ) {
 				if ( array_diff( array_keys( $delete ), array( 'category', 'syndication' ) ) ) {
@@ -754,7 +754,7 @@ class Micropub_Endpoint {
 	 * request is an update, it changes the post meta values in the db directly.
 	 */
 	public static function store_mf2( $args ) {
-		$props = static::$input['properties'];
+		$props = self::get( static::$input, 'properties', false );
 		if ( ! isset( $args['ID'] ) && $props ) {
 			$args['meta_input'] = self::get( $args, 'meta_input' );
 			$type               = static::$input['type'];
