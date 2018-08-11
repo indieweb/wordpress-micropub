@@ -87,23 +87,9 @@ class Micropub_Endpoint {
 		);
 	}
 
-
-	public static function get_action( $request ) {
-		$action = $request->get_param( 'action' );
-		return $action ? $action : 'create';
-	}
-
 	public static function load_auth() {
 		static::$micropub_auth_response = apply_filters( 'indieauth_response', static::$micropub_auth_response );
 		static::$scopes                 = apply_filters( 'indieauth_scopes', static::$scopes );
-	}
-
-	public static function get_client_id() {
-		return self::get( static::$micropub_auth_response, 'client_id', false );
-	}
-
-	public static function get_me() {
-		return self::get( static::$micropub_auth_response, 'me', false );
 	}
 
 	public static function check_query_permissions( $request ) {
@@ -120,7 +106,10 @@ class Micropub_Endpoint {
 
 	public static function check_post_permissions( $request ) {
 		self::load_auth();
-		$action     = self::get_action( $request );
+
+		$action = $request->get_param( 'action' );
+		$action = $action ? $action : 'create';
+
 		$permission = self::check_scope( $action, get_current_user_id() );
 		if ( is_micropub_error( $permission ) ) {
 			return $permission->to_wp_error();
@@ -163,17 +152,18 @@ class Micropub_Endpoint {
 	}
 
 	/**
-	 * Check scope
+	 * Check scope.
+	 * If a user id is supplied check the scope against the user permissions otherwise just check scopes
 	 *
 	 * @param string $scope
-	 * @param id $user_id. If supplied will check user permissions
+	 * @param id $user_id. Optional.
 	 *
 	 * @return boolean|WP_Micropub_Error
 	**/
 	protected static function check_scope( $scope, $user_id = null ) {
 		$inscope = in_array( $scope, static::$scopes, true ) || in_array( 'post', static::$scopes, true );
 		if ( ! $inscope ) {
-			return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'scope insufficient to %1$s posts', $scope ), 403, static::$scopes );
+			return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'scope insufficient to %1$s posts', $scope ), 401, static::$scopes );
 		}
 		// Because 0 is a user
 		if ( is_null( $user_id ) ) {
@@ -231,44 +221,54 @@ class Micropub_Endpoint {
 
 		if ( $unknown ) {
 			return new WP_Micropub_Error( 'invalid_request', sprintf( 'Unknown mp-syndicate-to targets: %1$s', implode( ', ', $unknown ) ), 400 );
-
-		} elseif ( ! $url || 'create' === $action ) { // create
-			$args = static::create( $user_id );
-			if ( ! is_micropub_error( $args ) ) {
-				$response->set_status( 201 );
-				$response->header( 'Location', get_permalink( $args['ID'] ) );
-			}
-		} elseif ( 'update' === $action || ! $action ) { // update
-			$args = static::update( static::$input );
-
-		} elseif ( 'delete' === $action ) { // delete
-			$args = get_post( url_to_postid( $url ), ARRAY_A );
-			if ( ! $args ) {
-				return new WP_Micropub_Error( 'invalid_request', sprintf( '%1$s not found', $url ), 400 );
-			}
-			static::check_error( wp_trash_post( $args['ID'] ) );
-
-		} elseif ( 'undelete' === $action ) { // undelete
-			$found = false;
-			// url_to_postid() doesn't support posts in trash, so look for
-			// it ourselves, manually.
-			// here's another, more complicated way that customizes WP_Query:
-			// https://gist.github.com/peterwilsoncc/bb40e52cae7faa0e6efc
-			foreach ( get_posts( array( 'post_status' => 'trash' ) ) as $post ) {
-				if ( get_the_guid( $post ) === $url ) {
-					wp_untrash_post( $post->ID );
-					wp_publish_post( $post->ID );
-					$found = true;
-					$args  = array( 'ID' => $post->ID );
+		}
+		// For all actions other than creation a url is required
+		if ( ! $url && 'create' !== $action ) {
+			return new WP_Micropub_Error( 'invalid_request', sprintf( 'URL is Required for %1$s action', $action ), 400 );
+		}
+		switch ( $action ) {
+			case 'create':
+				$args = static::create( $user_id );
+				if ( ! is_micropub_error( $args ) ) {
+					$response->set_status( 201 );
+					$response->header( 'Location', get_permalink( $args['ID'] ) );
 				}
-			}
-			if ( ! $found ) {
-				return new WP_Micropub_Error( 'invalid_request', sprintf( 'deleted post %1$s not found', $url ), 400 );
-			}
-
-			// unknown action
-		} else {
-			return new WP_Micropub_Error( 'invalid_request', sprintf( 'unknown action %1$s', $action ), 400 );
+				break;
+			case 'update':
+				$args = static::update( static::$input );
+				break;
+			case 'delete':
+				$args = get_post( url_to_postid( $url ), ARRAY_A );
+				if ( ! $args ) {
+					return new WP_Micropub_Error( 'invalid_request', sprintf( '%1$s not found', $url ), 400 );
+				}
+				static::check_error( wp_trash_post( $args['ID'] ) );
+				break;
+			case 'undelete':
+				$found = false;
+				// url_to_postid() doesn't support posts in trash, so look for
+				// it ourselves, manually.
+				// here's another, more complicated way that customizes WP_Query:
+				// https://gist.github.com/peterwilsoncc/bb40e52cae7faa0e6efc
+				foreach ( get_posts(
+					array(
+						'post_status' => 'trash',
+						'fields'      => 'ids',
+					)
+				) as $post_id ) {
+					if ( get_the_guid( $post_id ) === $url ) {
+						wp_untrash_post( $post_id );
+						wp_publish_post( $post_id );
+						$found = true;
+						$args  = array( 'ID' => $post_id );
+					}
+				}
+				if ( ! $found ) {
+					return new WP_Micropub_Error( 'invalid_request', sprintf( 'deleted post %1$s not found', $url ), 400 );
+				}
+				break;
+			default:
+				return new WP_Micropub_Error( 'invalid_request', sprintf( 'unknown action %1$s', $action ), 400 );
 		}
 		if ( is_micropub_error( $args ) ) {
 			return $args;
