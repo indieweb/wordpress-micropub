@@ -468,7 +468,7 @@ EOF;
 			'replace' => array( 'content' => array( 'unused' ) ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$subscriber_id );
-		$this->check( $response, 403, sprintf( 'user id %1$s cannot create posts', static::$subscriber_id ) );
+		$this->check( $response, 403, sprintf( 'user id %1$s cannot update posts', static::$subscriber_id ) );
 	}
 
 
