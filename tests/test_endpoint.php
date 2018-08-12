@@ -42,7 +42,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		'nonce'     => 501884823,
 	);
 
-	// Scope defaulting to legacy params
+	// Scope defaulting to legacy
 	protected static $scopes = array( 'post' );
 
 	protected static $geo = array(
@@ -86,6 +86,11 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 	public static function wpTearDownAfterClass() {
 		self::delete_user( self::$author_id );
 		remove_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ) );
+	}
+
+	public function setUp() {
+		parent::setUp();
+		static::$scopes = array( 'post' );
 	}
 
 
@@ -148,8 +153,11 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		return $response;
 	}
 
-	public function check_create( $request ) {
-		$response = $this->dispatch( $request, static::$author_id );
+	public function check_create( $request, $user_id = null ) {
+		if ( ! $user_id ) {
+			$user_id = static::$author_id;
+		}
+		$response = $this->dispatch( $request, $user_id );
 		$response = $this->check( $response, 201, null );
 		$posts    = wp_get_recent_posts( null, OBJECT );
 		$this->assertEquals( 1, count( $posts ) );
@@ -194,10 +202,15 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 	public function test_create_post_without_create_scope() {
 		static::$scopes = array( 'update' );
 		$response       = $this->dispatch( self::create_form_request( static::$post ), static::$author_id );
-		self::check( $response, 403, 'scope insufficient to create posts' );
-		// Set Back to Default
-		static::$scopes = array( 'post' );
+		self::check( $response, 401, 'scope insufficient to create posts' );
 	}
+
+	public function test_create_post_subscriber_id() {
+		static::$scopes = array( 'create' );
+		$response       = $this->dispatch( self::create_form_request( static::$post ), static::$subscriber_id );
+		self::check( $response, 403, sprintf( 'user id %1$s cannot create posts', static::$subscriber_id ) );
+	}
+ 
 
 	public function test_form_to_json_encode() {
 		$output = Micropub_Endpoint::form_to_json( static::$post );
@@ -437,6 +450,29 @@ EOF;
 		$this->check( $response, 400, 'http://example.org/?p=999 not found' );
 	}
 
+	public function test_update_post_no_scope() {
+		static::$scopes = array( 'create' );
+		$input    = array(
+			'action'  => 'update',
+			'url'     => 'http://example.org/?p=999',
+			'replace' => array( 'content' => array( 'unused' ) ),
+		);
+		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
+		$this->check( $response, 401, 'scope insufficient to update posts' );
+	}
+
+	public function test_update_post_no_permission() {
+		$input    = array(
+			'action'  => 'update',
+			'url'     => 'http://example.org/?p=999',
+			'replace' => array( 'content' => array( 'unused' ) ),
+		);
+		$response = $this->dispatch( self::create_json_request( $input ), static::$subscriber_id );
+		$this->check( $response, 403, sprintf( 'user id %1$s cannot update posts', static::$subscriber_id ) );
+	}
+
+
+
 	function test_update_delete_value() {
 		$POST     = self::$post;
 		$post_id  = $this->check_create( self::create_form_request( $POST ) )->ID;
@@ -525,6 +561,39 @@ EOF;
 		$post = get_post( $post_id );
 		$this->assertEquals( 'trash', $post->post_status );
 	}
+
+	public function test_delete_no_permission() {
+		$post_id = self::insert_post();
+		$POST = array(
+			'action' => 'delete',
+			'url'    => 'http://example.org/?p=' . $post_id,
+		);
+		$response = $this->dispatch( self::create_form_request( $POST ), static::$subscriber_id );
+		$this->check(
+			$response, 403, array(
+				'error' => 'forbidden',
+				'error_description' => sprintf( 'user id %1$s cannot delete posts', static::$subscriber_id )
+			)
+		);
+	}
+
+	public function test_delete_no_scope() {
+		static::$scopes = array( 'create' );
+		$post_id = self::insert_post();
+		$POST = array(
+			'action' => 'delete',
+			'url'    => 'http://example.org/?p=' . $post_id,
+		);
+		$response = $this->dispatch( self::create_form_request( $POST ), static::$author_id );
+		$this->check(
+			$response, 401, array(
+				'error' => 'insufficient_scope',
+				'error_description' => sprintf( 'scope insufficient to delete posts', static::$subscriber_id )
+			)
+		);
+	}
+
+
 	public function test_delete_post_not_found() {
 		$POST     = array(
 			'action' => 'delete',
@@ -578,7 +647,7 @@ EOF;
 			'url'    => 'http://example.org/?p=' . $post_id,
 		);
 		$response = $this->dispatch( self::create_form_request( $POST ), static::$author_id );
-		$this->check( $response, 400, 'unknown action' );
+		$this->check( $response, 400, 'Unknown Action' );
 	}
 
 	// https://github.com/snarfed/wordpress-micropub/issues/57#issuecomment-302965336
