@@ -36,6 +36,9 @@ if ( ! defined( 'MICROPUB_NAMESPACE' ) ) {
 	define( 'MICROPUB_NAMESPACE', 'micropub/1.0' );
 }
 
+// Global Functions
+require_once plugin_dir_path( __FILE__ ) . 'includes/functions.php';
+
 // Admin Menu Functions
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-admin.php';
 
