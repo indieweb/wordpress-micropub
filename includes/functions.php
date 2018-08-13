@@ -21,3 +21,12 @@ if ( ! function_exists( 'getallheaders' ) ) {
 		return $headers;
 	}
 }
+
+if ( ! function_exists( 'mp_get' ) ) {
+	function mp_get( $array, $key, $default = array() ) {
+		if ( is_array( $array ) ) {
+			return isset( $array[ $key ] ) ? $array[ $key ] : $default;
+		}
+		return $default;
+	}
+}

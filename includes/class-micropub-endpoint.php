@@ -164,22 +164,22 @@ class Micropub_Endpoint {
 			return $load;
 		}
 
-		$action = self::get( static::$input, 'action', 'create' );
+		$action = mp_get( static::$input, 'action', 'create' );
 		if ( ! self::check_scope( $action ) ) {
 			return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'scope insufficient to %1$s posts', $action ), 403 );
 		}
 
-		$url = self::get( static::$input, 'url' );
+		$url = mp_get( static::$input, 'url' );
 
 		// check that we support all requested syndication targets
 		$synd_supported = self::get_syndicate_targets( $user_id );
 		$uids           = array();
 		foreach ( $synd_supported as $syn ) {
-			$uids[] = self::get( $syn, 'uid' );
+			$uids[] = mp_get( $syn, 'uid' );
 		}
 
-		$properties     = self::get( static::$input, 'properties' );
-		$synd_requested = self::get( $properties, 'mp-syndicate-to' );
+		$properties     = mp_get( static::$input, 'properties' );
+		$synd_requested = mp_get( $properties, 'mp-syndicate-to' );
 		$unknown        = array_diff( $synd_requested, $uids );
 
 		if ( $unknown ) {
@@ -317,7 +317,7 @@ class Micropub_Endpoint {
 		$args = static::mp_to_wp( static::$input );
 		$args = static::store_micropub_auth_response( $args );
 
-		$post_content = self::get( $args, 'post_content', '' );
+		$post_content = mp_get( $args, 'post_content', '' );
 		$post_content = apply_filters( 'micropub_post_content', $post_content, static::$input );
 		if ( $post_content ) {
 			$args['post_content'] = $post_content;
@@ -362,7 +362,7 @@ class Micropub_Endpoint {
 		}
 
 		// add
-		$add = self::get( $input, 'add', false );
+		$add = mp_get( $input, 'add', false );
 		if ( $add ) {
 			if ( ! is_array( $add ) ) {
 				return new WP_Micropub_Error( 'invalid_request', 'add must be an object', 400 );
@@ -388,7 +388,7 @@ class Micropub_Endpoint {
 		}
 
 		// replace
-		$replace = self::get( $input, 'replace', false );
+		$replace = mp_get( $input, 'replace', false );
 		if ( $replace ) {
 			if ( ! is_array( $replace ) ) {
 				return new WP_Micropub_Error( 'invalid_request', 'replace must be an object', 400 );
@@ -400,7 +400,7 @@ class Micropub_Endpoint {
 		}
 
 		// delete
-		$delete = self::get( $input, 'delete', false );
+		$delete = mp_get( $input, 'delete', false );
 		if ( $delete ) {
 			if ( is_assoc_array( $delete ) ) {
 				if ( array_diff( array_keys( $delete ), array( 'category', 'syndication' ) ) ) {
@@ -438,7 +438,7 @@ class Micropub_Endpoint {
 		$args['edit_date'] = true;
 
 		// Generate Post Content
-		$post_content = self::get( $args, 'post_content', '' );
+		$post_content = mp_get( $args, 'post_content', '' );
 		$post_content = apply_filters( 'micropub_post_content', $post_content, static::$input );
 		if ( $post_content ) {
 			$args['post_content'] = $post_content;
@@ -738,7 +738,7 @@ class Micropub_Endpoint {
 	public static function store_micropub_auth_response( $args ) {
 		$micropub_auth_response = static::$micropub_auth_response;
 		if ( $micropub_auth_response || ( is_assoc_array( $micropub_auth_response ) ) ) {
-			$args['meta_input']                           = self::get( $args, 'meta_input' );
+			$args['meta_input']                           = mp_get( $args, 'meta_input' );
 			$args['meta_input']['micropub_auth_response'] = $micropub_auth_response;
 		}
 		return $args;
@@ -754,9 +754,9 @@ class Micropub_Endpoint {
 	 * request is an update, it changes the post meta values in the db directly.
 	 */
 	public static function store_mf2( $args ) {
-		$props = self::get( static::$input, 'properties', false );
+		$props = mp_get( static::$input, 'properties', false );
 		if ( ! isset( $args['ID'] ) && $props ) {
-			$args['meta_input'] = self::get( $args, 'meta_input' );
+			$args['meta_input'] = mp_get( $args, 'meta_input' );
 			$type               = static::$input['type'];
 			if ( $type ) {
 				$args['meta_input']['mf2_type'] = $type;
@@ -879,7 +879,7 @@ class Micropub_Endpoint {
 			} elseif ( 'access_token' === $key ) {
 				continue;
 			} else {
-				$input['properties']         = self::get( $input, 'properties' );
+				$input['properties']         = mp_get( $input, 'properties' );
 				$input['properties'][ $key ] =
 				( is_array( $val ) && wp_is_numeric_array( $val ) )
 				? $val : array( $val );

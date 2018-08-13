@@ -9,20 +9,12 @@ add_filter( 'micropub_post_content', array( 'Micropub_Render', 'generate_post_co
  */
 class Micropub_Render {
 
-	public static function get( $array, $key, $default = array() ) {
-		if ( is_array( $array ) ) {
-			  return isset( $array[ $key ] ) ? $array[ $key ] : $default;
-		}
-		return $default;
-	}
-
-
 	/**
 	 * Generates and returns a post_content string suitable for wp_insert_post()
 	 * and friends.
 	 */
 	public static function generate_post_content( $post_content, $input ) {
-		$props = self::get( $input, 'replace', $input['properties'] );
+		$props = mp_get( $input, 'replace', $input['properties'] );
 		$lines = array();
 
 		$verbs = array(
@@ -79,7 +71,7 @@ class Micropub_Render {
 		}
 
 		// event
-		if ( array( 'h-event' ) === self::get( $input, 'type' ) ) {
+		if ( array( 'h-event' ) === mp_get( $input, 'type' ) ) {
 			$lines[] = static::generate_event( $input );
 		}
 
