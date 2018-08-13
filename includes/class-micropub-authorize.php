@@ -117,13 +117,6 @@ class Micropub_Authorize {
 		return $array;
 	}
 
-	public static function get( $array, $key, $default = array() ) {
-		if ( is_array( $array ) ) {
-			return isset( $array[ $key ] ) ? $array[ $key ] : $default;
-		}
-		return $default;
-	}
-
 	/**
 	 * Get the authorization header
 	 *
@@ -166,7 +159,7 @@ class Micropub_Authorize {
 
 		// find the access token
 		$auth  = static::get_authorization_header();
-		$token = self::get( $_POST, 'access_token' ); // phpcs:ignore
+		$token = mp_get( $_POST, 'access_token' ); // phpcs:ignore
 		if ( ! $auth && ! $token ) {
 			static::$error = new WP_Micropub_Error( 'unauthorized', 'missing access token', 401 );
 			return $user_id;

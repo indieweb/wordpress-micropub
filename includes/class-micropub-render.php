@@ -8,12 +8,13 @@ add_filter( 'micropub_post_content', array( 'Micropub_Render', 'generate_post_co
  * Micropub Render Class
  */
 class Micropub_Render {
+
 	/**
 	 * Generates and returns a post_content string suitable for wp_insert_post()
 	 * and friends.
 	 */
 	public static function generate_post_content( $post_content, $input ) {
-		$props = $input['replace'] ?: $input['properties'];
+		$props = mp_get( $input, 'replace', $input['properties'] );
 		$lines = array();
 
 		$verbs = array(
@@ -25,6 +26,10 @@ class Micropub_Render {
 
 		// interactions
 		foreach ( array_keys( $verbs ) as $prop ) {
+			if ( ! isset( $props[ $prop ] ) ) {
+				continue;
+			}
+
 			if ( wp_is_numeric_array( $props[ $prop ] ) ) {
 				$val = $props[ $prop ][0];
 			} else {
@@ -66,7 +71,7 @@ class Micropub_Render {
 		}
 
 		// event
-		if ( array( 'h-event' ) === $input['type'] ) {
+		if ( array( 'h-event' ) === mp_get( $input, 'type' ) ) {
 			$lines[] = static::generate_event( $input );
 		}
 
