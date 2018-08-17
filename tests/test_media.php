@@ -42,7 +42,7 @@ class Micropub_Media_Test extends WP_UnitTestCase {
 	public function test_register_routes() {
 		$routes = rest_get_server()->get_routes();
 		$this->assertArrayHasKey( MICROPUB_NAMESPACE . '/media', $routes );
-		$this->assertCount( 1, $routes[ MICROPUB_NAMESPACE . '/media'] );
+		$this->assertCount( 2, $routes[ MICROPUB_NAMESPACE . '/media'] );
 	}
 
 	public function upload_request() {

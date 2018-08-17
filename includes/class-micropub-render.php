@@ -14,7 +14,7 @@ class Micropub_Render {
 	 * and friends.
 	 */
 	public static function generate_post_content( $post_content, $input ) {
-		$props = mp_get( $input, 'replace', $input['properties'] );
+		$props = mp_get( $input, 'properties' );
 		$lines = array();
 
 		$verbs = array(

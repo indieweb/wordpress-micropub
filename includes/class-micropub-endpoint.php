@@ -426,18 +426,6 @@ class Micropub_Endpoint {
 			}
 		}
 
-		// replace
-		$replace = mp_get( $input, 'replace', false );
-		if ( $replace ) {
-			if ( ! is_array( $replace ) ) {
-				return new WP_Micropub_Error( 'invalid_request', 'replace must be an object', 400 );
-			}
-			foreach ( static::mp_to_wp( array( 'properties' => $replace ) )
-					as $name => $val ) {
-				$args[ $name ] = $val;
-			}
-		}
-
 		// delete
 		$delete = mp_get( $input, 'delete', false );
 		if ( $delete ) {
@@ -469,6 +457,18 @@ class Micropub_Endpoint {
 				}
 			} else {
 				return new WP_Micropub_Error( 'invalid_request', 'delete must be an array or object', 400 );
+			}
+		}
+
+		// replace
+		$replace = mp_get( $input, 'replace', false );
+		if ( $replace ) {
+			if ( ! is_array( $replace ) ) {
+				return new WP_Micropub_Error( 'invalid_request', 'replace must be an object', 400 );
+			}
+			foreach ( static::mp_to_wp( array( 'properties' => $replace ) )
+				as $name => $val ) {
+				$args[ $name ] = $val;
 			}
 		}
 
