@@ -29,6 +29,10 @@ class Micropub_Media {
 					'methods'  => WP_REST_Server::CREATABLE,
 					'callback' => array( $cls, 'upload_handler' ),
 				),
+				array(
+					'methods'  => WP_REST_Server::READABLE,
+					'callback' => array( $cls, 'query_handler' ),
+				),
 			)
 		);
 	}
@@ -125,12 +129,16 @@ class Micropub_Media {
 	 * @return WP_Micropub_Error|true Boolean true if the attachment may be created, or a WP_Micropub_Error if not.
 	 */
 	protected static function permissions_check( $request ) {
-		if ( ! current_user_can( 'upload_files' ) ) {
-			return new WP_Micropub_Error( 'forbidden', 'User is not permitted to upload files', 403 );
+		static::$scopes                 = apply_filters( 'indieauth_scopes', static::$scopes );
+		static::$micropub_auth_response = apply_filters( 'indieauth_response', static::$micropub_auth_response );
+		if ( 'POST' === $request->get_method() ) {
+			if ( ! current_user_can( 'upload_files' ) ) {
+				return new WP_Micropub_Error( 'forbidden', 'User is not permitted to upload files', 403 );
+			}
 		}
 		$intersect = array_intersect( array( 'create', 'media' ), static::$scopes );
 		if ( empty( $intersect ) ) {
-			return new WP_Micropub_Error( 'insufficient_scope', 'Token Does Not Meet Requirements for Upload', 401 );
+			return new WP_Micropub_Error( 'insufficient_scope', 'You do not have permission to create or upload media', 401 );
 		}
 
 		return true;
@@ -175,8 +183,6 @@ class Micropub_Media {
 
 	// Handles requests to the Media Endpoint
 	public static function upload_handler( $request ) {
-		static::$scopes                 = apply_filters( 'indieauth_scopes', static::$scopes );
-		static::$micropub_auth_response = apply_filters( 'indieauth_response', static::$micropub_auth_response );
 
 		$permission = static::permissions_check( $request );
 		if ( is_micropub_error( $permission ) ) {
@@ -210,6 +216,15 @@ class Micropub_Media {
 			)
 		);
 		return $response;
+	}
+
+	// Responds to queries to the media endpoint
+	public static function query_handler( $request ) {
+		$permission = static::permissions_check( $request );
+		if ( is_micropub_error( $permission ) ) {
+			return $permission;
+		}
+		return new WP_Micropub_Error( 'invalid_request', 'unknown query', 400, $request->get_query_params() );
 	}
 
 	public static function media_sideload_url( $url, $post_id = 0, $title = null ) {

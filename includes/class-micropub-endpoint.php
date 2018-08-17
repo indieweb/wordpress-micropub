@@ -205,14 +205,12 @@ class Micropub_Endpoint {
 			return $load;
 		}
 
-
 		$action = mp_get( static::$input, 'action', 'create' );
 		if ( ! self::check_scope( $action ) ) {
 			return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'scope insufficient to %1$s posts', $action ), 403 );
 		}
 
 		$url = mp_get( static::$input, 'url' );
-
 
 		// check that we support all requested syndication targets
 		$synd_supported = self::get_syndicate_targets( $user_id );
@@ -612,14 +610,15 @@ class Micropub_Endpoint {
 				}
 			}
 		}
-
-		$content = $props['content'][0];
-		if ( is_array( $content ) ) {
-			$args['post_content'] = $content['html'] ?:
-								htmlspecialchars( $content['value'] );
-		} elseif ( $content ) {
-			$args['post_content'] = htmlspecialchars( $content );
-		} elseif ( $props['summary'] ) {
+		if ( isset( $props['content'] ) ) {
+			$content = $props['content'][0];
+			if ( is_array( $content ) ) {
+				$args['post_content'] = $content['html'] ?:
+							htmlspecialchars( $content['value'] );
+			} elseif ( $content ) {
+				$args['post_content'] = htmlspecialchars( $content );
+			}
+		} elseif ( isset( $props['summary'] ) ) {
 			$args['post_content'] = $props['summary'][0];
 		}
 

@@ -76,14 +76,9 @@ class Micropub_Render {
 		}
 
 		// content
-		$content = $props['content'][0];
-		if ( $content ) {
+		if ( ! empty( $post_content ) ) {
 			$lines[] = '<div class="e-content">';
-			if ( is_array( $content ) ) {
-				$lines[] = $content['html'] ?: htmlspecialchars( $content['value'] );
-			} else {
-				$lines[] = htmlspecialchars( $content );
-			}
+			$lines[] = $post_content;
 			$lines[] = '</div>';
 		}
 
