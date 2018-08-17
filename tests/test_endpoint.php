@@ -348,7 +348,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_public', true ) );
 	}
 
-	public function test_update() {
+	public function test_update_replaceadddelete() {
 		$POST    = self::$post;
 		$post_id = $this->check_create( self::create_form_request( $POST ) )->ID;
 		$this->assertEquals( '2016-01-01 12:01:23', get_post( $post_id )->post_date );
@@ -428,6 +428,25 @@ EOF;
 			$this->query_source( $post->ID )
 		);
 	}
+
+
+	public function test_update_delete_prop() {
+		$POST     = array( 'content' => 'my<br>content' );
+		$post_id  = $this->check_create( self::create_form_request( $POST ) )->ID;
+		$input    = array(
+			'action' => 'update',
+			'url'    => 'http://example.org/?p=' . $post_id,
+			'delete'    => array( 'location' ),
+		);
+		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
+		$this->check( $response, 200 );
+		// added
+		$post = get_post( $post_id );
+		$meta = get_post_meta( $post->ID );
+		$this->assertNull( $meta['geo_latitude'] );
+		$this->assertNull( $meta['geo_longitude'] );
+	}
+
 
 	public function test_add_property_not_category() {
 		$post_id  = self::insert_post();

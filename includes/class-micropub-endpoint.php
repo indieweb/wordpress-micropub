@@ -425,7 +425,7 @@ class Micropub_Endpoint {
 				);
 			}
 		}
-
+		// Delete was moved to before replace in versions greater than 1.4.3 due to the fact that all items should be removed before replacement
 		// delete
 		$delete = mp_get( $input, 'delete', false );
 		if ( $delete ) {
@@ -476,7 +476,10 @@ class Micropub_Endpoint {
 		// wp_update_post sets it to the current time
 		$args['edit_date'] = true;
 
-		// Generate Post Content
+		/* Filter Post Content
+		 * Post Content is initially generated from content properties in the mp_to_wp function however this function is called
+		 * multiple times for replace and delete
+		*/
 		$post_content = mp_get( $args, 'post_content', '' );
 		$post_content = apply_filters( 'micropub_post_content', $post_content, static::$input );
 		if ( $post_content ) {
@@ -618,10 +621,7 @@ class Micropub_Endpoint {
 			} elseif ( $content ) {
 				$args['post_content'] = htmlspecialchars( $content );
 			}
-		} elseif ( isset( $props['summary'] ) ) {
-			$args['post_content'] = $props['summary'][0];
 		}
-
 		return $args;
 	}
 

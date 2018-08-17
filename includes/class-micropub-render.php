@@ -75,7 +75,11 @@ class Micropub_Render {
 			$lines[] = static::generate_event( $input );
 		}
 
-		// content
+		// If there is no content use the summary property as content
+		if ( empty( $post_content ) && isset( $props['summary'] ) ) {
+			$post_content = $props['summary'][0];
+		}
+
 		if ( ! empty( $post_content ) ) {
 			$lines[] = '<div class="e-content">';
 			$lines[] = $post_content;
