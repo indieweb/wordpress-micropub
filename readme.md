@@ -120,7 +120,7 @@ These configuration options can be enabled by adding them to your wp-config.php
 * `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` - Define a custom token endpoint
 * `define('MICROPUB_NAMESPACE', 'micropub/1.0' )` - By default the namespace for micropub is micropub/1.0. This would allow you to change this for your endpoint
 
-These configuration options can be enabled by setting them in the WordPress options table or will appear under General if you install the IndieAuth plugin.
+These configuration options can be enabled by setting them in the WordPress options table.
 * `indieauth_authorization_endpoint` - if set will override MICROPUB_AUTHENTICATION_ENDPOINT for setting a custom endpoint
 * `indieauth_token_endpoint` - if set will override MICROPUB_TOKEN_ENDPOINT for setting a custom endpoint
 * `micropub_default_post_status` - if set, Micropub posts will be set to this status by default( publish, draft, or private ). Can also be set on the settings page.
@@ -144,7 +144,10 @@ resolve is to add the URL you are using as the URL in your user profile.
 
 ## Upgrade Notice 
 
-None yet.
+
+### Version 2.0.0 
+
+This version changes the Micropub endpoint URL as it now uses the REST API. You may have to update any third-parties that have cached this info.
 
 
 ## Screenshots 

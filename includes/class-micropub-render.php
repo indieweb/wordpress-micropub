@@ -14,7 +14,7 @@ class Micropub_Render {
 	 * and friends.
 	 */
 	public static function generate_post_content( $post_content, $input ) {
-		$props = mp_get( $input, 'replace', $input['properties'] );
+		$props = mp_get( $input, 'properties' );
 		$lines = array();
 
 		$verbs = array(
@@ -75,15 +75,14 @@ class Micropub_Render {
 			$lines[] = static::generate_event( $input );
 		}
 
-		// content
-		$content = $props['content'][0];
-		if ( $content ) {
+		// If there is no content use the summary property as content
+		if ( empty( $post_content ) && isset( $props['summary'] ) ) {
+			$post_content = $props['summary'][0];
+		}
+
+		if ( ! empty( $post_content ) ) {
 			$lines[] = '<div class="e-content">';
-			if ( is_array( $content ) ) {
-				$lines[] = $content['html'] ?: htmlspecialchars( $content['value'] );
-			} else {
-				$lines[] = htmlspecialchars( $content );
-			}
+			$lines[] = $post_content;
 			$lines[] = '</div>';
 		}
 

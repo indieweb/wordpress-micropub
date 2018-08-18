@@ -25,15 +25,26 @@ class MicropubRenderTest extends WP_UnitTestCase {
 			$post_content );
 	}
 
-	function check_econtent() {
-		$content = '\n<h1>HTML content!</h1><p>coolio.</p>\n';
+	function test_check_wrap_content() {
+		$content = '<h1>HTML content!</h1><p>coolio.</p>';
 		$input = array(
 			'properties' => array(
 				'content' => array( $content )
 			) );
-		$post_content = Micropub_Render::generate_post_content( 'something', $input );
+		$post_content = Micropub_Render::generate_post_content( $content, $input );
 		$this->assertEquals( "<div class=\"e-content\">\n<h1>HTML content!</h1><p>coolio.</p>\n</div>", $post_content );
 	}
+
+	function test_check_no_content_passed() {
+		$content = '<h1>HTML content!</h1><p>coolio.</p>';
+		$input = array(
+			'properties' => array(
+				'content' => array( $content )
+			) );
+		$post_content = Micropub_Render::generate_post_content( '', $input );
+		$this->assertEquals( "", $post_content );
+	}
+
 
 	function create_interaction( $property ) {
 		$input = array(

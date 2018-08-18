@@ -205,14 +205,12 @@ class Micropub_Endpoint {
 			return $load;
 		}
 
-
 		$action = mp_get( static::$input, 'action', 'create' );
 		if ( ! self::check_scope( $action ) ) {
 			return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'scope insufficient to %1$s posts', $action ), 403 );
 		}
 
 		$url = mp_get( static::$input, 'url' );
-
 
 		// check that we support all requested syndication targets
 		$synd_supported = self::get_syndicate_targets( $user_id );
@@ -427,19 +425,7 @@ class Micropub_Endpoint {
 				);
 			}
 		}
-
-		// replace
-		$replace = mp_get( $input, 'replace', false );
-		if ( $replace ) {
-			if ( ! is_array( $replace ) ) {
-				return new WP_Micropub_Error( 'invalid_request', 'replace must be an object', 400 );
-			}
-			foreach ( static::mp_to_wp( array( 'properties' => $replace ) )
-					as $name => $val ) {
-				$args[ $name ] = $val;
-			}
-		}
-
+		// Delete was moved to before replace in versions greater than 1.4.3 due to the fact that all items should be removed before replacement
 		// delete
 		$delete = mp_get( $input, 'delete', false );
 		if ( $delete ) {
@@ -474,11 +460,26 @@ class Micropub_Endpoint {
 			}
 		}
 
+		// replace
+		$replace = mp_get( $input, 'replace', false );
+		if ( $replace ) {
+			if ( ! is_array( $replace ) ) {
+				return new WP_Micropub_Error( 'invalid_request', 'replace must be an object', 400 );
+			}
+			foreach ( static::mp_to_wp( array( 'properties' => $replace ) )
+				as $name => $val ) {
+				$args[ $name ] = $val;
+			}
+		}
+
 		// tell WordPress to preserve published date explicitly, otherwise
 		// wp_update_post sets it to the current time
 		$args['edit_date'] = true;
 
-		// Generate Post Content
+		/* Filter Post Content
+		 * Post Content is initially generated from content properties in the mp_to_wp function however this function is called
+		 * multiple times for replace and delete
+		*/
 		$post_content = mp_get( $args, 'post_content', '' );
 		$post_content = apply_filters( 'micropub_post_content', $post_content, static::$input );
 		if ( $post_content ) {
@@ -612,17 +613,15 @@ class Micropub_Endpoint {
 				}
 			}
 		}
-
-		$content = $props['content'][0];
-		if ( is_array( $content ) ) {
-			$args['post_content'] = $content['html'] ?:
-								htmlspecialchars( $content['value'] );
-		} elseif ( $content ) {
-			$args['post_content'] = htmlspecialchars( $content );
-		} elseif ( $props['summary'] ) {
-			$args['post_content'] = $props['summary'][0];
+		if ( isset( $props['content'] ) ) {
+			$content = $props['content'][0];
+			if ( is_array( $content ) ) {
+				$args['post_content'] = $content['html'] ?:
+							htmlspecialchars( $content['value'] );
+			} elseif ( $content ) {
+				$args['post_content'] = htmlspecialchars( $content );
+			}
 		}
-
 		return $args;
 	}
 
