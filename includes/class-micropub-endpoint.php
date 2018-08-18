@@ -327,18 +327,8 @@ class Micropub_Endpoint {
 					if ( ! $post_id ) {
 						return new WP_Micropub_Error( 'invalid_request', sprintf( 'not found: %1$s', static::$input['url'] ), 400 );
 					}
-					$resp  = static::get_mf2( $post_id );
-					$props = static::$input['properties'];
-					if ( $props ) {
-						if ( ! is_array( $props ) ) {
-							$props = array( $props );
-						}
-						$resp = array(
-							'properties' => array_intersect_key(
-								$resp['properties'], array_flip( $props )
-							),
-						);
-					}
+					$resp = self::query( $post_id );
+
 					break;
 				default:
 					return new WP_Micropub_Error( 'invalid_request', 'unknown query', 400, static::$input );
@@ -348,6 +338,23 @@ class Micropub_Endpoint {
 		do_action( 'after_micropub', static::$input, null );
 		return new WP_REST_Response( $resp, 200 );
 	}
+
+	public static function query( $post_id ) {
+		$resp  = static::get_mf2( $post_id );
+		$props = static::$input['properties'];
+		if ( $props ) {
+			if ( ! is_array( $props ) ) {
+				$props = array( $props );
+			}
+			$resp = array(
+				'properties' => array_intersect_key(
+					$resp['properties'], array_flip( $props )
+				),
+			);
+		}
+		return $resp;
+	}
+
 
 	/*
 	 * Handle a create request.
