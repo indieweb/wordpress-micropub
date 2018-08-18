@@ -152,10 +152,6 @@ class Micropub_Authorize {
 	 */
 	public static function determine_current_user( $user_id ) {
 		$cls = get_called_class();
-		// Do not try to find a user if one has already been found
-		if ( ! empty( $user_id ) ) {
-			return $user_id;
-		}
 
 		// find the access token
 		$auth  = static::get_authorization_header();
@@ -175,7 +171,7 @@ class Micropub_Authorize {
 		);
 		if ( is_wp_error( $resp ) ) {
 			static::$error = $resp;
-			return $user_id;
+			return 0;
 		}
 
 		$code           = wp_remote_retrieve_response_code( $resp );
@@ -185,10 +181,10 @@ class Micropub_Authorize {
 
 		if ( (int) ( $code / 100 ) !== 2 ) {
 			static::$error = new WP_Micropub_Error( 'invalid_request', 'invalid access token', 403 );
-			return $user_id;
+			return 0;
 		} elseif ( empty( static::$scopes ) ) {
 			static::$error = new WP_Micropub_Error( 'insufficient_scope', 'access token is missing scope', 401 );
-			return $user_id;
+			return 0;
 		}
 
 		$me                             = untrailingslashit( $params['me'] );
