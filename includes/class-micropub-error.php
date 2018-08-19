@@ -2,7 +2,7 @@
 
 class WP_Micropub_Error extends WP_REST_Response {
 
-	public function __construct( $error, $error_description, $code = 200, $debug = array() ) {
+	public function __construct( $error, $error_description, $code = 200, $debug = null ) {
 		$this->set_status( $code );
 		$data = array(
 			'error'             => $error,
@@ -31,7 +31,8 @@ class WP_Micropub_Error extends WP_REST_Response {
 	public function to_log() {
 		$data   = $this->get_data();
 		$status = $this->get_status();
-		return sprintf( 'Micropub Error: %1$s %2$s - %3$s', $status, $data['error'], $data['error_description'], wp_json_encode( $data['debug'] ) );
+		$debug  = mp_get( $data, 'debug', array() );
+		return sprintf( 'Micropub Error: %1$s %2$s - %3$s', $status, $data['error'], $data['error_description'], wp_json_encode( $debug ) );
 	}
 
 }
