@@ -27,7 +27,7 @@ class Micropub_Media_Test extends WP_UnitTestCase {
 	}
 	public static function wpTearDownAfterClass() {
 		self::delete_user( self::$author_id );
-		remove_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ) );
+		remove_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ), 12 );
 	}
 	public function setUp() {
 		// parent::setUp();
@@ -74,7 +74,7 @@ class Micropub_Media_Test extends WP_UnitTestCase {
 
 	public function test_upload_file_with_scope() {
 		static::$scopes = array( 'create' );
-		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ) );
+		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ), 12 );
 		wp_set_current_user( self::$author_id );
 		$response = rest_get_server()->dispatch( self::upload_request() );
 		$data     = $response->get_data();
@@ -90,7 +90,7 @@ class Micropub_Media_Test extends WP_UnitTestCase {
 
 	public function test_empty_upload() {
 		static::$scopes = array( 'create' );
-		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ) );
+		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ), 12 );
 		wp_set_current_user( self::$author_id );
 		$request = new WP_REST_Request( 'POST', MICROPUB_NAMESPACE . '/media' );
 		$response = rest_get_server()->dispatch( $request );
@@ -100,7 +100,7 @@ class Micropub_Media_Test extends WP_UnitTestCase {
 
 	public function test_upload_file_without_scope() {
 		static::$scopes = array();
-		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ) );
+		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ), 12 );
 		wp_set_current_user( self::$author_id );
 		$response = rest_get_server()->dispatch( self::upload_request() );
 		$data     = $response->get_data();
@@ -109,7 +109,7 @@ class Micropub_Media_Test extends WP_UnitTestCase {
 
 	public function test_upload_file_with_scope_but_insufficient_permissions() {
 		static::$scopes = array( 'create' );
-		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ) );
+		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ), 12 );
 		wp_set_current_user( self::$subscriber_id );
 		$response = rest_get_server()->dispatch( self::upload_request() );
 		$data     = $response->get_data();

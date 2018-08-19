@@ -101,7 +101,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 	}
 
 	public function dispatch( $request, $user_id ) {
-		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ) );
+		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ), 12 );
 		wp_set_current_user( $user_id );
 		return rest_get_server()->dispatch( $request );
 	}

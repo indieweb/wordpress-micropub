@@ -47,6 +47,10 @@ class Micropub_Authorize {
 
 	}
 
+	public static function get_error() {
+		return static::$error;
+	}
+
 	public static function return_micropub_error( $result, $server, $request ) {
 		if ( '/micropub/1.0/endpoint' !== $request->get_route() ) {
 			return $result;
@@ -146,16 +150,13 @@ class Micropub_Authorize {
 	}
 
 	/**
-	 * Validate the access token at the token endpoint.
+	 * Attaches to the determine_current_user filter and passes back the $user_id if there is no token.
+	 * However if as token is provided it will validate that token or return 0 and set an error.
 	 *
 	 * https://indieauth.spec.indieweb.org/#access-token-verification
 	 */
 	public static function determine_current_user( $user_id ) {
 		$cls = get_called_class();
-		// Do not try to find a user if one has already been found
-		if ( ! empty( $user_id ) ) {
-			return $user_id;
-		}
 
 		// find the access token
 		$auth  = static::get_authorization_header();
@@ -175,20 +176,20 @@ class Micropub_Authorize {
 		);
 		if ( is_wp_error( $resp ) ) {
 			static::$error = $resp;
-			return $user_id;
+			return 0;
 		}
 
-		$code           = wp_remote_retrieve_response_code( $resp );
+		$code           = (int) wp_remote_retrieve_response_code( $resp );
 		$body           = wp_remote_retrieve_body( $resp );
 		$params         = json_decode( $body, true );
 		static::$scopes = explode( ' ', $params['scope'] );
 
-		if ( (int) ( $code / 100 ) !== 2 ) {
+		if ( ( $code / 100 ) !== 2 ) {
 			static::$error = new WP_Micropub_Error( 'invalid_request', 'invalid access token', 403 );
-			return $user_id;
+			return 0;
 		} elseif ( empty( static::$scopes ) ) {
 			static::$error = new WP_Micropub_Error( 'insufficient_scope', 'access token is missing scope', 401 );
-			return $user_id;
+			return 0;
 		}
 
 		$me                             = untrailingslashit( $params['me'] );
@@ -207,6 +208,7 @@ class Micropub_Authorize {
 			return $user_id;
 		}
 		// Nothing was found return 0 to indicate no privileges given
+		static::$error = new WP_Micropub_Error( 'forbidden', 'user not found', 403, $me );
 		return 0;
 	}
 
