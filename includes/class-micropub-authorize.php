@@ -150,7 +150,8 @@ class Micropub_Authorize {
 	}
 
 	/**
-	 * Validate the access token at the token endpoint.
+	 * Attaches to the determine_current_user filter and passes back the $user_id if there is no token.
+	 * However if as token is provided it will validate that token or return 0 and set an error.
 	 *
 	 * https://indieauth.spec.indieweb.org/#access-token-verification
 	 */
