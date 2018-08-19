@@ -16,10 +16,10 @@ class Micropub_Endpoint {
 	protected static $files;
 
 	// associative array, populated by authorize().
-	protected static $micropub_auth_response;
+	protected static $micropub_auth_response = array();
 
 	// Array of Scopes
-	protected static $scopes;
+	protected static $scopes = array();
 
 	/**
 	 * Initialize the plugin.
