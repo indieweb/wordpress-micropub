@@ -339,6 +339,12 @@ class Micropub_Endpoint {
 		return new WP_REST_Response( $resp, 200 );
 	}
 
+	/* Query a format.
+	 *
+	 * @param int $post_id Post ID
+	 *
+	 * @return array MF2 Formatted Array
+	 */
 	public static function query( $post_id ) {
 		$resp  = static::get_mf2( $post_id );
 		$props = static::$input['properties'];
