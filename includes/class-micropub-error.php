@@ -2,7 +2,7 @@
 
 class WP_Micropub_Error extends WP_REST_Response {
 
-	public function __construct( $error, $error_description, $code = 200, $debug = null ) {
+	public function __construct( $error, $error_description, $code = 200, $debug = array() ) {
 		$this->set_status( $code );
 		$data = array(
 			'error'             => $error,
@@ -11,6 +11,9 @@ class WP_Micropub_Error extends WP_REST_Response {
 		);
 		$data = array_filter( $data );
 		$this->set_data( $data );
+		if ( WP_DEBUG ) {
+			error_log( $this->to_log() ); // phpcs:ignore
+		}
 
 	}
 
@@ -24,6 +27,13 @@ class WP_Micropub_Error extends WP_REST_Response {
 		$status = $this->get_status();
 		return new WP_Error( $data['error'], $data['error_description'], array( 'status' => $status ) );
 	}
+
+	public function to_log() {
+		$data   = $this->get_data();
+		$status = $this->get_status();
+		return sprintf( 'Micropub Error: %1$s %2$s - %3$s', $status, $data['error'], $data['error_description'], wp_json_encode( $data['debug'] ) );
+	}
+
 }
 
 function get_micropub_error( $obj ) {
