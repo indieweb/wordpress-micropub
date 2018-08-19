@@ -119,6 +119,7 @@ These configuration options can be enabled by adding them to your wp-config.php
 * `define('MICROPUB_AUTHENTICATION_ENDPOINT', 'https://indieauth.com/auth')` - Define a custom authentication endpoint.
 * `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` - Define a custom token endpoint
 * `define('MICROPUB_NAMESPACE', 'micropub/1.0' )` - By default the namespace for micropub is micropub/1.0. This would allow you to change this for your endpoint
+* `define('MICROPUB_DISABLE_NAG', '1' ) - Disable notices for insecure sites
 
 These configuration options can be enabled by setting them in the WordPress options table.
 * `indieauth_authorization_endpoint` - if set will override MICROPUB_AUTHENTICATION_ENDPOINT for setting a custom endpoint
@@ -204,6 +205,7 @@ into markdown and saved to readme.md.
 * Improve error handling
 * Ensure compliance with Micropub spec
 * Update composer dependencies and include PHPUnit as a development dependency
+* Add nag notice for http domains and the option to diable with a setting
 
 
 ### 1.4.3 (2018-05-27) 

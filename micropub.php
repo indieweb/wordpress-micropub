@@ -36,6 +36,10 @@ if ( ! defined( 'MICROPUB_NAMESPACE' ) ) {
 	define( 'MICROPUB_NAMESPACE', 'micropub/1.0' );
 }
 
+if ( ! defined( 'MICROPUB_DISABLE_NAG' ) ) {
+	define( 'MICROPUB_DISABLE_NAG', '0' );
+}
+
 // Global Functions
 require_once plugin_dir_path( __FILE__ ) . 'includes/functions.php';
 
@@ -57,4 +61,16 @@ require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-endpoint.php
 
 // Render Functions
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-render.php';
+
+function micropub_not_ssl_notice() {
+	if ( is_ssl() || MICROPUB_DISABLE_NAG ) {
+		return;
+	}
+	    ?>
+    <div class="notice notice-warning">
+        <p>For security reasons you should use Micropub only on an HTTPS domain.</p>
+    </div>
+    <?php
+}
+add_action( 'admin_notices', 'micropub_not_ssl_notice' );
 
