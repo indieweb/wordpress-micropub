@@ -68,7 +68,7 @@ function micropub_not_ssl_notice() {
 	}
 	    ?>
     <div class="notice notice-warning">
-        <p>For security reasons you should use Micropub only on an HTTPS domain. You can disable this message be adding define( 'MICROPUB_DISABLE_NAG', '1' ); to your wp-config.php</p>
+        <p>For security reasons you should use Micropub only on an HTTPS domain.</p>
     </div>
     <?php
 }
