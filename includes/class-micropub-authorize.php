@@ -47,6 +47,10 @@ class Micropub_Authorize {
 
 	}
 
+	public static function get_error() {
+		return static::$error;
+	}
+
 	public static function return_micropub_error( $result, $server, $request ) {
 		if ( '/micropub/1.0/endpoint' !== $request->get_route() ) {
 			return $result;
@@ -174,12 +178,12 @@ class Micropub_Authorize {
 			return 0;
 		}
 
-		$code           = wp_remote_retrieve_response_code( $resp );
+		$code           = (int) wp_remote_retrieve_response_code( $resp );
 		$body           = wp_remote_retrieve_body( $resp );
 		$params         = json_decode( $body, true );
 		static::$scopes = explode( ' ', $params['scope'] );
 
-		if ( (int) ( $code / 100 ) !== 2 ) {
+		if ( ( $code / 100 ) !== 2 ) {
 			static::$error = new WP_Micropub_Error( 'invalid_request', 'invalid access token', 403 );
 			return 0;
 		} elseif ( empty( static::$scopes ) ) {
@@ -203,6 +207,7 @@ class Micropub_Authorize {
 			return $user_id;
 		}
 		// Nothing was found return 0 to indicate no privileges given
+		static::$error = new WP_Micropub_Error( 'forbidden', 'user not found', 403, $me );
 		return 0;
 	}
 
