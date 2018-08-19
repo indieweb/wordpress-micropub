@@ -37,6 +37,7 @@ class Micropub_Authorize_Test extends WP_UnitTestCase {
 	public static function wpTearDownAfterClass() {
 		self::delete_user( self::$author_id );
 		self::delete_user( self::$secondauthor_id );
+		remove_filter( 'indieauth_scopes', array( 'Micropub_Authorize', 'scopes' ) );
 	}
 	public function setUp() {
 		// parent::setUp();
@@ -94,6 +95,7 @@ class Micropub_Authorize_Test extends WP_UnitTestCase {
 		add_filter( 'pre_http_request', array( $this, 'verify_token' ) );
 		$user_id = Micropub_Authorize::determine_current_user( 0 );
 		$this->assertEquals( static::$author_id, $user_id );
+		remove_filter( 'pre_http_request', array( $this, 'verify_token' ) );
 	}
 
 	public function failed_token() {
@@ -121,7 +123,7 @@ class Micropub_Authorize_Test extends WP_UnitTestCase {
 		$this->assertEquals( $error->get_status(), 403 );
 		$this->assertEquals( $data['error'], 'invalid_request' );
 		$this->assertEquals( $data['error_description'], 'invalid access token' );
-
+		remove_filter( 'pre_http_request', array( $this, 'verify_token' ) );
 	}
 
 }
