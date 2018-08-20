@@ -90,22 +90,35 @@ class Micropub_Endpoint {
 	public static function load_auth() {
 		static::$micropub_auth_response = apply_filters( 'indieauth_response', static::$micropub_auth_response );
 		static::$scopes                 = apply_filters( 'indieauth_scopes', static::$scopes );
+		// Every user should have this capability which reflects the ability to access your user profile and the admin dashboard
+		if ( ! current_user_can( 'read' ) ) {
+			return new WP_Error( 'forbidden', 'Unauthorized', array( 'status' => 403 ) );
+		}
+
+		// If there is no auth response this is cookie authentication which should be rejected
+		if ( empty( static::$micropub_auth_response ) ) {
+			return new WP_Error( 'unauthorized', 'Cookie Authentication is not permitted', array( 'status' => 401 ) );
+		}
 	}
 
 	public static function check_query_permissions( $request ) {
-		self::load_auth();
+		$auth = self::load_auth();
+		if ( is_wp_error( $auth ) ) {
+			return $auth;
+		}
 		$query = $request->get_param( 'q' );
 		if ( ! $query ) {
 			return new WP_Error( 'invalid_request', 'Missing Query Parameter', array( 'status' => 400 ) );
 		}
-		if ( ! current_user_can( 'read' ) ) {
-			return new WP_Error( 'forbidden', 'Unauthorized', array( 'status' => 403 ) );
-		}
+
 		return true;
 	}
 
 	public static function check_post_permissions( $request ) {
-		self::load_auth();
+		$auth = self::load_auth();
+		if ( is_wp_error( $auth ) ) {
+			return $auth;
+		}
 
 		$action = $request->get_param( 'action' );
 		$action = $action ? $action : 'create';
