@@ -70,6 +70,14 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		return static::$scopes;
 	}
 
+	public static function auth_response( $response ) {
+		return static::$micropub_auth_response;
+	}
+
+	public static function empty_auth_response( $response ) {
+		return array();
+	}
+
 	public static function wpSetUpBeforeClass( $factory ) {
 		self::$author_id     = $factory->user->create(
 			array(
@@ -99,6 +107,23 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		$this->assertArrayHasKey( MICROPUB_NAMESPACE . '/endpoint', $routes );
 		$this->assertCount( 2, $routes[ MICROPUB_NAMESPACE . '/endpoint' ] );
 	}
+
+	public function test_no_auth_response() {
+		wp_set_current_user( static::$author_id );
+		$response = static::$micropub_auth_response;
+		static::$micropub_auth_response = array();
+		add_filter( 'indieauth_response', array( get_called_class(), 'empty_auth_response' ), 99 );
+		$auth = Micropub_Endpoint::load_auth();
+		$this->assertEquals( 'unauthorized', $auth->get_error_code() );
+		remove_filter( 'indieauth_response', array( get_called_class(), 'auth_response' ), 99 );
+	}
+
+	public function test_auth_response() {
+		wp_set_current_user( static::$author_id );
+		$auth = Micropub_Endpoint::load_auth();
+		$this->assertTrue( $auth );
+	}
+
 
 	public function dispatch( $request, $user_id ) {
 		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ), 12 );

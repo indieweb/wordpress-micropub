@@ -66,11 +66,11 @@ function micropub_not_ssl_notice() {
 	if ( is_ssl() || MICROPUB_DISABLE_NAG ) {
 		return;
 	}
-	    ?>
-    <div class="notice notice-warning">
-        <p>For security reasons you should use Micropub only on an HTTPS domain.</p>
-    </div>
-    <?php
+	?>
+	<div class="notice notice-warning">
+		<p>For security reasons you should use Micropub only on an HTTPS domain.</p>
+	</div>
+	<?php
 }
 add_action( 'admin_notices', 'micropub_not_ssl_notice' );
 

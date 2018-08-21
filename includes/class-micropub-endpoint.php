@@ -96,9 +96,11 @@ class Micropub_Endpoint {
 		}
 
 		// If there is no auth response this is cookie authentication which should be rejected
+		// https://www.w3.org/TR/micropub/#authentication-and-authorization - Requests must be authenticated by token
 		if ( empty( static::$micropub_auth_response ) ) {
 			return new WP_Error( 'unauthorized', 'Cookie Authentication is not permitted', array( 'status' => 401 ) );
 		}
+		return true;
 	}
 
 	public static function check_query_permissions( $request ) {
