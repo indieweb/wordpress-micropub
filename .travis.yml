@@ -14,9 +14,12 @@ env:
   - WP_VERSION=latest WP_MULTISITE=0
   global:
   - WP_TRAVISCI=travis:phpunit
+  - SVN_REPO: https://plugins.svn.wordpress.org/micropub/
+  - secure: "lWqKSX3SPggddb0ass4pmep1GJ3g/l0iTpRTi+q8qaMlD9jFQ7bwMstXQ0QWPtRHqeX2pjbNTTol4Uw4j9djUdQm4XSOM+I7ki2bAOC0yPTy8sVeJ8uBy1cOI2Az2Ni+bYe4vg6ThhF9f9Q1rtb2Xs+suBZYCbUXP7tin+Z6sE3XMtWxmqaIIHOW4FW3z7ha0Dmxqj4fcqgWirEk8rNY55dt1phPfvWUKLbYdANemXnLz9dVf4aEQu/KfKGwlQFfFq4AILrtpeo3BkBIt6ZnU+AZeecyQSB0LEauphrF5fpKfPhsOksLUO/t6SVlWgSJ6K+36axj/OgqD2Ruo+DwYbHQCcVZ+BRJ2ESmch2hM1YZhzBwHkT21cKR8VCZkJkXtBoou2UjBfsw8SMy5M/taJjlJI9SjBl0ZRv/1sviXlEJovHCqg7yy85hX7kGVrULi1m+dDim96x/+YV3O7/VWZRi3mdwQ2lRBqkdpxqLAPnsgvFiNhrDyEKj1gT3G9sVlEpIrg3rw1KZDcP1eOO/DvchSIl3pW2uupN5fmCA+REFXYbLCTioKsfgOcRjPwUx24d4gPsYWhy7bfCOu1Kz9tZSA11Zbz0bVT5fB+awKcKaQkJg2s1JazaSrjBH/HSGBEXXIOXvGS+mUX/I+t2z1NzroHkmqQHWozXRl2Sh6Cs="
 matrix:
   include:
   - php: 7.2
+    env: WP_VERSION=latest WP_MULTISITE=0 WP_PULUGIN_DEPLOY=1
   - php: 7.0
   - php: 5.6
   - php: 5.4
@@ -74,6 +77,8 @@ before_install:
       bash bin/install-wp-tests.sh wordpress_test root '' localhost $WP_VERSION
       set +e
     fi
+after_success:
+  - curl -L https://raw.githubusercontent.com/miya0001/travis2wpplugin/master/deploy.sh | bash
 script:
   - |
     if [[ ! -z "$WP_VERSION" ]] ; then
