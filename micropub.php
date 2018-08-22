@@ -28,10 +28,6 @@
  * 5. Extract the access_token parameter from the response body.
  */
 
-if ( ! defined( 'MICROPUB_LOCAL_AUTH' ) ) {
-	define( 'MICROPUB_LOCAL_AUTH', '0' );
-}
-
 if ( ! defined( 'MICROPUB_NAMESPACE' ) ) {
 	define( 'MICROPUB_NAMESPACE', 'micropub/1.0' );
 }
@@ -46,7 +42,7 @@ require_once plugin_dir_path( __FILE__ ) . 'includes/functions.php';
 // Admin Menu Functions
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-admin.php';
 
-if ( MICROPUB_LOCAL_AUTH || ! class_exists( 'IndieAuth_Plugin' ) ) {
+if ( ! apply_filters( 'disable_micropub_auth', class_exists( 'IndieAuth_Plugin' ) ) ) {
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-authorize.php';
 }
 
