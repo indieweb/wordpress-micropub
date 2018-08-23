@@ -33,7 +33,11 @@ if ( ! defined( 'MICROPUB_NAMESPACE' ) ) {
 }
 
 if ( ! defined( 'MICROPUB_DISABLE_NAG' ) ) {
-	define( 'MICROPUB_DISABLE_NAG', '0' );
+	define( 'MICROPUB_DISABLE_NAG', 0 );
+}
+
+if ( ! defined( 'MICROPUB_LOCAL_AUTH' ) ) {
+	define( 'MICROPUB_LOCAL_AUTH', 0 );
 }
 
 // Global Functions
@@ -42,7 +46,12 @@ require_once plugin_dir_path( __FILE__ ) . 'includes/functions.php';
 // Admin Menu Functions
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-admin.php';
 
-if ( ! apply_filters( 'disable_micropub_auth', class_exists( 'IndieAuth_Plugin' ) ) ) {
+function disable_micropub_auth() {
+	$load = ( class_exists( 'IndieAuth_Plugin' ) || MICROPUB_LOCAL_AUTH );
+	return ! apply_filters( 'disable_micropub_auth', $load );
+}
+
+if ( disable_micropub_auth() ) {
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-authorize.php';
 }
 
