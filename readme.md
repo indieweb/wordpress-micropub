@@ -51,7 +51,8 @@ $resp defaults to null. If the return value is non-null, it should be an associa
 
 `disable_micropub_auth( $boolean )`
 
-If this filter returns true the authentication functions built into the plugin are disabled. By default, this is disabled if the IndieAuth Plugin is installed. 
+If this filter returns true the authentication functions built into the plugin are disabled. By default, this is disabled if the IndieAuth Plugin is installed. By default it will return
+false which loads the built-in IndieAuth client.
 
 `indieauth_scopes( $scopes )`
 
@@ -128,7 +129,8 @@ These configuration options can be enabled by adding them to your wp-config.php
 * `define('MICROPUB_AUTHENTICATION_ENDPOINT', 'https://indieauth.com/auth')` - Define a custom authentication endpoint.
 * `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` - Define a custom token endpoint
 * `define('MICROPUB_NAMESPACE', 'micropub/1.0' )` - By default the namespace for micropub is micropub/1.0. This would allow you to change this for your endpoint
-* `define('MICROPUB_DISABLE_NAG', '1' ) - Disable notices for insecure sites
+* `define('MICROPUB_DISABLE_NAG', 1 ) - Disable notices for insecure sites
+* `define('MICROPUB_LOCAL_AUTH', 1 ) - Disable built in AUTH in favor of your own plugin. Recommend plugin developers use the filter `disable_micropub_auth` for this.
 
 These configuration options can be enabled by setting them in the WordPress options table.
 * `indieauth_authorization_endpoint` - if set will override MICROPUB_AUTHENTICATION_ENDPOINT for setting a custom endpoint
@@ -215,7 +217,7 @@ into markdown and saved to readme.md.
 * Ensure compliance with Micropub spec
 * Update composer dependencies and include PHPUnit as a development dependency
 * Add nag notice for http domains and the option to diable with a setting
-* `MICROPUB_LOCAL_AUTH` is now deprecated in favor of a filter
+* `MICROPUB_LOCAL_AUTH` is now deprecated in favor of a filter and may be removed in a future version.
 
 
 ### 1.4.3 (2018-05-27) 
