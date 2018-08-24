@@ -32,7 +32,7 @@ Supports the following [scope](https://indieweb.org/scope) parameters requested 
 
 
 ### Filters and hooks 
-Adds seven filters:
+Adds six filters:
 
 `before_micropub( $input )`
 
@@ -48,11 +48,6 @@ Called to generate the list of `syndicate-to` targets to return in response to a
 `micropub_query( $resp, $input )`
 
 $resp defaults to null. If the return value is non-null, it should be an associative array that is encoded as JSON and will be returned in place of the normal micropub response.
-
-`enable_micropub_auth( $boolean )`
-
-If this filter returns true the authentication functions built into the plugin are enabled. By default, this is disabled if the IndieAuth Plugin is installed. By default it will return
-true which loads the built-in IndieAuth client.
 
 `indieauth_scopes( $scopes )`
 
@@ -109,9 +104,13 @@ WordPress has a [whitelist of file extensions that it allows in uploads](https:/
 
 For reasons of security it is recommended that you only use this plugin on sites that implement HTTPS.
 
-Supports the full OAuth2/IndieAuth authentication and authorization flow. Defaults to IndieAuth.com. Custom auth and token endpoints can be used by overriding the `MICROPUB_AUTHENTICATION_ENDPOINT` and `MICROPUB_TOKEN_ENDPOINT` endpoints or by setting the options `indieauth_authorization_endpoint` and `indieauth_token_endpoint`.
+Supports the full OAuth2/IndieAuth authentication and authorization flow. Defaults to IndieAuth.com. Custom auth and token endpoints can be used by overriding the `MICROPUB_AUTHENTICATION_ENDPOINT`
+and `MICROPUB_TOKEN_ENDPOINT` endpoints or by setting the options `indieauth_authorization_endpoint` and `indieauth_token_endpoint`.
 
 If you want to use your own site as an IndieAuth endpoint, you can activate the IndieAuth plugin which is recommended but not required. You can disable the authentication in favor of an alternative plugin.
+This can be done by removing the loading of the auth flow or setting MICROPUB_LOCAL_AUTH to 1.
+
+`remove_action( 'plugins_loaded', 'load_micropub_auth', 20 );` 
 
 If the token's `me` value matches a WordPress user's or author post URL, that user will be used. If there is only one site author that will be matched otherwise.
 
@@ -217,7 +216,7 @@ into markdown and saved to readme.md.
 * Ensure compliance with Micropub spec
 * Update composer dependencies and include PHPUnit as a development dependency
 * Add nag notice for http domains and the option to diable with a setting
-* `MICROPUB_LOCAL_AUTH` is now deprecated in favor of a filter and may be removed in a future version.
+* Load auth later in init sequence to avoid conflict
 
 
 ### 1.4.3 (2018-05-27) 
