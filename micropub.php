@@ -51,8 +51,8 @@ function load_micropub_auth() {
 	if ( class_exists( 'IndieAuth_Plugin' ) ) {
 		return;
 	}
-	// Set this filter to false to disable built in authorization
-	if ( apply_filters( 'enable_micropub_auth', (0 === MICROPUB_LOCAL_AUTH ) ) ) {
+	// If this configuration option is set to 0 then load this file
+	if ( 0 === MICROPUB_LOCAL_AUTH ) {
 		require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-authorize.php';
 	
 	}
