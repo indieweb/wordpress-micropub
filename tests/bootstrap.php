@@ -2,7 +2,6 @@
 
 error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_WARNING);
 
-define( 'MICROPUB_LOCAL_AUTH', true );
 define( 'MICROPUB_NAMESPACE', '/micropub/1.0' );
 define( 'WP_DEBUG', false );
 define( 'DIR_TESTDATA', dirname( __FILE__ ) . '/data' );

@@ -115,7 +115,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		add_filter( 'indieauth_response', array( get_called_class(), 'empty_auth_response' ), 99 );
 		$auth = Micropub_Endpoint::load_auth();
 		$this->assertEquals( 'unauthorized', $auth->get_error_code() );
-		remove_filter( 'indieauth_response', array( get_called_class(), 'auth_response' ), 99 );
+		remove_filter( 'indieauth_response', array( get_called_class(), 'empty_auth_response' ), 99 );
 	}
 
 	public function test_auth_response() {
