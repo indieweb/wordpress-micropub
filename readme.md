@@ -49,10 +49,10 @@ Called to generate the list of `syndicate-to` targets to return in response to a
 
 $resp defaults to null. If the return value is non-null, it should be an associative array that is encoded as JSON and will be returned in place of the normal micropub response.
 
-`disable_micropub_auth( $boolean )`
+`enable_micropub_auth( $boolean )`
 
-If this filter returns true the authentication functions built into the plugin are disabled. By default, this is disabled if the IndieAuth Plugin is installed. By default it will return
-false which loads the built-in IndieAuth client.
+If this filter returns true the authentication functions built into the plugin are enabled. By default, this is disabled if the IndieAuth Plugin is installed. By default it will return
+true which loads the built-in IndieAuth client.
 
 `indieauth_scopes( $scopes )`
 

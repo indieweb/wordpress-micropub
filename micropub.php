@@ -46,14 +46,20 @@ require_once plugin_dir_path( __FILE__ ) . 'includes/functions.php';
 // Admin Menu Functions
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-admin.php';
 
-function disable_micropub_auth() {
-	$load = ( class_exists( 'IndieAuth_Plugin' ) || MICROPUB_LOCAL_AUTH );
-	return ! apply_filters( 'disable_micropub_auth', $load );
+function load_micropub_auth() {
+	// Always disable local auth when the IndieAuth Plugin is installed
+	if ( class_exists( 'IndieAuth_Plugin' ) ) {
+		return;
+	}
+	// Set this filter to false to disable built in authorization
+	if ( apply_filters( 'enable_micropub_auth', (0 === MICROPUB_LOCAL_AUTH ) ) ) {
+		require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-authorize.php';
+	
+	}
 }
 
-if ( disable_micropub_auth() ) {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-authorize.php';
-}
+// Load auth at the plugins loaded stage in order to ensure it occurs after the IndieAuth plugin is loaded
+add_action( 'plugins_loaded', 'load_micropub_auth', 20 );
 
 // Error Handling Class
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-error.php';
