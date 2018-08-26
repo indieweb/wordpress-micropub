@@ -3,7 +3,7 @@ A [Micropub](http://micropub.net/) server plugin. Available in the WordPress plu
 
 ## Description 
 
-[![Travis CI](https://travis-ci.org/snarfed/wordpress-micropub.svg?branch=master)](https://travis-ci.org/snarfed/wordpress-micropub)
+[![Travis CI](https://travis-ci.org/indieweb/wordpress-micropub.svg?branch=master)](https://travis-ci.org/indieweb/wordpress-micropub)
 
 > Micropub is an open API standard that is used to create posts on one's own domain using third-party clients. Web apps and native apps (e.g. iPhone, Android) can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com.
 
@@ -139,7 +139,7 @@ These configuration options can be enabled by setting them in the WordPress opti
 
 ## Frequently Asked Questions 
 
-If your Micropub client includes an `Authorization` HTTP request header but you still get an HTTP 401 response with body `missing access token`, your server may be stripping the `Authorization` header. If you're on Apache, [try adding this line to your `.htaccess` file](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299202820):
+If your Micropub client includes an `Authorization` HTTP request header but you still get an HTTP 401 response with body `missing access token`, your server may be stripping the `Authorization` header. If you're on Apache, [try adding this line to your `.htaccess` file](https://github.com/indieweb/wordpress-micropub/issues/56#issuecomment-299202820):
 
     SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 
@@ -147,7 +147,7 @@ If that doesn't work, [try this line](https://github.com/georgestephanis/applica
 
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-If that doesn't work either, you may need to ask your hosting provider to whitelist the `Authorization` header for your account. If they refuse, you can [pass it through Apache with an alternate name](https://github.com/snarfed/wordpress-micropub/issues/56#issuecomment-299569822). The plugin searches for the header in REDIRECT_HTTP_AUTHORIZATION, as some FastCGI implementations store the header in this location.
+If that doesn't work either, you may need to ask your hosting provider to whitelist the `Authorization` header for your account. If they refuse, you can [pass it through Apache with an alternate name](https://github.com/indieweb/wordpress-micropub/issues/56#issuecomment-299569822). The plugin searches for the header in REDIRECT_HTTP_AUTHORIZATION, as some FastCGI implementations store the header in this location.
 
 If you are getting an `Unauthorized` error despite passing a valid access token then your WordPress installation may not be able to match your user account with the provided URL. The easiest way to 
 resolve is to add the URL you are using as the URL in your user profile. 
@@ -168,7 +168,7 @@ None.
 
 ## Development 
 
-The canonical repo is http://github.com/snarfed/wordpress-micropub . Feedback and pull requests are welcome!
+The canonical repo is http://github.com/indieweb/wordpress-micropub . Feedback and pull requests are welcome!
 
 To add a new release to the WordPress plugin directory, run `push.sh`.
 
