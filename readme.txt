@@ -1,6 +1,6 @@
 === Micropub ===
 Contributors: indieweb, snarfed, dshanske
-Tags: micropub, publish
+Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.7
 Requires PHP: 5.3
 Tested up to: 4.9.8
