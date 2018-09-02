@@ -231,6 +231,13 @@ class Micropub_Media {
 		// Check to see if URL is already in the media library
 		$id = attachment_url_to_postid( $url );
 		if ( $id ) {
+			// Attach media to post
+			wp_update_post(
+				array(
+					'post_ID' => $id,
+					'post_parent' => $post_id
+				)
+			);
 			return $id;
 		}
 
