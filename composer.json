@@ -1,4 +1,6 @@
 {
+    "name": "indieweb/wordpress-micropub",
+    "description": "A Micropub Endpoint for WordPress http://wordpress.org/plugins/micropub/",   
     "require": {
 	"php": ">=5.3.0",
 	"composer/installers": "~1.0"
