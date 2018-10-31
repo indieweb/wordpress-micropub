@@ -12,7 +12,7 @@ if ( ! defined( 'MICROPUB_TOKEN_ENDPOINT' ) ) {
 	define( 'MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token' );
 }
 
-add_action( 'plugins_loaded', array( 'Micropub_Authorize', 'init' ) );
+add_action( 'plugins_loaded', array( 'Micropub_Authorize', 'init' ), 30 );
 
 /**
  * Micropub IndieAuth Authorization Class
