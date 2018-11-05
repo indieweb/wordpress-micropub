@@ -162,7 +162,7 @@ class Micropub_Authorize {
 		$auth  = static::get_authorization_header();
 		$token = mp_get( $_POST, 'access_token' ); // phpcs:ignore
 		if ( ! $auth && ! $token ) {
-			static::$error = new WP_Micropub_Error( 'unauthorized', 'missing access token', 401 );
+			# static::$error = new WP_Micropub_Error( 'unauthorized', 'missing access token', 401 );
 			return $user_id;
 		}
 
