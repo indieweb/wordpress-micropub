@@ -204,7 +204,11 @@ into markdown and saved to readme.md.
 ## Changelog 
 
 
-### 2.0.0 (2018-xx-xx) 
+### 2.0.1 (2018-11-04) 
+* Move authorization code later in load to resolve conflict
+
+
+### 2.0.0 (2018-10-22) 
 * Split plugin into files by functionality
 * Change authorization to integrate with WordPress mechanisms for login
 * Reject where the URL cannot be matched with a user account

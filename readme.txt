@@ -4,7 +4,7 @@ Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.7
 Requires PHP: 5.3
 Tested up to: 4.9.8
-Stable tag: 2.0.0
+Stable tag: 2.0.1
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
@@ -199,7 +199,10 @@ into markdown and saved to readme.md.
 
 == Changelog ==
 
-= 2.0.0 (2018-xx-xx) =
+= 2.0.1 (2018-11-04) =
+* Move authorization code later in load to resolve conflict
+
+= 2.0.0 (2018-10-22) =
 * Split plugin into files by functionality
 * Change authorization to integrate with WordPress mechanisms for login
 * Reject where the URL cannot be matched with a user account
