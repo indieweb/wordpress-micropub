@@ -7,7 +7,7 @@
  * Author: Ryan Barrett
  * Author URI: https://snarfed.org/
  * Text Domain: micropub
- * Version: 2.0.1
+ * Version: 2.0.2
  */
 
 /* See README for supported filters and actions.
@@ -54,7 +54,7 @@ function load_micropub_auth() {
 	// If this configuration option is set to 0 then load this file
 	if ( 0 === MICROPUB_LOCAL_AUTH ) {
 		require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-authorize.php';
-	
+
 	}
 }
 

@@ -4,7 +4,7 @@ Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.7
 Requires PHP: 5.3
 Tested up to: 4.9.8
-Stable tag: 2.0.1
+Stable tag: 2.0.2
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
@@ -198,6 +198,10 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.0.2 (2018-11-12) =
+* Fix issue with built-in auth and update compatibility testing
+* Add experimental endpoint discovery option(https://indieweb.org/micropub_media_endpoint#Discovery_via_link_rel)
 
 = 2.0.1 (2018-11-04) =
 * Move authorization code later in load to resolve conflict

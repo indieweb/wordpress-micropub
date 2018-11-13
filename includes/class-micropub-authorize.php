@@ -162,12 +162,16 @@ class Micropub_Authorize {
 		$auth  = static::get_authorization_header();
 		$token = mp_get( $_POST, 'access_token' ); // phpcs:ignore
 		if ( ! $auth && ! $token ) {
-			static::$error = new WP_Micropub_Error( 'unauthorized', 'missing access token', 401 );
+			// Fail if micropub is in the requested path
+			if ( false !== strpos( MICROPUB_NAMESPACE, $_SERVER['REQUEST_URI'] ) ) {
+				static::$error = new WP_Micropub_Error( 'unauthorized', 'missing access token', 401 );
+			}
 			return $user_id;
 		}
 
 		$resp = wp_remote_get(
-			get_option( 'indieauth_token_endpoint', MICROPUB_TOKEN_ENDPOINT ), array(
+			get_option( 'indieauth_token_endpoint', MICROPUB_TOKEN_ENDPOINT ),
+			array(
 				'headers' => array(
 					'Accept'        => 'application/json',
 					'Authorization' => $auth ?: 'Bearer ' . $token,

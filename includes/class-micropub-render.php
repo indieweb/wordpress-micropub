@@ -50,7 +50,8 @@ class Micropub_Render {
 					$lines[] = sprintf(
 						'<p>%1s <a class="u-%2s" href="%3s">%4s</a>.</p>',
 						$verbs[ $prop ],
-						$prop, $val['url'],
+						$prop,
+						$val['url'],
 						$val['name']
 					);
 				}

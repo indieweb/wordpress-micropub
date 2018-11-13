@@ -19,12 +19,51 @@ class Micropub_Media {
 		// register endpoint
 		add_action( 'rest_api_init', array( $cls, 'register_route' ) );
 
+				// endpoint discovery
+				add_action( 'wp_head', array( $cls, 'micropub_media_html_header' ), 99 );
+				add_action( 'send_headers', array( $cls, 'micropub_media_http_header' ) );
+				add_filter( 'host_meta', array( $cls, 'micropub_media_jrd_links' ) );
+				add_filter( 'webfinger_user_data', array( $cls, 'micropub_media_jrd_links' ) );
+
 	}
+
+	public static function get_micropub_media_endpoint() {
+			return rest_url( MICROPUB_NAMESPACE . '/media' );
+	}
+
+		/**
+		 * The micropub autodicovery meta tags
+		 */
+	public static function micropub_media_html_header() {
+			// phpcs:ignore
+			printf( '<link rel="micropub_media" href="%s" />' . PHP_EOL, static::get_micropub_media_endpoint() );
+	}
+
+		/**
+		 * The micropub autodicovery http-header
+		 */
+	public static function micropub_media_http_header() {
+			Micropub_Endpoint::header( 'Link', '<' . static::get_micropub_media_endpoint() . '>; rel="micropub_media"' );
+	}
+
+		/**
+		 * Generates webfinger/host-meta links
+		 */
+	public static function micropub_media_jrd_links( $array ) {
+			$array['links'][] = array(
+				'rel'  => 'micropub_media',
+				'href' => static::get_micropub_media_endpoint(),
+			);
+			return $array;
+	}
+
 
 	public static function register_route() {
 		$cls = get_called_class();
 		register_rest_route(
-			MICROPUB_NAMESPACE, '/media', array(
+			MICROPUB_NAMESPACE,
+			'/media',
+			array(
 				array(
 					'methods'  => WP_REST_Server::CREATABLE,
 					'callback' => array( $cls, 'upload_handler' ),
@@ -234,8 +273,8 @@ class Micropub_Media {
 			// Attach media to post
 			wp_update_post(
 				array(
-					'post_ID' => $id,
-					'post_parent' => $post_id
+					'post_ID'     => $id,
+					'post_parent' => $post_id,
 				)
 			);
 			return $id;
