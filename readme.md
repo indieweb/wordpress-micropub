@@ -204,6 +204,10 @@ into markdown and saved to readme.md.
 ## Changelog 
 
 
+### 2.0.2 (2018-11-12) 
+* Fix issue with built-in auth and update compatibility testing
+
+
 ### 2.0.1 (2018-11-04) 
 * Move authorization code later in load to resolve conflict
 

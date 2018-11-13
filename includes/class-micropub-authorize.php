@@ -163,7 +163,7 @@ class Micropub_Authorize {
 		$token = mp_get( $_POST, 'access_token' ); // phpcs:ignore
 		if ( ! $auth && ! $token ) {
 			// Fail if micropub is in the requested path
-			if ( false !== strpos( 'micropub', $_SERVER['REQUEST_URI'] ) ) {
+			if ( false !== strpos( MICROPUB_NAMESPACE, $_SERVER['REQUEST_URI'] ) ) {
 				static::$error = new WP_Micropub_Error( 'unauthorized', 'missing access token', 401 );
 			}
 			return $user_id;
