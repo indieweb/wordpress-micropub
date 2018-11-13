@@ -206,6 +206,7 @@ into markdown and saved to readme.md.
 
 ### 2.0.2 (2018-11-12) 
 * Fix issue with built-in auth and update compatibility testing
+* Add experimental endpoint discovery option(https://indieweb.org/micropub_media_endpoint#Discovery_via_link_rel)
 
 
 ### 2.0.1 (2018-11-04) 
