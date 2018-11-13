@@ -11,7 +11,8 @@
         "wimg/php-compatibility": "*",
         "wp-coding-standards/wpcs": "*",
         "wpreadme2markdown/wp2md": "*",
-        "phpunit/phpunit": ">=5.0"
+        "phpunit/phpunit": ">=5.0",
+        "phpcompatibility/phpcompatibility-wp": "^2.0"
     },
     "prefer-stable" : true,
     "scripts": {

@@ -24,7 +24,9 @@ class Micropub_Media {
 	public static function register_route() {
 		$cls = get_called_class();
 		register_rest_route(
-			MICROPUB_NAMESPACE, '/media', array(
+			MICROPUB_NAMESPACE,
+			'/media',
+			array(
 				array(
 					'methods'  => WP_REST_Server::CREATABLE,
 					'callback' => array( $cls, 'upload_handler' ),
@@ -234,8 +236,8 @@ class Micropub_Media {
 			// Attach media to post
 			wp_update_post(
 				array(
-					'post_ID' => $id,
-					'post_parent' => $post_id
+					'post_ID'     => $id,
+					'post_parent' => $post_id,
 				)
 			);
 			return $id;

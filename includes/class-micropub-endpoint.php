@@ -70,7 +70,9 @@ class Micropub_Endpoint {
 	public static function register_route() {
 		$cls = get_called_class();
 		register_rest_route(
-			MICROPUB_NAMESPACE, '/endpoint', array(
+			MICROPUB_NAMESPACE,
+			'/endpoint',
+			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $cls, 'post_handler' ),
@@ -369,7 +371,8 @@ class Micropub_Endpoint {
 			}
 			$resp = array(
 				'properties' => array_intersect_key(
-					$resp['properties'], array_flip( $props )
+					$resp['properties'],
+					array_flip( $props )
 				),
 			);
 		}
@@ -683,7 +686,9 @@ class Micropub_Endpoint {
 						$desc      = is_array( $val ) ? $val['alt'] : null;
 						$att_ids[] = static::check_error(
 							Micropub_Media::media_sideload_url(
-								$url, $post_id, $desc
+								$url,
+								$post_id,
+								$desc
 							)
 						);
 					}
@@ -765,8 +770,10 @@ class Micropub_Endpoint {
 						$props['country-name'][0],
 					);
 					$args['meta_input']['geo_address'] = implode(
-						', ', array_filter(
-							$parts, function( $v ) {
+						', ',
+						array_filter(
+							$parts,
+							function( $v ) {
 								return $v;
 							}
 						)
@@ -860,7 +867,8 @@ class Micropub_Endpoint {
 					if ( isset( $meta[ $key ] ) ) {
 						$existing = unserialize( $meta[ $key ][0] );
 						update_post_meta(
-							$args['ID'], $key,
+							$args['ID'],
+							$key,
 							array_diff( $existing, $to_delete )
 						);
 					}

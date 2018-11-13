@@ -54,7 +54,7 @@ function load_micropub_auth() {
 	// If this configuration option is set to 0 then load this file
 	if ( 0 === MICROPUB_LOCAL_AUTH ) {
 		require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-authorize.php';
-	
+
 	}
 }
 
