@@ -63,6 +63,7 @@ class Micropub_Authorize_Test extends WP_UnitTestCase {
 	}
 
 	public function test_determine_current_user() {
+		$_SERVER['REQUEST_URI'] = MICROPUB_NAMESPACE;
 		$user_id = Micropub_Authorize::determine_current_user( 0 );
 		$this->assertEquals( 0, $user_id );
 		$error = Micropub_Authorize::get_error();
