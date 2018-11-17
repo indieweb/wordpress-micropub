@@ -338,6 +338,7 @@ class Micropub_Endpoint {
 							)
 						)
 					);
+					$resp = array( 'categories' => $resp );
 					break;
 				case 'source':
 					$post_id = url_to_postid( static::$input['url'] );
