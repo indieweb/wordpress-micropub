@@ -380,6 +380,7 @@ class Micropub_Endpoint {
 					foreach ( $posts as $post ) {
 						$resp[] = self::query( $post );
 					}
+					$resp = array( 'items' => $resp );
 				}
 
 				break;
