@@ -354,11 +354,25 @@ class Micropub_Endpoint {
 					$resp = array( 'categories' => $resp );
 					break;
 				case 'source':
-					$post_id = url_to_postid( static::$input['url'] );
-					if ( ! $post_id ) {
-						return new WP_Micropub_Error( 'invalid_request', sprintf( 'not found: %1$s', static::$input['url'] ), 400 );
+					if ( array_key_exists( 'url', static::$input ) ) {
+						$post_id = url_to_postid( static::$input['url'] );
+						if ( ! $post_id ) {
+							return new WP_Micropub_Error( 'invalid_request', sprintf( 'not found: %1$s', static::$input['url'] ), 400 );
+						}
+						$resp = self::query( $post_id );
+					} else {
+						$numberposts = mp_get( static::$input, 'limit', 10 );
+						$posts       = get_posts(
+							array(
+								'posts_per_page' => $numberposts,
+								'fields'         => 'ids',
+							)
+						);
+						$resp        = array();
+						foreach ( $posts as $post ) {
+							$resp[] = self::query( $post );
+						}
 					}
-					$resp = self::query( $post_id );
 
 					break;
 				default:
@@ -378,7 +392,7 @@ class Micropub_Endpoint {
 	 */
 	public static function query( $post_id ) {
 		$resp  = static::get_mf2( $post_id );
-		$props = static::$input['properties'];
+		$props = mp_get( static::$input, 'properties' );
 		if ( $props ) {
 			if ( ! is_array( $props ) ) {
 				$props = array( $props );
@@ -914,7 +928,7 @@ class Micropub_Endpoint {
 		$mf2 = array();
 
 		foreach ( get_post_meta( $post_id ) as $field => $val ) {
-			$val = unserialize( $val[0] );
+			$val = maybe_unserialize( $val[0] );
 			if ( 'mf2_type' === $field ) {
 				$mf2['type'] = $val;
 			} elseif ( 'mf2_' === substr( $field, 0, 4 ) ) {
