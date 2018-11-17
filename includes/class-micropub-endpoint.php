@@ -701,6 +701,12 @@ class Micropub_Endpoint {
 					}
 					$att_urls[] = wp_get_attachment_url( $id );
 				}
+				// Add to the input so will be visible to the after_micropub action
+				if ( ! isset( $input[ $field ] ) ) {
+					$input[ $field ] = $att_urls;
+				} else {
+					$input[ $field ] = array_merge( $input[ $field ], $att_urls );
+				}
 				add_post_meta( $post_id, 'mf2_' . $field, $att_urls, true );
 			}
 		}
