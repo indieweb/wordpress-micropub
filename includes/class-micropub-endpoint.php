@@ -329,6 +329,7 @@ class Micropub_Endpoint {
 					$resp = array( 'syndicate-to' => static::get_syndicate_targets( $user_id ) );
 					break;
 				case 'category':
+					// https://github.com/indieweb/micropub-extensions/issues/5
 					$resp = array_merge(
 						get_tags( array( 'fields' => 'names' ) ),
 						get_terms(
@@ -338,6 +339,18 @@ class Micropub_Endpoint {
 							)
 						)
 					);
+					if ( array_key_exists( 'search', static::$input ) ) {
+						$search = static::$input['search'];
+						$resp   = array_values(
+							array_filter(
+								$resp,
+								function( $value ) use ( $search ) {
+									return ( false !== stripos( $value, $search ) );
+								}
+							)
+						);
+					}
+
 					$resp = array( 'categories' => $resp );
 					break;
 				case 'source':
