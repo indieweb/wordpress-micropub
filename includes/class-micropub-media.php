@@ -260,6 +260,19 @@ class Micropub_Media {
 	// Responds to queries to the media endpoint
 	public static function query_handler( $request ) {
 		$permission = static::permissions_check( $request );
+		$params     = $request->get_query_params();
+		if ( array_key_exists( 'q', $params ) ) {
+			switch ( $params['q'] ) {
+				case 'config':
+					return new WP_REST_Response(
+						array(
+							'q' => array(),
+						),
+						200
+					);
+			}
+		}
+
 		if ( is_micropub_error( $permission ) ) {
 			return $permission;
 		}
