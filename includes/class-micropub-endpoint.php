@@ -315,70 +315,78 @@ class Micropub_Endpoint {
 		$user_id = get_current_user_id();
 		static::load_input( $request );
 
-		$resp = apply_filters( 'micropub_query', null, static::$input );
-		if ( ! $resp ) {
-			switch ( static::$input['q'] ) {
-				case 'config':
-					$resp = array(
-						'syndicate-to'   => static::get_syndicate_targets( $user_id ),
-						'media-endpoint' => rest_url( MICROPUB_NAMESPACE . '/media' ),
-					);
-					break;
-				case 'syndicate-to':
-					// return syndication targets with filter
-					$resp = array( 'syndicate-to' => static::get_syndicate_targets( $user_id ) );
-					break;
-				case 'category':
-					// https://github.com/indieweb/micropub-extensions/issues/5
-					$resp = array_merge(
-						get_tags( array( 'fields' => 'names' ) ),
-						get_terms(
-							array(
-								'taxonomy' => 'category',
-								'fields'   => 'names',
-							)
+		switch ( static::$input['q'] ) {
+			case 'config':
+				$resp = array(
+					'syndicate-to'   => static::get_syndicate_targets( $user_id ),
+					'media-endpoint' => rest_url( MICROPUB_NAMESPACE . '/media' ),
+					'mp'             => array(
+						'slug',
+						'syndicate-to',
+					), // List of supported mp parameters
+					'q'              => array(
+						'config',
+						'syndicate-to',
+						'category',
+						'source',
+					), // List of supported query parameters
+				);
+				break;
+			case 'syndicate-to':
+				// return syndication targets with filter
+				$resp = array( 'syndicate-to' => static::get_syndicate_targets( $user_id ) );
+				break;
+			case 'category':
+				// https://github.com/indieweb/micropub-extensions/issues/5
+				$resp = array_merge(
+					get_tags( array( 'fields' => 'names' ) ),
+					get_terms(
+						array(
+							'taxonomy' => 'category',
+							'fields'   => 'names',
+						)
+					)
+				);
+				if ( array_key_exists( 'search', static::$input ) ) {
+					$search = static::$input['search'];
+					$resp   = array_values(
+						array_filter(
+							$resp,
+							function( $value ) use ( $search ) {
+								return ( false !== stripos( $value, $search ) );
+							}
 						)
 					);
-					if ( array_key_exists( 'search', static::$input ) ) {
-						$search = static::$input['search'];
-						$resp   = array_values(
-							array_filter(
-								$resp,
-								function( $value ) use ( $search ) {
-									return ( false !== stripos( $value, $search ) );
-								}
-							)
-						);
-					}
+				}
 
-					$resp = array( 'categories' => $resp );
-					break;
-				case 'source':
-					if ( array_key_exists( 'url', static::$input ) ) {
-						$post_id = url_to_postid( static::$input['url'] );
-						if ( ! $post_id ) {
-							return new WP_Micropub_Error( 'invalid_request', sprintf( 'not found: %1$s', static::$input['url'] ), 400 );
-						}
-						$resp = self::query( $post_id );
-					} else {
-						$numberposts = mp_get( static::$input, 'limit', 10 );
-						$posts       = get_posts(
-							array(
-								'posts_per_page' => $numberposts,
-								'fields'         => 'ids',
-							)
-						);
-						$resp        = array();
-						foreach ( $posts as $post ) {
-							$resp[] = self::query( $post );
-						}
+				$resp = array( 'categories' => $resp );
+				break;
+			case 'source':
+				if ( array_key_exists( 'url', static::$input ) ) {
+					$post_id = url_to_postid( static::$input['url'] );
+					if ( ! $post_id ) {
+						return new WP_Micropub_Error( 'invalid_request', sprintf( 'not found: %1$s', static::$input['url'] ), 400 );
 					}
+					$resp = self::query( $post_id );
+				} else {
+					$numberposts = mp_get( static::$input, 'limit', 10 );
+					$posts       = get_posts(
+						array(
+							'posts_per_page' => $numberposts,
+							'fields'         => 'ids',
+						)
+					);
+					$resp        = array();
+					foreach ( $posts as $post ) {
+						$resp[] = self::query( $post );
+					}
+				}
 
-					break;
-				default:
-					return new WP_Micropub_Error( 'invalid_request', 'unknown query', 400, static::$input );
-			}
+				break;
+			default:
+				return new WP_Micropub_Error( 'invalid_request', 'unknown query', 400, static::$input );
 		}
+		$resp = apply_filters( 'micropub_query', $resp, static::$input );
 
 		do_action( 'after_micropub', static::$input, null );
 		return new WP_REST_Response( $resp, 200 );
