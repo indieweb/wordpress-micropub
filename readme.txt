@@ -4,7 +4,7 @@ Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.7
 Requires PHP: 5.3
 Tested up to: 4.9.8
-Stable tag: 2.0.2
+Stable tag: 2.0.3
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
@@ -51,9 +51,10 @@ Called during the handling of a Micropub request. The content generation functio
 `micropub_syndicate-to( $synd_urls, $user_id )`
 
 Called to generate the list of `syndicate-to` targets to return in response to a query. Returns `$synd_urls`, an array, possibly modified. This filter is empty by default
+
 `micropub_query( $resp, $input )`
 
-$resp defaults to null. If the return value is non-null, it should be an associative array that is encoded as JSON and will be returned in place of the normal micropub response.
+Allows you to replace a query response with your own customized version to add additional information
 
 `indieauth_scopes( $scopes )`
 
@@ -198,6 +199,16 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.0.3 (2018-11-17) =
+* Fix issue where the after_micropub action could not see form encoded files by adding them as properties on upload
+* Fix issue in previous release where did not account for a null request sent by wpcli
+* Add search parameter to category
+* Wrap category query in categories key to be consistent with other query parameters
+* If a URL is not provided to the query source parameter it will return the last 10 posts or more/less with an optional parameter
+* Micropub query filter now called after default parameters are added rather than before so it can modify the defaults rather than replacing them.
+* Micropub config query now returns a list of supported mp parameters and supported q query parameters
+* Micropub media endpoint config query now returns an empty array indicating that it has no configuration parameters yet
 
 = 2.0.2 (2018-11-12) =
 * Fix issue with built-in auth and update compatibility testing
