@@ -4,7 +4,7 @@ Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.7
 Requires PHP: 5.3
 Tested up to: 4.9.8
-Stable tag: 2.0.3
+Stable tag: 2.0.4
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
@@ -199,6 +199,10 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.0.4 (2018-11-17) =
+* Issues raised on prior release.
+* Removed generating debug messages when the data is empty
 
 = 2.0.3 (2018-11-17) =
 * Fix issue where the after_micropub action could not see form encoded files by adding them as properties on upload

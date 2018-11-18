@@ -205,6 +205,11 @@ into markdown and saved to readme.md.
 ## Changelog 
 
 
+### 2.0.4 (2018-11-17) 
+* Issues raised on prior release.
+* Removed generating debug messages when the data is empty
+
+
 ### 2.0.3 (2018-11-17) 
 * Fix issue where the after_micropub action could not see form encoded files by adding them as properties on upload
 * Fix issue in previous release where did not account for a null request sent by wpcli
