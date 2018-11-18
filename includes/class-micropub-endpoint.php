@@ -296,10 +296,12 @@ class Micropub_Endpoint {
 		if ( is_micropub_error( $args ) ) {
 			return $args;
 		}
+		do_action( 'after_micropub', static::$input, $args );
+
 		if ( ! empty( $synd_requested ) ) {
 			do_action( 'micropub_syndication', $args['ID'], $synd_requested );
 		}
-		do_action( 'after_micropub', static::$input, $args );
+
 		$response->set_data( $args );
 		return $response;
 	}
