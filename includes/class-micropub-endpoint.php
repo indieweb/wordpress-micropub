@@ -165,9 +165,6 @@ class Micropub_Endpoint {
 			if ( ! empty( static::$files ) ) {
 				static::log_error( array_keys( static::$files ), 'Micropub File Parameters' );
 			}
-			if ( ! empty( $request->get_query_params() ) ) {
-				static::log_error( $request->get_query_params(), 'Micropub Query Parameters' );
-			}
 			static::log_error( static::$input, 'Micropub Input' );
 		}
 		static::$input = apply_filters( 'before_micropub', static::$input );
