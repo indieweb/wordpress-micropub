@@ -162,7 +162,12 @@ class Micropub_Endpoint {
 			return new WP_Micropub_Error( 'invalid_request', 'No input provided', 400 );
 		}
 		if ( WP_DEBUG ) {
-			static::log_error( $request->get_query_params(), 'Micropub Query Parameters' );
+			if ( ! empty( static::$files ) ) {
+				static::log_error( array_keys( static::$files ), 'Micropub File Parameters' );
+			}
+			if ( ! empty( $request->get_query_params() ) ) {
+				static::log_error( $request->get_query_params(), 'Micropub Query Parameters' );
+			}
 			static::log_error( static::$input, 'Micropub Input' );
 		}
 		static::$input = apply_filters( 'before_micropub', static::$input );
@@ -739,10 +744,10 @@ class Micropub_Endpoint {
 					$att_urls[] = wp_get_attachment_url( $id );
 				}
 				// Add to the input so will be visible to the after_micropub action
-				if ( ! isset( $input[ $field ] ) ) {
-					$input[ $field ] = $att_urls;
+				if ( ! isset( static::$input['properties'][ $field ] ) ) {
+					static::$input['properties'][ $field ] = $att_urls;
 				} else {
-					$input[ $field ] = array_merge( $input[ $field ], $att_urls );
+					static::$input['properties'][ $field ] = array_merge( static::$input['properties'][ $field ], $att_urls );
 				}
 				add_post_meta( $post_id, 'mf2_' . $field, $att_urls, true );
 			}
