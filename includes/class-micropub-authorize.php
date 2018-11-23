@@ -34,6 +34,8 @@ class Micropub_Authorize {
 	public static function init() {
 		$cls = get_called_class();
 
+		add_action( 'admin_init', array( $cls, 'admin_init' ), 11 );
+
 		add_action( 'wp_head', array( $cls, 'html_header' ), 99 );
 		add_action( 'send_headers', array( $cls, 'http_header' ) );
 		add_filter( 'host_meta', array( $cls, 'jrd_links' ) );
@@ -45,6 +47,73 @@ class Micropub_Authorize {
 		add_filter( 'rest_authentication_errors', array( $cls, 'rest_authentication_errors' ), 10 );
 		add_filter( 'rest_post_dispatch', array( $cls, 'return_micropub_error' ), 10, 3 );
 
+				// Register Setting
+				register_setting(
+					'micropub',
+					'indieauth_authorization_endpoint', // Setting Name
+					array(
+						'type'              => 'string',
+						'description'       => 'IndieAuth Authorization Endpoint',
+						'sanitize_callback' => 'esc_url',
+						'show_in_rest'      => true,
+					)
+				);
+				// Register Setting
+				register_setting(
+					'micropub',
+					'indieauth_token_endpoint', // Setting Name
+					array(
+						'type'              => 'string',
+						'description'       => 'IndieAuth Token Endpoint',
+						'sanitize_callback' => 'esc_url',
+						'show_in_rest'      => true,
+					)
+				);
+
+	}
+
+	public static function admin_init() {
+		$cls  = get_called_class();
+		$page = 'micropub';
+				add_settings_section(
+					'micropub_authorize',
+					'Micropub Authorization Settings',
+					array( $cls, 'auth_settings' ),
+					$page
+				);
+				add_settings_field(
+					'indieauth_authorization_endpoint',
+					__( 'Authorization Endpoint', 'micropub' ),
+					array( $cls, 'endpoint_field' ),
+					$page,
+					'micropub_authorize',
+					array(
+						'label_for' => 'indieauth_authorization_endpoint',
+						'class'     => 'widefat',
+						'default'   => MICROPUB_AUTHENTICATION_ENDPOINT,
+					)
+				);
+				add_settings_field(
+					'indieauth_token_endpoint',
+					__( 'Token Endpoint', 'micropub' ),
+					array( $cls, 'endpoint_field' ),
+					$page,
+					'micropub_authorize',
+					array(
+						'label_for' => 'indieauth_token_endpoint',
+						'class'     => 'widefat',
+						'default'   => MICROPUB_TOKEN_ENDPOINT,
+					)
+				);
+	}
+
+
+	public static function endpoint_field( $args ) {
+			printf( '<label for="%1$s"><input id="%1$s" name="%1$s" type="url" value="%2$s" />', esc_attr( $args['label_for'] ), esc_url( get_option( $args['label_for'], $args['default'] ) ) );
+	}
+
+	public static function auth_settings() {
+			echo 'Server Settings for Indieauth';
 	}
 
 	public static function get_error() {

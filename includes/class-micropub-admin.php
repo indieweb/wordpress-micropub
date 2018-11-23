@@ -22,7 +22,7 @@ class Micropub_Admin {
 
 		// Register Setting
 		register_setting(
-			'micropub_writing',
+			'micropub',
 			'micropub_default_post_status', // Setting Name
 			array(
 				'type'              => 'string',
@@ -57,6 +57,7 @@ class Micropub_Admin {
 	 */
 	public static function admin_menu() {
 		$title = 'Micropub';
+		$cls   = get_called_class();
 		// If the IndieWeb Plugin is installed use its menu.
 		if ( class_exists( 'IndieWeb_Plugin' ) ) {
 			$options_page = add_submenu_page(
@@ -65,7 +66,7 @@ class Micropub_Admin {
 				$title,
 				'manage_options',
 				'micropub',
-				array( 'Micropub_Admin', 'settings_page' )
+				array( $cls, 'settings_page' )
 			);
 		} else {
 			$options_page = add_options_page(
@@ -73,7 +74,7 @@ class Micropub_Admin {
 				$title,
 				'manage_options',
 				'micropub',
-				array( 'Micropub_Admin', 'settings_page' )
+				array( $cls, 'settings_page' )
 			);
 		}
 

@@ -4,7 +4,7 @@ Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.7
 Requires PHP: 5.3
 Tested up to: 4.9.8
-Stable tag: 2.0.4
+Stable tag: 2.0.5
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
@@ -128,8 +128,8 @@ Install from the WordPress plugin directory. No setup needed.
 
 These configuration options can be enabled by adding them to your wp-config.php
 
-* `define('MICROPUB_AUTHENTICATION_ENDPOINT', 'https://indieauth.com/auth')` - Define a custom authentication endpoint.
-* `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` - Define a custom token endpoint
+* `define('MICROPUB_AUTHENTICATION_ENDPOINT', 'https://indieauth.com/auth')` - Define a custom authentication endpoint. Can be overridden in the settings interface
+* `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` - Define a custom token endpoint. Can be overridden in the settings interface.
 * `define('MICROPUB_NAMESPACE', 'micropub/1.0' )` - By default the namespace for micropub is micropub/1.0. This would allow you to change this for your endpoint
 * `define('MICROPUB_DISABLE_NAG', 1 ) - Disable notices for insecure sites
 * `define('MICROPUB_LOCAL_AUTH', 1 ) - Disable built in AUTH in favor of your own plugin. Recommend plugin developers use the filter `disable_micropub_auth` for this.
@@ -199,6 +199,10 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.0.5 (2018-11-23) =
+* Move syndication trigger to after micropub hook in order to ensure final version is rendered before sending syndication
+* Add settings UI for alternate authorization endpoint and token endpoint which will be hidden if Indieauth plugin is enabled
 
 = 2.0.4 (2018-11-17) =
 * Issues raised on prior release.
