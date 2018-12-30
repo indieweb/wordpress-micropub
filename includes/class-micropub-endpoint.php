@@ -333,7 +333,10 @@ class Micropub_Endpoint {
 						'syndicate-to',
 						'category',
 						'source',
-					), // List of supported query parameters
+					), // List of supported query parameters https://github.com/indieweb/micropub-extensions/issues/7
+					'properties'     => array(
+						'location-visibility',
+					), // List of support properties https://github.com/indieweb/micropub-extensions/issues/8
 				);
 				break;
 			case 'syndicate-to':
@@ -389,10 +392,12 @@ class Micropub_Endpoint {
 
 				break;
 			default:
-				return new WP_Micropub_Error( 'invalid_request', 'unknown query', 400, static::$input );
+				$resp = new WP_Micropub_Error( 'invalid_request', 'unknown query', 400, static::$input );
 		}
 		$resp = apply_filters( 'micropub_query', $resp, static::$input );
-
+		if ( is_wp_error( $resp ) ) {
+			return $resp;
+		}
 		do_action( 'after_micropub', static::$input, null );
 		return new WP_REST_Response( $resp, 200 );
 	}
