@@ -5,11 +5,14 @@ A [Micropub](http://micropub.net/) server plugin. Available in the WordPress plu
 
 [![Travis CI](https://travis-ci.org/indieweb/wordpress-micropub.svg?branch=master)](https://travis-ci.org/indieweb/wordpress-micropub)
 
-> Micropub is an open API standard that is used to create posts on one's own domain using third-party clients. Web apps and native apps (e.g. iPhone, Android) can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com.
+> Micropub is an open API standard that is used to create posts on one's own domain using third-party clients. Web apps and native apps (e.g. iPhone, Android) can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com. 
 
 Once you've installed and activated the plugin, try using [Quill](http://quill.p3k.io/) to create a new post on your site. It walks you through the steps and helps you troubleshoot if you run into any problems. A list of known Micropub clients are available [here](https://indieweb.org/Micropub/Clients)
 
 Supports the [full W3C Micropub CR spec](https://www.w3.org/TR/micropub/) as of version 2.0.0.
+
+As this allows the creation of posts without entering the WordPress admin, it is not subject to any Gutenberg compatibility concerns per se. Posts created will not have Gutenberg blocks
+as they were not created with Gutenberg, but otherwise there should be no issues at this time.
 
 
 ## License 
@@ -81,10 +84,14 @@ Stores [microformats2](http://microformats.org/wiki/microformats2) properties in
 
 Does *not* support multithreading. PHP doesn't really either, so it generally won't matter, but just for the record.
 
-Supports Experimental Properties:
+Supports Experimental Extensions to Micropub:
 * [Post Status](https://indieweb.org/Micropub-extensions#Post_Status) - Either `published` or `draft`
 * [Visibility](https://indieweb.org/Micropub-extensions#Visibility) - Either `public` or `private`.
 * [Location Visiblity](https://indieweb.org/Micropub-extensions#Location_Visibility) - Either `public`, `private`, or `protected`
+* [Query for Post List](https://github.com/indieweb/micropub-extensions/issues/4) - Supports query for the last x number of posts. 
+* [Query for Support Queries](https://github.com/indieweb/micropub-extensions/issues/7) - Returns a list of query parameters the endpoint supports
+* [Query for Supported Properties](https://github.com/indieweb/micropub-extensions/issues/8) - Returns a list of which supported experimental properties the endpoint supports so the client can choose to hide unsupported ones.
+
 
 If an experimental property is not set to one of these options, the plugin will return HTTP 400 with body:
 
@@ -203,6 +210,11 @@ into markdown and saved to readme.md.
 
 
 ## Changelog 
+
+
+### 2.0.6 (2018-12-30) 
+* Adjust query filter to allow for new properties to be added by query
+* Add Gutenberg information into README
 
 
 ### 2.0.5 (2018-11-23) 
