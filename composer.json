@@ -8,11 +8,11 @@
     "require-dev": {
         "dealerdirect/phpcodesniffer-composer-installer": "^0.4",
 	"squizlabs/php_codesniffer": "*",
-        "wimg/php-compatibility": "*",
         "wp-coding-standards/wpcs": "*",
         "wpreadme2markdown/wp2md": "*",
         "phpunit/phpunit": ">=5.0",
-        "phpcompatibility/phpcompatibility-wp": "^2.0"
+        "phpcompatibility/phpcompatibility-wp": "^2.0",
+        "phpcompatibility/php-compatibility": "^9.1"
     },
     "prefer-stable" : true,
     "scripts": {
