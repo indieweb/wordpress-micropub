@@ -333,7 +333,10 @@ class Micropub_Endpoint {
 						'syndicate-to',
 						'category',
 						'source',
-					), // List of supported query parameters
+					), // List of supported query parameters https://github.com/indieweb/micropub-extensions/issues/7
+					'properties'     => array(
+						'location-visibility',
+					), // List of support properties https://github.com/indieweb/micropub-extensions/issues/8
 				);
 				break;
 			case 'syndicate-to':
