@@ -840,16 +840,30 @@ class Micropub_Endpoint {
 				// https://indieweb.org/Micropub#h-entry
 				//
 				// e.g. geo:37.786971,-122.399677;u=35
-				$geo = explode( ':', substr( urldecode( $location ), 4 ) );
-				$geo = explode( ';', $geo[0] );
-				// Store the accuracy/uncertainty
-				$args['meta_input']['geo_accuracy']  = substr( $geo[1], 2 );
+				$geo                                 = explode( ':', substr( urldecode( $location ), 4 ) );
+				$geo                                 = explode( ';', $geo[0] );
 				$coords                              = explode( ',', $geo[0] );
 				$args['meta_input']['geo_latitude']  = trim( $coords[0] );
 				$args['meta_input']['geo_longitude'] = trim( $coords[1] );
 				// Geo URI optionally allows for altitude to be stored as a third csv
 				if ( isset( $coords[2] ) ) {
 					$args['meta_input']['geo_altitude'] = trim( $coords[2] );
+				}
+				// Store additional parameters
+				array_shift( $geo ); // Remove coordinates to check for other parameters
+				$params = array();
+				foreach ( $geo as $g ) {
+					$g               = explode( '=', $g );
+					$params[ $g[0] ] = $g[1];
+				}
+				$args['meta_input']['geo'] = $params;
+				if ( array_key_exists( 'u', $params ) ) {
+					$args['meta_input']['geo_accuracy'] = $params['u'];
+				}
+				if ( array_key_exists( 'name', $params ) ) {
+					$args['meta_input']['geo_address'] = $params['name'];
+				} elseif ( array_key_exists( 'label', $params ) ) {
+					$args['meta_input']['geo_address'] = $params['label'];
 				}
 			} elseif ( 'http' !== substr( $location, 0, 4 ) ) {
 				$args['meta_input']['geo_address'] = $location;
