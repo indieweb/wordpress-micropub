@@ -136,8 +136,8 @@ These configuration options can be enabled by adding them to your wp-config.php
 * `define('MICROPUB_AUTHENTICATION_ENDPOINT', 'https://indieauth.com/auth')` - Define a custom authentication endpoint. Can be overridden in the settings interface
 * `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` - Define a custom token endpoint. Can be overridden in the settings interface.
 * `define('MICROPUB_NAMESPACE', 'micropub/1.0' )` - By default the namespace for micropub is micropub/1.0. This would allow you to change this for your endpoint
-* `define('MICROPUB_DISABLE_NAG', 1 )` - Disable notices for insecure sites
-* `define('MICROPUB_LOCAL_AUTH', 1 )` - Disable built in AUTH in favor of your own plugin. Recommend plugin developers use the filter `disable_micropub_auth` for this.
+* `define('MICROPUB_DISABLE_NAG', 1 ) - Disable notices for insecure sites
+* `define('MICROPUB_LOCAL_AUTH', 1 ) - Disable built in AUTH in favor of your own plugin. Recommend plugin developers use the filter `disable_micropub_auth` for this.
 
 These configuration options can be enabled by setting them in the WordPress options table.
 * `indieauth_authorization_endpoint` - if set will override MICROPUB_AUTHENTICATION_ENDPOINT for setting a custom endpoint
@@ -210,6 +210,10 @@ into markdown and saved to readme.md.
 
 
 ## Changelog 
+
+
+### 2.0.7 (2018-02-18) 
+* Update geo storage to fix accuracy storage as well as allow for name parameter and future parameters to be passed. Indigenous for Android now supports passing this
 
 
 ### 2.0.6 (2018-12-30) 

@@ -3,8 +3,8 @@ Contributors: indieweb, snarfed, dshanske
 Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.7
 Requires PHP: 5.3
-Tested up to: 5.0.2
-Stable tag: 2.0.6
+Tested up to: 5.0.3
+Stable tag: 2.0.7
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
@@ -206,6 +206,9 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.0.7 (2018-02-18) =
+* Update geo storage to fix accuracy storage as well as allow for name parameter and future parameters to be passed. Indigenous for Android now supports passing this
 
 = 2.0.6 (2018-12-30) =
 * Adjust query filter to allow for new properties to be added by query

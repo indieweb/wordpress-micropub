@@ -343,7 +343,21 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ) );
 		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ) );
 		$this->assertEquals( '1500', get_post_meta( $post->ID, 'geo_altitude', true ) );
+		$this->assertEquals( '25000', get_post_meta( $post->ID, 'geo_accuracy', true ) );
 	}
+
+	
+	public function test_create_location_geo_with_name() {
+		$input                           = static::$mf2;
+		$input['properties']['location'] = array( 'geo:42.361,-71.092,1500;u=25000;name=New York, New York' );
+		$post                            = self::check_create( self::create_json_request( $input ) );
+		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ) );
+		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ) );
+		$this->assertEquals( '1500', get_post_meta( $post->ID, 'geo_altitude', true ) );
+		$this->assertEquals( '25000', get_post_meta( $post->ID, 'geo_accuracy', true ) );
+		$this->assertEquals( 'New York, New York', get_post_meta( $post->ID, 'geo_address', true ) );
+	}
+
 	public function test_create_location_plain_text() {
 		$input                           = static::$mf2;
 		$input['properties']['location'] = array( 'foo bar baz' );

@@ -68,7 +68,9 @@ function micropub_wp_error( $error ) {
 	if ( is_wp_error( $error ) ) {
 		$data   = $error->get_error_data();
 		$status = isset( $data['status'] ) ? $data['status'] : 200;
-		unset( $data['status'] );
+		if ( is_array( $data ) ) {
+			unset( $data['status'] );
+		}
 		return new WP_Micropub_Error( $error->get_error_code(), $error->get_error_message(), $status, $data );
 	}
 	return null;
