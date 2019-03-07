@@ -873,6 +873,61 @@ class Micropub_Endpoint {
 	}
 
 	/**
+	 * Parse a GEO URI into an mf2 object for storage
+	 */
+	public static function parse_geo_uri( $uri ) {
+		// Ensure this is a geo uri
+		if ( 'geo:' !== substr( $uri, 0, 4 ) ) {
+			return array();
+		}
+		$properties = array();
+		// Geo URI format:
+		// http://en.wikipedia.org/wiki/Geo_URI#Example
+		// https://indieweb.org/Micropub#h-entry
+		//
+		// e.g. geo:37.786971,-122.399677;u=35
+		$geo                     = str_replace( 'geo:', '', urldecode( $uri ) );
+		$geo                     = explode( ';', $geo );
+		$coords                  = explode( ',', $geo[0] );
+		$properties['latitude']  = array( trim( $coords[0] ) );
+		$properties['longitude'] = array( trim( $coords[1] ) );
+		// Geo URI optionally allows for altitude to be stored as a third csv
+		if ( isset( $coords[2] ) ) {
+			$properties['altitude'] = array( trim( $coords[2] ) );
+		}
+		// Store additional parameters
+		array_shift( $geo ); // Remove coordinates to check for other parameters
+		foreach ( $geo as $g ) {
+			$g = explode( '=', $g );
+			if ( 'u' === $g[0] ) {
+				$g[0] = 'accuracy';
+			}
+			$properties[ $g[0] ] = array( $g[1] );
+		}
+		// If geo URI is overloaded h-card... e.g. geo:37.786971,-122.399677;u=35;h=card;name=Home;url=https://example.com
+		if ( array_key_exists( 'h', $return ) ) {
+			$type = array( 'h-' . $properties['h'][0] );
+			unset( $properties['h'] );
+		} else {
+			$diff = array_diff(
+				array_keys( $properties ),
+				array( 'longitude', 'latitude', 'altitude', 'accuracy' )
+			);
+			// If empty that means this is a geo
+			if ( empty( $diff ) ) {
+				$type = array( 'h-geo' );
+			} else {
+				$type = array( 'h-card' );
+			}
+		}
+
+		return array(
+			'type'       => $type,
+			'properties' => array_filter( $properties ),
+		);
+	}
+
+	/**
 	 * Store the return of the authorization endpoint as post metadata. Details:
 	 * https://tokens.indieauth.com/
 	 */
