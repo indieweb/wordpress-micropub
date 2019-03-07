@@ -807,6 +807,7 @@ class Micropub_Endpoint {
 			if ( ! isset( $args['meta_input'] ) ) {
 				$args['meta_input'] = array();
 			}
+			$location = self::parse_geo_uri( $location );
 			if ( is_array( $location ) ) {
 				$props = $location['properties'];
 				if ( isset( $props['geo'] ) ) {
@@ -834,37 +835,7 @@ class Micropub_Endpoint {
 				$args['meta_input']['geo_latitude']  = $props['latitude'][0];
 				$args['meta_input']['geo_longitude'] = $props['longitude'][0];
 				$args['meta_input']['geo_altitude']  = $props['altitude'][0];
-			} elseif ( 'geo:' === substr( $location, 0, 4 ) ) {
-				// Geo URI format:
-				// http://en.wikipedia.org/wiki/Geo_URI#Example
-				// https://indieweb.org/Micropub#h-entry
-				//
-				// e.g. geo:37.786971,-122.399677;u=35
-				$geo                                 = explode( ':', substr( urldecode( $location ), 4 ) );
-				$geo                                 = explode( ';', $geo[0] );
-				$coords                              = explode( ',', $geo[0] );
-				$args['meta_input']['geo_latitude']  = trim( $coords[0] );
-				$args['meta_input']['geo_longitude'] = trim( $coords[1] );
-				// Geo URI optionally allows for altitude to be stored as a third csv
-				if ( isset( $coords[2] ) ) {
-					$args['meta_input']['geo_altitude'] = trim( $coords[2] );
-				}
-				// Store additional parameters
-				array_shift( $geo ); // Remove coordinates to check for other parameters
-				$params = array();
-				foreach ( $geo as $g ) {
-					$g               = explode( '=', $g );
-					$params[ $g[0] ] = $g[1];
-				}
-				$args['meta_input']['geo'] = $params;
-				if ( array_key_exists( 'u', $params ) ) {
-					$args['meta_input']['geo_accuracy'] = $params['u'];
-				}
-				if ( array_key_exists( 'name', $params ) ) {
-					$args['meta_input']['geo_address'] = $params['name'];
-				} elseif ( array_key_exists( 'label', $params ) ) {
-					$args['meta_input']['geo_address'] = $params['label'];
-				}
+				$args['meta_input']['geo_accuracy']  = $props['accuracy'][0];
 			} elseif ( 'http' !== substr( $location, 0, 4 ) ) {
 				$args['meta_input']['geo_address'] = $location;
 			}
@@ -876,9 +847,12 @@ class Micropub_Endpoint {
 	 * Parse a GEO URI into an mf2 object for storage
 	 */
 	public static function parse_geo_uri( $uri ) {
+		if ( ! is_string( $uri ) ) {
+			return $uri;
+		}
 		// Ensure this is a geo uri
 		if ( 'geo:' !== substr( $uri, 0, 4 ) ) {
-			return array();
+			return $uri;
 		}
 		$properties = array();
 		// Geo URI format:
