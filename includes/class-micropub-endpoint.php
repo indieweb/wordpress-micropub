@@ -167,6 +167,17 @@ class Micropub_Endpoint {
 			}
 			static::log_error( static::$input, 'Micropub Input' );
 		}
+
+		if ( isset( static::$input['properties'] ) ) {
+			$properties = static::$input['properties'];
+			if ( isset( $properties['location'] ) ) {
+				static::$input['properties']['location'] = self::parse_geo_uri( $properties['location'][0] );
+			}
+			if ( isset( $properties['checkin'] ) ) {
+				static::$input['properties']['checkin'] = self::parse_geo_uri( $properties['checkin'][0] );
+			}
+		}
+
 		static::$input = apply_filters( 'before_micropub', static::$input );
 	}
 
@@ -775,7 +786,7 @@ class Micropub_Endpoint {
 	public static function store_geodata( $args ) {
 		$properties = static::get( static::$input, 'properties' );
 		$location   = static::get( $properties, 'location', static::get( $properties, 'checkin' ) );
-		$location   = static::get( $location, 0, null );
+		$location   = static::get( $location, 0, $location );
 		// Location-visibility is an experimental property https://indieweb.org/Micropub-extensions#Location_Visibility
 		// It attempts to mimic the geo_public property
 		$visibility = static::get( $properties, 'location-visibility', null );
@@ -807,7 +818,7 @@ class Micropub_Endpoint {
 			if ( ! isset( $args['meta_input'] ) ) {
 				$args['meta_input'] = array();
 			}
-			$location = self::parse_geo_uri( $location );
+			// $location = self::parse_geo_uri( $location );
 			if ( is_array( $location ) ) {
 				$props = $location['properties'];
 				if ( isset( $props['geo'] ) ) {

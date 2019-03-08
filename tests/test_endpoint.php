@@ -16,7 +16,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		'summary'   => 'my summary',
 		'category'  => array( 'tag1', 'tag4' ),
 		'published' => '2016-01-01T04:01:23-08:00',
-		'location'  => 'geo:42.361,-71.092;u=25000',
+		'location'  => 'geo:42.361,-71.092,25000;u=25000',
 	);
 
 	// JSON mf2 input
@@ -29,7 +29,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 			'summary'   => array( 'my summary' ),
 			'category'  => array( 'tag1', 'tag4' ),
 			'published' => array( '2016-01-01T04:01:23-08:00' ),
-			'location'  => array( 'geo:42.361,-71.092;u=25000' ),
+			'location'  => array( 'geo:42.361,-71.092,25000;u=25000' ),
 		),
 	);
 
@@ -51,6 +51,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 			'latitude'  => array( '42.361' ),
 			'longitude' => array( '-71.092' ),
 			'altitude'  => array( '25000' ),
+			'accuracy'  => array( '25000' )
 		),
 	);
 
@@ -100,6 +101,11 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		parent::setUp();
 		static::$scopes = array( 'post' );
 	}
+
+	public function test_parse_geo_uri() {
+		$geo = Micropub_Endpoint::parse_geo_uri( 'geo:42.361,-71.092,25000;u=25000' );
+		$this->assertEquals( $geo, static::$geo );
+		}
 
 
 	public function test_register_routes() {
@@ -196,6 +202,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		if ( ! $input ) {
 			$input = static::$mf2;
 		}
+
 		$post = $this->check_create( $request );
 		$this->assertEquals( 'publish', $post->post_status );
 		$this->assertEquals( 'post', $post->post_type );
@@ -212,7 +219,9 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ) );
 		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ) );
 		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_address', true ) );
-		$this->assertEquals( $input, $this->query_source( $post->ID ) );
+		$source = $this->query_source( $post->ID );
+		$input['properties']['location'] = static::$geo;
+		$this->assertEquals( $input, $source, wp_json_encode( $source ) );
 		return $post;
 	}
 
