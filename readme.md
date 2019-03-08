@@ -212,7 +212,11 @@ into markdown and saved to readme.md.
 ## Changelog 
 
 
-### 2.0.7 (2018-02-18) 
+### 2.0.8 (2019-03-08) 
+* Parse geo URI into h-geo or h-card object
+
+
+### 2.0.7 (2019-02-18) 
 * Update geo storage to fix accuracy storage as well as allow for name parameter and future parameters to be passed. Indigenous for Android now supports passing this
 
 
