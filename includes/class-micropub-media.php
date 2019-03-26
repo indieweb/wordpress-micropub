@@ -209,6 +209,10 @@ class Micropub_Media {
 		require_once ABSPATH . 'wp-admin/includes/admin.php';
 
 		wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $file['file'] ) );
+
+		// Add metadata tag to micropub uploaded so they can be queried
+		update_post_meta( $id, '_micropub_upload', 1 );
+
 		return $id;
 	}
 
