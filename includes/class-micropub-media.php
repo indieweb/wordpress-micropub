@@ -209,6 +209,10 @@ class Micropub_Media {
 		require_once ABSPATH . 'wp-admin/includes/admin.php';
 
 		wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $file['file'] ) );
+
+		// Add metadata tag to micropub uploaded so they can be queried
+		update_post_meta( $id, '_micropub_upload', 1 );
+
 		return $id;
 	}
 
@@ -218,6 +222,15 @@ class Micropub_Media {
 			'post_parent' => $post_id,
 		);
 		return wp_update_post( $post, true );
+	}
+
+	/*
+	 * Returns information about an attachment
+	 */
+	private static function return_media_data( $attachment_id ) {
+		$data        = wp_get_attachment_metadata( $attachment_id );
+		$data['url'] = wp_get_attachment_image_url( $attachment_id, 'full' );
+		return $data;
 	}
 
 	// Handles requests to the Media Endpoint
@@ -240,10 +253,11 @@ class Micropub_Media {
 		if ( is_micropub_error( $file ) ) {
 			return $file;
 		}
-		$id = self::insert_attachment( $file );
+		$title = $request->get_param( 'name' );
+		$id    = self::insert_attachment( $file, 0, $title );
 
 		$url  = wp_get_attachment_url( $id );
-		$data = wp_get_attachment_metadata( $id );
+		$data = self::return_media_data( $id );
 		add_post_meta( $id, 'micropub_auth_response', static::$micropub_auth_response );
 		$data['url'] = $url;
 		$data['id']  = $id;
@@ -266,10 +280,56 @@ class Micropub_Media {
 				case 'config':
 					return new WP_REST_Response(
 						array(
-							'q' => array(),
+							'q' => array(
+								'last',
+								'source',
+							),
 						),
 						200
 					);
+				case 'last':
+					$attachments = get_posts(
+						array(
+							'post_type'      => 'attachment',
+							'fields'         => 'ids',
+							'posts_per_page' => 10,
+							'order'          => 'DESC',
+						)
+					);
+					if ( is_array( $attachments ) ) {
+						foreach ( $attachments as $attachment ) {
+							if ( wp_attachment_is( 'image', $attachment ) ) {
+								return array(
+									'url' => wp_get_attachment_image_url( $attachment, 'full' ),
+								);
+							}
+						}
+					}
+					return array();
+				case 'source':
+					if ( array_key_exists( 'url', $params ) ) {
+						$attachment_id = url_to_postid( $params['url'] );
+						if ( ! $attachment_id ) {
+							return new WP_Micropub_Error( 'invalid_request', sprintf( 'not found: %1$s', $params['url'] ), 400 );
+						}
+						$resp = self::return_media_data( $attachment_id );
+					} else {
+						$numberposts = mp_get( $params, 'limit', 10 );
+						$attachments = get_posts(
+							array(
+								'posts_per_page' => $numberposts,
+								'post_type'      => 'attachment',
+								'fields'         => 'ids',
+								'order'          => 'DESC',
+							)
+						);
+						$resp        = array();
+						foreach ( $attachments as $attachment ) {
+							$resp[] = self::return_media_data( $attachment );
+						}
+						$resp = array( 'items' => $resp );
+					}
+					return $resp;
 			}
 		}
 

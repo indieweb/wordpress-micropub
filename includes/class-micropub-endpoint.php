@@ -634,6 +634,20 @@ class Micropub_Endpoint {
 	}
 
 	/**
+	 * Generates a suggestion for a title based on mf2 properties.
+	 * This can be used to generate a post slug
+	 * $mf2 MF2 Properties
+	 *
+	 */
+	private static function suggest_post_title( $mf2 ) {
+		$props = mp_get( $mf2, 'properties' );
+		if ( isset( $props['name'] ) ) {
+			return $props['name'];
+		}
+		return apply_filters( 'micropub_suggest_title', '', $props );
+	}
+
+	/**
 	 * Converts Micropub create, update, or delete request to args for WordPress
 	 * wp_insert_post() or wp_update_post().
 	 *
@@ -646,7 +660,7 @@ class Micropub_Endpoint {
 	 * Uses $input, so load_input() must be called before this.
 	 */
 	private static function mp_to_wp( $mf2 ) {
-		$props = $mf2['properties'];
+		$props = mp_get( $mf2, 'properties' );
 		$args  = array();
 
 		foreach ( array(
@@ -660,9 +674,10 @@ class Micropub_Endpoint {
 		}
 
 		// perform these functions only for creates
-		if ( ! isset( $args['ID'] ) ) {
-			if ( isset( $args['post_title'] ) && ! isset( $args['post_name'] ) ) {
-				$args['post_name'] = $args['post_title'];
+		if ( ! isset( $args['ID'] ) && ! isset( $args['post_name'] ) ) {
+			$slug = static::suggest_post_title( $mf2 );
+			if ( ! empty( $slug ) ) {
+				$args['post_name'] = $slug;
 			}
 		}
 		if ( isset( $args['post_name'] ) ) {
@@ -684,6 +699,24 @@ class Micropub_Endpoint {
 				$args['post_date'] = $date->format( 'Y-m-d H:i:s' );
 				$date->setTimeZone( new DateTimeZone( 'GMT' ) );
 				$args['post_date_gmt'] = $date->format( 'Y-m-d H:i:s' );
+			}
+		}
+
+		if ( isset( $props['updated'] ) ) {
+			$date = new DateTime( $props['updated'][0] );
+			// If for whatever reason the date cannot be parsed do not include one which defaults to now
+			if ( $date ) {
+				$tz_string = get_option( 'timezone_string' );
+				if ( empty( $tz_string ) ) {
+					$tz_string = 'UTC';
+				}
+				$date->setTimeZone( new DateTimeZone( $tz_string ) );
+				$tz = $date->getTimezone();
+				// Pass this argument to the filter for use
+				$args['timezone']      = $tz->getName();
+				$args['post_modified'] = $date->format( 'Y-m-d H:i:s' );
+				$date->setTimeZone( new DateTimeZone( 'GMT' ) );
+				$args['post_modified_gmt'] = $date->format( 'Y-m-d H:i:s' );
 			}
 		}
 

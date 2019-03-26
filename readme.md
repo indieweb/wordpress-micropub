@@ -35,7 +35,7 @@ Supports the following [scope](https://indieweb.org/scope) parameters requested 
 
 
 ### Filters and hooks 
-Adds six filters:
+Adds seven filters:
 
 `before_micropub( $input )`
 
@@ -52,6 +52,10 @@ Called to generate the list of `syndicate-to` targets to return in response to a
 `micropub_query( $resp, $input )`
 
 Allows you to replace a query response with your own customized version to add additional information
+
+`micropub_suggest_title( $mf2 )`
+
+Allows a suggested title to be generated. This can be used either to generate the post slug or for individuals who want to use it to set a WordPress title 
 
 `indieauth_scopes( $scopes )`
 
@@ -210,6 +214,14 @@ into markdown and saved to readme.md.
 
 
 ## Changelog 
+
+
+### 2.0.9 (2019-03-25) 
+* Add filter `micropub_suggest_title` and related function to generate slugs
+* Map updated property to WordPress modified property
+* Add meta key to micropub uploaded media so it can be queried
+* Add last and source queries for media endpoint
+* Set up return function for media that returns attachment metadata for now
 
 
 ### 2.0.8 (2019-03-08) 
