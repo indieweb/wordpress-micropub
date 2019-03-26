@@ -216,10 +216,12 @@ into markdown and saved to readme.md.
 ## Changelog 
 
 
-### 2.0.9 (2019-03-xx) 
+### 2.0.9 (2019-03-25) 
 * Add filter `micropub_suggest_title` and related function to generate slugs
 * Map updated property to WordPress modified property
-
+* Add meta key to micropub uploaded media so it can be queried
+* Add last and source queries for media endpoint
+* Set up return function for media that returns attachment metadata for now
 
 
 ### 2.0.8 (2019-03-08) 
