@@ -346,7 +346,7 @@ class Micropub_Media {
 			// Attach media to post
 			wp_update_post(
 				array(
-					'post_ID'     => $id,
+					'ID'          => $id,
 					'post_parent' => $post_id,
 				)
 			);
