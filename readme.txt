@@ -3,8 +3,8 @@ Contributors: indieweb, snarfed, dshanske
 Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.7
 Requires PHP: 5.3
-Tested up to: 5.1
-Stable tag: 2.0.9
+Tested up to: 5.1.1
+Stable tag: 2.0.10
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
@@ -210,6 +210,9 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.0.10 (2019-04-13) =
+* Fix issue with media not being attached to post 
 
 = 2.0.9 (2019-03-25) =
 * Add filter `micropub_suggest_title` and related function to generate slugs

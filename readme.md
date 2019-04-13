@@ -216,6 +216,10 @@ into markdown and saved to readme.md.
 ## Changelog 
 
 
+### 2.0.10 (2019-04-13) 
+* Fix issue with media not being attached to post 
+
+
 ### 2.0.9 (2019-03-25) 
 * Add filter `micropub_suggest_title` and related function to generate slugs
 * Map updated property to WordPress modified property
