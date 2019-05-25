@@ -854,35 +854,40 @@ class Micropub_Endpoint {
 			if ( ! isset( $args['meta_input'] ) ) {
 				$args['meta_input'] = array();
 			}
-			// $location = self::parse_geo_uri( $location );
 			if ( is_array( $location ) ) {
 				$props = $location['properties'];
 				if ( isset( $props['geo'] ) ) {
-					$args['meta_input']['geo_address'] = $props['label'][0];
-					$props                             = $props['geo'][0]['properties'];
+					if ( array_key_exists( 'label', $props ) ) {
+						$args['meta_input']['geo_address'] = $props['label'][0];
+					}
+					$props = $props['geo'][0]['properties'];
 				} else {
-					$parts                             = array(
-						mp_get( $props, 'name', true ),
-						mp_get( $props, 'street-address', true ),
-						mp_get( $props, 'locality', true ),
-						mp_get( $props, 'region', true ),
-						mp_get( $props, 'postal-code', true ),
-						mp_get( $props, 'country-name', true ),
+					$parts = array(
+						mp_get( $props, 'name', array(), true ),
+						mp_get( $props, 'street-address', array(), true ),
+						mp_get( $props, 'locality', array(), true ),
+						mp_get( $props, 'region', array(), true ),
+						mp_get( $props, 'postal-code', array(), true ),
+						mp_get( $props, 'country-name', array(), true ),
 					);
-					$args['meta_input']['geo_address'] = implode(
-						', ',
-						array_filter(
-							$parts,
-							function( $v ) {
-								return $v;
-							}
-						)
-					);
+					$parts = array_filter( $parts );
+					if ( ! empty( $parts ) ) {
+						$args['meta_input']['geo_address'] = implode(
+							', ',
+							array_filter(
+								$parts,
+								function( $v ) {
+									return $v;
+								}
+							)
+						);
+					}
 				}
-				$args['meta_input']['geo_latitude']  = mp_get( $props, 'latitude', true );
-				$args['meta_input']['geo_longitude'] = mp_get( $props, 'longitude', true );
-				$args['meta_input']['geo_altitude']  = mp_get( $props, 'altitude', true );
-				$args['meta_input']['geo_accuracy']  = mp_get( $props, 'accuracy', true );
+				foreach ( array( 'latitude', 'longitude', 'altitude', 'accuracy' ) as $property ) {
+					if ( array_key_exists( $property, $props ) ) {
+						$args['meta_input'][ 'geo_' . $property ] = $props[ $property ][0];
+					}
+				}
 			} elseif ( 'http' !== substr( $location, 0, 4 ) ) {
 				$args['meta_input']['geo_address'] = $location;
 			}
