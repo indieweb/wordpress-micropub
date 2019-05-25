@@ -113,6 +113,12 @@ class Micropub_Media {
 			$files = $files[ $name ];
 		}
 
+		foreach ( $files as $key => $value ) {
+			if ( is_array( $value ) ) {
+				$files[ $key ] = array_shift( $value );
+			}
+		}
+
 		$file = wp_handle_upload( $files, $overrides );
 
 		if ( isset( $file['error'] ) ) {
@@ -310,6 +316,9 @@ class Micropub_Media {
 							'fields'         => 'ids',
 							'posts_per_page' => 10,
 							'order'          => 'DESC',
+							'date_query'     => array(
+								'after' => '1 hour ago',
+							),
 						)
 					);
 					if ( is_array( $attachments ) ) {

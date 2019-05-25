@@ -28,7 +28,7 @@ if ( ! function_exists( 'mp_get' ) ) {
 		if ( is_array( $array ) && isset( $array[ $key ] ) ) {
 			$return = $array[ $key ];
 		}
-		if ( $index && is_array( $return ) ) {
+		if ( $index && wp_is_numeric_array( $return ) ) {
 			$return = $return[0];
 		}
 		return $return;
