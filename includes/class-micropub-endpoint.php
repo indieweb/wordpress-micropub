@@ -191,6 +191,9 @@ class Micropub_Endpoint {
 	 * @return boolean|WP_Micropub_Error
 	**/
 	protected static function check_scope( $scope, $user_id = null ) {
+		if ( 'undelete' === $scope ) {
+			$scope = 'delete';
+		}
 		$inscope = in_array( $scope, static::$scopes, true ) || in_array( 'post', static::$scopes, true );
 		if ( ! $inscope ) {
 			return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'scope insufficient to %1$s posts', $scope ), 401, static::$scopes );
@@ -851,35 +854,40 @@ class Micropub_Endpoint {
 			if ( ! isset( $args['meta_input'] ) ) {
 				$args['meta_input'] = array();
 			}
-			// $location = self::parse_geo_uri( $location );
 			if ( is_array( $location ) ) {
 				$props = $location['properties'];
 				if ( isset( $props['geo'] ) ) {
-					$args['meta_input']['geo_address'] = $props['label'][0];
-					$props                             = $props['geo'][0]['properties'];
+					if ( array_key_exists( 'label', $props ) ) {
+						$args['meta_input']['geo_address'] = $props['label'][0];
+					}
+					$props = $props['geo'][0]['properties'];
 				} else {
-					$parts                             = array(
-						$props['name'][0],
-						$props['street-address'][0],
-						$props['locality'][0],
-						$props['region'][0],
-						$props['postal-code'][0],
-						$props['country-name'][0],
+					$parts = array(
+						mp_get( $props, 'name', array(), true ),
+						mp_get( $props, 'street-address', array(), true ),
+						mp_get( $props, 'locality', array(), true ),
+						mp_get( $props, 'region', array(), true ),
+						mp_get( $props, 'postal-code', array(), true ),
+						mp_get( $props, 'country-name', array(), true ),
 					);
-					$args['meta_input']['geo_address'] = implode(
-						', ',
-						array_filter(
-							$parts,
-							function( $v ) {
-								return $v;
-							}
-						)
-					);
+					$parts = array_filter( $parts );
+					if ( ! empty( $parts ) ) {
+						$args['meta_input']['geo_address'] = implode(
+							', ',
+							array_filter(
+								$parts,
+								function( $v ) {
+									return $v;
+								}
+							)
+						);
+					}
 				}
-				$args['meta_input']['geo_latitude']  = $props['latitude'][0];
-				$args['meta_input']['geo_longitude'] = $props['longitude'][0];
-				$args['meta_input']['geo_altitude']  = $props['altitude'][0];
-				$args['meta_input']['geo_accuracy']  = $props['accuracy'][0];
+				foreach ( array( 'latitude', 'longitude', 'altitude', 'accuracy' ) as $property ) {
+					if ( array_key_exists( $property, $props ) ) {
+						$args['meta_input'][ 'geo_' . $property ] = $props[ $property ][0];
+					}
+				}
 			} elseif ( 'http' !== substr( $location, 0, 4 ) ) {
 				$args['meta_input']['geo_address'] = $location;
 			}

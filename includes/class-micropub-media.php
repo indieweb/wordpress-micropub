@@ -79,12 +79,27 @@ class Micropub_Media {
 	// Based on WP_REST_Attachments_Controller function of the same name
 	// TODO: Hook main endpoint functionality into and extend to use this class
 
-	public static function upload_from_file( $files, $name = null ) {
+	public static function upload_from_file( $files, $name = null, $headers = array() ) {
+
+		if ( empty( $files ) ) {
+			return new WP_Micropub_Error( 'invalid_request', 'No data supplied', 400 );
+		}
 
 		// Pass off to WP to handle the actual upload.
 		$overrides = array(
 			'test_form' => false,
 		);
+
+			// Verify hash, if given.
+		if ( ! empty( $headers['content_md5'] ) ) {
+			$content_md5 = array_shift( $headers['content_md5'] );
+			$expected    = trim( $content_md5 );
+			$actual      = md5_file( $files['file']['tmp_name'] );
+
+			if ( $expected !== $actual ) {
+				return new WP_Micropub_Error( 'invalid_request', 'Content hash did not match expected.', 412 );
+			}
+		}
 
 		// Bypasses is_uploaded_file() when running unit tests.
 		if ( defined( 'DIR_TESTDATA' ) && DIR_TESTDATA ) {
@@ -92,16 +107,23 @@ class Micropub_Media {
 		}
 
 		/** Include admin functions to get access to wp_handle_upload() */
-		require_once ABSPATH . 'wp-admin/includes/admin.php';
+		require_once ABSPATH . 'wp-admin/includes/file.php';
 
 		if ( $name && isset( $files[ $name ] ) && is_array( $files[ $name ] ) ) {
 			$files = $files[ $name ];
 		}
 
+		foreach ( $files as $key => $value ) {
+			if ( is_array( $value ) ) {
+				$files[ $key ] = array_shift( $value );
+			}
+		}
+
 		$file = wp_handle_upload( $files, $overrides );
 
 		if ( isset( $file['error'] ) ) {
-			return new WP_Micropub_Error( 'invalid_request', $file['error'], 500 );
+			error_log( wp_json_encode( $file['error'] ) );
+			return new WP_Micropub_Error( 'invalid_request', $file['error'], 500, $files );
 		}
 
 		return $file;
@@ -247,7 +269,7 @@ class Micropub_Media {
 		if ( empty( $files ) ) {
 			return new WP_Micropub_Error( 'invalid_request', 'No Files Attached', 400 );
 		} else {
-			$file = self::upload_from_file( $files, 'file' );
+			$file = self::upload_from_file( $files, 'file', $headers );
 		}
 
 		if ( is_micropub_error( $file ) ) {
@@ -294,6 +316,9 @@ class Micropub_Media {
 							'fields'         => 'ids',
 							'posts_per_page' => 10,
 							'order'          => 'DESC',
+							'date_query'     => array(
+								'after' => '1 hour ago',
+							),
 						)
 					);
 					if ( is_array( $attachments ) ) {

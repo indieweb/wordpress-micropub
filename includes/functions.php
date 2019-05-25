@@ -23,10 +23,14 @@ if ( ! function_exists( 'getallheaders' ) ) {
 }
 
 if ( ! function_exists( 'mp_get' ) ) {
-	function mp_get( $array, $key, $default = array() ) {
-		if ( is_array( $array ) ) {
-			return isset( $array[ $key ] ) ? $array[ $key ] : $default;
+	function mp_get( $array, $key, $default = array(), $index = false ) {
+		$return = $default;
+		if ( is_array( $array ) && isset( $array[ $key ] ) ) {
+			$return = $array[ $key ];
 		}
-		return $default;
+		if ( $index && wp_is_numeric_array( $return ) ) {
+			$return = $return[0];
+		}
+		return $return;
 	}
 }

@@ -22,7 +22,12 @@ matrix:
     env: WP_VERSION=latest WP_MULTISITE=0 WP_PLUGIN_DEPLOY=1
   - php: 7.0
   - php: 5.6
+    env: WP_VERSION=latest WP_MULTISITE=1
+  - php: 5.6
+    env: WP_VERSION=latest WP_MULTISITE=0
   - php: 5.4
+    env: WP_VERSION=4.9.9 WP_MULTISITE=0
+    # WordPress 5.2 removes support for WordPress 5.4. Testing for 4.9.9 as many people did not move to 5.0 due Gutenberg concerns
 before_script:
 - |
   # Remove Xdebug for a huge performance increase:

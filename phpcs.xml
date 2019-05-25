@@ -5,9 +5,9 @@
 	<file>./micropub.php</file>
 	<file>./includes/</file>
 	<rule ref="PHPCompatibility"/>
-	<config name="testVersion" value="5.3-"/>
+	<config name="testVersion" value="5.4-"/>
 	<rule ref="WordPress-Core" />	
-	<config name="minimum_supported_wp_version" value="4.7"/>
+	<config name="minimum_supported_wp_version" value="4.9"/>
 	<rule ref="WordPress.Files.FileName">
 	<properties>
 	<property name="strict_class_file_names" value="false" />

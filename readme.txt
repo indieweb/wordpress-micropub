@@ -1,21 +1,22 @@
 === Micropub ===
 Contributors: indieweb, snarfed, dshanske
 Tags: micropub, publish, indieweb, microformats
-Requires at least: 4.7
-Requires PHP: 5.3
-Tested up to: 5.1.1
-Stable tag: 2.0.10
+Requires at least: 4.9.9
+Requires PHP: 5.4
+Tested up to: 5.2
+Stable tag: 2.0.11
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
 
-A [Micropub](http://micropub.net/) server plugin. Available in the WordPress plugin directory at [wordpress.org/plugins/micropub](https://wordpress.org/plugins/micropub/).
+Micropub is an open API standard that is used to create posts on your site using third-party clients. Web apps and native apps (e.g. iPhone, Android) 
+can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com. 
 
 == Description ==
 
-[![Travis CI](https://travis-ci.org/indieweb/wordpress-micropub.svg?branch=master)](https://travis-ci.org/indieweb/wordpress-micropub)
+Adds [Micropub](http://micropub.net/) server support to WordPress. 
 
-> Micropub is an open API standard that is used to create posts on one's own domain using third-party clients. Web apps and native apps (e.g. iPhone, Android) can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com. 
+[![Travis CI](https://travis-ci.org/indieweb/wordpress-micropub.svg?branch=master)](https://travis-ci.org/indieweb/wordpress-micropub)
 
 Once you've installed and activated the plugin, try using [Quill](http://quill.p3k.io/) to create a new post on your site. It walks you through the steps and helps you troubleshoot if you run into any problems. A list of known Micropub clients are available [here](https://indieweb.org/Micropub/Clients)
 
@@ -23,6 +24,8 @@ Supports the [full W3C Micropub CR spec](https://www.w3.org/TR/micropub/) as of 
 
 As this allows the creation of posts without entering the WordPress admin, it is not subject to any Gutenberg compatibility concerns per se. Posts created will not have Gutenberg blocks
 as they were not created with Gutenberg, but otherwise there should be no issues at this time.
+
+Available in the WordPress plugin directory at [wordpress.org/plugins/micropub](https://wordpress.org/plugins/micropub/).
 
 == License ==
 
@@ -34,8 +37,7 @@ Supports the following [scope](https://indieweb.org/scope) parameters requested 
 * post (legacy) - Grants all user delegated access
 * create - Allows the client to create posts on behalf of the user
 * update - Allows the client to update posts on behalf of the user
-* delete - Allows the client to delete posts on behalf of the user
-* undelete - Allows the client to undelete posts on behalf of the user
+* delete - Allows the client to undelete/delete posts on behalf of the user
 * media  - Supports media for the media endpoint, but create or update also give media upload permissions
 
 == WordPress details ==
@@ -94,15 +96,17 @@ Stores [microformats2](http://microformats.org/wiki/microformats2) properties in
 Does *not* support multithreading. PHP doesn't really either, so it generally won't matter, but just for the record.
 
 Supports Experimental Extensions to Micropub:
-* [Post Status](https://indieweb.org/Micropub-extensions#Post_Status) - Either `published` or `draft`
-* [Visibility](https://indieweb.org/Micropub-extensions#Visibility) - Either `public` or `private`.
+* [Post Status](https://github.com/indieweb/micropub-extensions/issues/19) - Either `published` or `draft`
+* [Visibility](https://github.com/indieweb/micropub-extensions/issues/11) - Either `public` or `private`.
 * [Location Visiblity](https://indieweb.org/Micropub-extensions#Location_Visibility) - Either `public`, `private`, or `protected`
 * [Query for Post List](https://github.com/indieweb/micropub-extensions/issues/4) - Supports query for the last x number of posts. 
-* [Query for Support Queries](https://github.com/indieweb/micropub-extensions/issues/7) - Returns a list of query parameters the endpoint supports
+* [Query for Supported Queries](https://github.com/indieweb/micropub-extensions/issues/7) - Returns a list of query parameters the endpoint supports
 * [Query for Supported Properties](https://github.com/indieweb/micropub-extensions/issues/8) - Returns a list of which supported experimental properties the endpoint supports so the client can choose to hide unsupported ones.
+* [Discovery of Media Endpoint using Link Rel](https://github.com/indieweb/micropub-extensions/issues/15) - Adds a link header for the media endpoint
+* [Last Media Uploaded](https://github.com/indieweb/micropub-extensions/issues/10) - Supports querying for the last image uploaded ...set to within the last hour
 
 
-If an experimental property is not set to one of these options, the plugin will return HTTP 400 with body:
+If an experimental property is not set to one of the noted options, the plugin will return HTTP 400 with body:
 
     {
       "error": "invalid_request",
@@ -143,7 +147,7 @@ These configuration options can be enabled by adding them to your wp-config.php
 * `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` - Define a custom token endpoint. Can be overridden in the settings interface.
 * `define('MICROPUB_NAMESPACE', 'micropub/1.0' )` - By default the namespace for micropub is micropub/1.0. This would allow you to change this for your endpoint
 * `define('MICROPUB_DISABLE_NAG', 1 ) - Disable notices for insecure sites
-* `define('MICROPUB_LOCAL_AUTH', 1 ) - Disable built in AUTH in favor of your own plugin. Recommend plugin developers use the filter `disable_micropub_auth` for this.
+* `define('MICROPUB_LOCAL_AUTH', 1 ) - Disable built in AUTH in favor of your own plugin.
 
 These configuration options can be enabled by setting them in the WordPress options table.
 * `indieauth_authorization_endpoint` - if set will override MICROPUB_AUTHENTICATION_ENDPOINT for setting a custom endpoint
@@ -210,6 +214,12 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.0.11 (2019-05-25) =
+* Fix issues with empty variables
+* Update last media query to limit itself to last hour
+* Undelete is now part of delete scope as there is no undelete scope
+* Address issue where properties in upload are single property arrays  
 
 = 2.0.10 (2019-04-13) =
 * Fix issue with media not being attached to post 
