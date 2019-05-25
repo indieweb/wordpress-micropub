@@ -862,12 +862,12 @@ class Micropub_Endpoint {
 					$props                             = $props['geo'][0]['properties'];
 				} else {
 					$parts                             = array(
-						$props['name'][0],
-						$props['street-address'][0],
-						$props['locality'][0],
-						$props['region'][0],
-						$props['postal-code'][0],
-						$props['country-name'][0],
+						mp_get( $props, 'name', true ),
+						mp_get( $props, 'street-address', true ),
+						mp_get( $props, 'locality', true ),
+						mp_get( $props, 'region', true ),
+						mp_get( $props, 'postal-code', true ),
+						mp_get( $props, 'country-name', true ),
 					);
 					$args['meta_input']['geo_address'] = implode(
 						', ',
@@ -879,10 +879,10 @@ class Micropub_Endpoint {
 						)
 					);
 				}
-				$args['meta_input']['geo_latitude']  = $props['latitude'][0];
-				$args['meta_input']['geo_longitude'] = $props['longitude'][0];
-				$args['meta_input']['geo_altitude']  = $props['altitude'][0];
-				$args['meta_input']['geo_accuracy']  = $props['accuracy'][0];
+				$args['meta_input']['geo_latitude']  = mp_get( $props, 'latitude', true );
+				$args['meta_input']['geo_longitude'] = mp_get( $props, 'longitude', true );
+				$args['meta_input']['geo_altitude']  = mp_get( $props, 'altitude', true );
+				$args['meta_input']['geo_accuracy']  = mp_get( $props, 'accuracy', true );
 			} elseif ( 'http' !== substr( $location, 0, 4 ) ) {
 				$args['meta_input']['geo_address'] = $location;
 			}
