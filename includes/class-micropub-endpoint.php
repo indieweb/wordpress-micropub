@@ -191,6 +191,9 @@ class Micropub_Endpoint {
 	 * @return boolean|WP_Micropub_Error
 	**/
 	protected static function check_scope( $scope, $user_id = null ) {
+		if ( 'undelete' === $scope ) {
+			$scope = 'delete';
+		}
 		$inscope = in_array( $scope, static::$scopes, true ) || in_array( 'post', static::$scopes, true );
 		if ( ! $inscope ) {
 			return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'scope insufficient to %1$s posts', $scope ), 401, static::$scopes );
