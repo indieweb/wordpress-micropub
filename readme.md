@@ -216,6 +216,13 @@ into markdown and saved to readme.md.
 ## Changelog 
 
 
+### 2.0.11 (2019-05-25) 
+* Fix issues with empty variables
+* Update last media query to limit itself to last hour
+* Undelete is now part of delete scope as there is no undelete scope
+* Address issue where properties in upload are single property arrays  
+
+
 ### 2.0.10 (2019-04-13) 
 * Fix issue with media not being attached to post 
 

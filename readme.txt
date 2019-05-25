@@ -3,8 +3,8 @@ Contributors: indieweb, snarfed, dshanske
 Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.7
 Requires PHP: 5.3
-Tested up to: 5.1.1
-Stable tag: 2.0.10
+Tested up to: 5.2
+Stable tag: 2.0.11
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
@@ -210,6 +210,12 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.0.11 (2019-05-25) =
+* Fix issues with empty variables
+* Update last media query to limit itself to last hour
+* Undelete is now part of delete scope as there is no undelete scope
+* Address issue where properties in upload are single property arrays  
 
 = 2.0.10 (2019-04-13) =
 * Fix issue with media not being attached to post 
