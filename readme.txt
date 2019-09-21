@@ -3,8 +3,8 @@ Contributors: indieweb, snarfed, dshanske
 Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.9.9
 Requires PHP: 5.4
-Tested up to: 5.2
-Stable tag: 2.0.11
+Tested up to: 5.2.3
+Stable tag: 2.0.12
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
@@ -214,6 +214,9 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.0.12 (2019-xx-xx ) =
+* Fix bug where timezone meta key was always set to website timezone instead of provided one
 
 = 2.0.11 (2019-05-25) =
 * Fix issues with empty variables
