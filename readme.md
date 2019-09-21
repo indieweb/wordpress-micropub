@@ -220,6 +220,10 @@ into markdown and saved to readme.md.
 ## Changelog 
 
 
+### 2.0.12 (2019-xx-xx ) 
+* Fix bug where timezone meta key was always set to website timezone instead of provided one
+
+
 ### 2.0.11 (2019-05-25) 
 * Fix issues with empty variables
 * Update last media query to limit itself to last hour
