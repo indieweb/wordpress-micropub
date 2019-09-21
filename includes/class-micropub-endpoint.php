@@ -695,10 +695,10 @@ class Micropub_Endpoint {
 				if ( empty( $tz_string ) ) {
 					$tz_string = 'UTC';
 				}
-				$date->setTimeZone( new DateTimeZone( $tz_string ) );
 				$tz = $date->getTimezone();
 				// Pass this argument to the filter for use
 				$args['timezone']  = $tz->getName();
+				$date->setTimeZone( new DateTimeZone( $tz_string ) );
 				$args['post_date'] = $date->format( 'Y-m-d H:i:s' );
 				$date->setTimeZone( new DateTimeZone( 'GMT' ) );
 				$args['post_date_gmt'] = $date->format( 'Y-m-d H:i:s' );
