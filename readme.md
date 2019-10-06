@@ -222,6 +222,7 @@ into markdown and saved to readme.md.
 
 ### 2.0.12 (2019-xx-xx ) 
 * Fix bug where timezone meta key was always set to website timezone instead of provided one
+* Fix issue where title and caption were not being set for images by adopting code from WordPress core
 
 
 ### 2.0.11 (2019-05-25) 
