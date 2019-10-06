@@ -206,15 +206,31 @@ class Micropub_Media {
 	}
 
 	protected static function insert_attachment( $file, $post_id = 0, $title = null ) {
-		if ( ! $title ) {
-			$title = preg_replace( '/\.[^.]+$/', '', basename( $file['file'] ) );
-		}
 		$args = array(
 			'post_mime_type' => $file['type'],
 			'guid'           => $file['url'],
-			'post_title'     => $title,
 			'post_parent'    => $post_id,
 		);
+
+		// Include image functions to get access to wp_read_image_metadata
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+
+		// Use image exif/iptc data for title and caption defaults if possible.
+		// This is copied from the REST API Attachment upload controller code
+		// FIXME: It probably should work for audio and video as well but as Core does not do that it is fine for now
+		$image_meta = wp_read_image_metadata( $file['file'] );
+
+		if ( $image_meta ) {
+			if ( trim( $image_meta['title'] ) && ! is_numeric( sanitize_title( $image_meta['title'] ) ) ) {
+				$args['post_title'] = $image_meta['title'];
+			}
+			if ( trim( $image_meta['caption'] ) ) {
+				$args['post_excerpt'] = $image_meta['caption'];
+			}
+		}
+		if ( empty( $args['post_title'] ) ) {
+			$args['post_title'] = preg_replace( '/\.[^.]+$/', '', wp_basename( $file['file'] ) );
+		}
 
 		$id = wp_insert_attachment( $args, $file['file'], 0, true );
 
