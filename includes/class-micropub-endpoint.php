@@ -472,6 +472,7 @@ class Micropub_Endpoint {
 
 		kses_remove_filters();  // prevent sanitizing HTML tags in post_content
 		$args['ID'] = static::check_error( wp_insert_post( $args, true ) );
+		$args['post_url'] = get_permalink( $args['ID'] );
 		kses_init_filters();
 
 		static::default_file_handler( $args['ID'] );
