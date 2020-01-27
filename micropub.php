@@ -4,8 +4,8 @@
  * Plugin URI: https://github.com/snarfed/wordpress-micropub
  * Description: <a href="https://indiewebcamp.com/micropub">Micropub</a> server.
  * Protocol spec: <a href="https://www.w3.org/TR/micropub/">w3.org/TR/micropub</a>
- * Author: Ryan Barrett
- * Author URI: https://snarfed.org/
+ * Author: IndieWeb WordPress Outreach Club
+ * Author URI: https://indieweb.org/WordPress_Outreach_Club
  * Text Domain: micropub
  * Version: 2.0.12
  */
