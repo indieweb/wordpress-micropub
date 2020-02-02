@@ -25,7 +25,7 @@ class WP_Micropub_Error extends WP_REST_Response {
 	public function to_wp_error() {
 		$data   = $this->get_data();
 		$status = $this->get_status();
-		return new WP_Error( $data['error'], $data['error_description'], array( 'status' => $status ) );
+		return new WP_Error( $data['error'], $data['error_description'], array( 'status' => $status, 'data' => $data['data'] ) );
 	}
 
 	public function to_log() {
