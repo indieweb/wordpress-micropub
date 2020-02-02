@@ -112,9 +112,9 @@ class Micropub_Render {
 		$times   = array();
 		foreach ( array( 'start', 'end' ) as $cls ) {
 			if ( isset( $props[ $cls ][0] ) ) {
-				$datetime = iso8601_to_datetime( $props[ $cls ][0] );
+				$datetime = new DateTime( $props[ $cls ][0] );
 				$times[]  = '<time class="dt-' . $cls . '" datetime="' .
-					$props[ $cls ][0] . '">' . $datetime . '</time>';
+					$datetime->format( DATE_W3C ) . '">' . $datetime->format( DATE_W3C ) . '</time>';
 			}
 		}
 		$lines[] = implode( "\nto\n", $times );
