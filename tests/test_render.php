@@ -78,8 +78,8 @@ class MicropubRenderTest extends WP_UnitTestCase {
 			'type' => array( 'h-event' ),
 			'properties' => array(
 				'name' => array( 'My Event' ),
-				'start' => array( '2013-06-30 12:00:00' ),
-				'end' => array( '2013-06-31 18:00:00' ),
+				'start' => array( '2013-06-30T12:00:00+00:00' ),
+				'end' => array( '2013-07-01T18:00:00+00:00' ),
 				'location' => array( 'http://a/place' ),
 				'description' => array( 'some stuff' ),
 			) );
@@ -88,9 +88,9 @@ class MicropubRenderTest extends WP_UnitTestCase {
 <div class="h-event">
 <h1 class="p-name">My Event</h1>
 <p>
-<time class="dt-start" datetime="2013-06-30 12:00:00">2013-06-30 12:00:00</time>
+<time class="dt-start" datetime="2013-06-30T12:00:00+00:00">2013-06-30T12:00:00+00:00</time>
 to
-<time class="dt-end" datetime="2013-06-31 18:00:00">2013-06-31 18:00:00</time>
+<time class="dt-end" datetime="2013-07-01T18:00:00+00:00">2013-07-01T18:00:00+00:00</time>
 at <a class="p-location" href="http://a/place">http://a/place</a>.
 </p>
 <p class="p-description">some stuff</p>
