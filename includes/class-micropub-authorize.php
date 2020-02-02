@@ -243,7 +243,7 @@ class Micropub_Authorize {
 			array(
 				'headers' => array(
 					'Accept'        => 'application/json',
-					'Authorization' => $auth ?: 'Bearer ' . $token,
+					'Authorization' => $auth ? $auth : 'Bearer ' . $token,
 				),
 			)
 		);
