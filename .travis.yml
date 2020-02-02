@@ -82,7 +82,6 @@ before_install:
       set +e
     fi
 after_success:
-  - bash bin/deploy.sh
 script:
   - |
     if [[ ! -z "$WP_VERSION" ]] ; then
