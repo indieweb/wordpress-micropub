@@ -37,13 +37,13 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 	protected static $micropub_auth_response = array(
 		'me'        => 'http://tacos.com', // taken from WordPress' tests/user.php
 		'client_id' => 'https://example.com',
-		'scope'     => 'create update',
+		'scope'     => 'create update delete',
 		'issued_at' => 1399155608,
 		'nonce'     => 501884823,
 	);
 
-	// Scope defaulting to legacy
-	protected static $scopes = array( 'post' );
+	// Scope defaulting to 'create update delete'
+	protected static $scopes = array( 'create', 'update', 'delete' );
 
 	protected static $geo = array(
 		'type'       => array( 'h-geo' ),
@@ -99,7 +99,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 
 	public function setUp() {
 		parent::setUp();
-		static::$scopes = array( 'post' );
+		static::$scopes = array( 'create', 'update', 'delete' );
 	}
 
 	public function test_parse_geo_uri() {
@@ -177,7 +177,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		if ( is_array( $expected ) ) {
 			$this->assertEquals( $expected, $encoded, 'Array Equals: ' . wp_json_encode( $encoded ) );
 		} elseif ( is_string( $expected ) ) {
-			$this->assertContains( $expected, $encoded['error_description'], 'String Contains: ' . $encoded['error_description'] );
+			$this->assertContains( $expected, $encoded['error'], 'String Contains: ' . $encoded['error'] );
 		} else {
 			$this->assertSame( null, $expected, 'Same:  ' );
 		}
@@ -236,15 +236,20 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 	public function test_create_post_without_create_scope() {
 		static::$scopes = array( 'update' );
 		$response       = $this->dispatch( self::create_form_request( static::$post ), static::$author_id );
-		self::check( $response, 401, 'scope insufficient to create posts' );
+		self::check( $response, 401, 'insufficient_scope' );
+	}
+
+	public function test_create_post_with_draft_scope() {
+		static::$scopes = array( 'draft' );
+		$post = self::check_create( self::create_json_request( static::$mf2 ) );
+		$this->assertEquals( 'draft', get_post_status( $post, true ) );
 	}
 
 	public function test_create_post_subscriber_id() {
 		static::$scopes = array( 'create' );
 		$response       = $this->dispatch( self::create_form_request( static::$post ), static::$subscriber_id );
-		self::check( $response, 403, sprintf( 'user id %1$s cannot create posts', static::$subscriber_id ) );
+		self::check( $response, 400, 'forbidden' );
 	}
- 
 
 	public function test_form_to_json_encode() {
 		$output = Micropub_Endpoint::form_to_json( static::$post );
@@ -277,7 +282,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		$input                                  = static::$mf2;
 		$input['properties']['mp-syndicate-to'] = array( 'twitter', facebook );
 		$response                               = $this->dispatch( self::create_json_request( $input ), static::$author_id );
-		self::check( $response, 400, 'Unknown mp-syndicate-to targets: facebook' );
+		self::check( $response, 400, 'invalid_request' );
 	}
 
 	function syndicate_trigger( $id, $syns ) {
@@ -388,7 +393,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		$input['properties']['location-visibility'] = array( 'bleh' );
 				$response                           = $this->dispatch( self::create_json_request( $input ), static::$author_id );
 
-		$this->check( $response, 400, 'unsupported location visibility' );
+		$this->check( $response, 400, 'invalid_request' );
 	}
 	public function test_create_location_visibility_none() {
 		$input = static::$mf2;
@@ -504,7 +509,7 @@ EOF;
 			'add'    => array( 'content' => array( 'foo' ) ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
-		$this->check( $response, 400, 'can only add to category and syndication' );
+		$this->check( $response, 400, 'invalid_request' );
 	}
 
 	public function test_update_post_not_found() {
@@ -514,7 +519,7 @@ EOF;
 			'replace' => array( 'content' => array( 'unused' ) ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
-		$this->check( $response, 400, 'http://example.org/?p=999 not found' );
+		$this->check( $response, 400, 'invalid_request' );
 	}
 
 	public function test_update_post_no_scope() {
@@ -525,7 +530,7 @@ EOF;
 			'replace' => array( 'content' => array( 'unused' ) ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
-		$this->check( $response, 401, 'scope insufficient to update posts' );
+		$this->check( $response, 401, 'insufficient_scope' );
 	}
 
 	public function test_update_post_no_permission() {
@@ -535,7 +540,7 @@ EOF;
 			'replace' => array( 'content' => array( 'unused' ) ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$subscriber_id );
-		$this->check( $response, 403, sprintf( 'user id %1$s cannot update posts', static::$subscriber_id ) );
+		$this->check( $response, 403, 'forbidden' );
 	}
 
 
@@ -584,7 +589,7 @@ EOF;
 			'delete' => array( 'content' => array( 'to delete ' ) ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
-		$this->check( $response, 400, 'can only delete individual values from category and syndication' );
+		$this->check( $response, 400, 'invalid_request' );
 	}
 
 	public function test_update_replace_not_array() {
@@ -595,7 +600,7 @@ EOF;
 			'replace' => 'foo',
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
-		$this->check( $response, 400, 'replace must be an object' );
+		$this->check( $response, 400, 'invalid_request' );
 	}
 	public function test_update_add_not_array() {
 		$post_id  = self::insert_post();
@@ -605,7 +610,7 @@ EOF;
 			'add'    => 'foo',
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
-		$this->check( $response, 400, 'add must be an object' );
+		$this->check( $response, 400, 'invalid_request' );
 	}
 	public function test_update_delete_not_array() {
 		$post_id  = self::insert_post();
@@ -615,7 +620,7 @@ EOF;
 			'delete' => 'foo',
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
-		$this->check( $response, 400, 'delete must be an array' );
+		$this->check( $response, 400, 'invalid_request' );
 	}
 	public function test_delete() {
 		$post_id  = self::insert_post();
@@ -636,12 +641,7 @@ EOF;
 			'url'    => 'http://example.org/?p=' . $post_id,
 		);
 		$response = $this->dispatch( self::create_form_request( $POST ), static::$subscriber_id );
-		$this->check(
-			$response, 403, array(
-				'error' => 'forbidden',
-				'error_description' => sprintf( 'user id %1$s cannot delete posts', static::$subscriber_id )
-			)
-		);
+		$this->check( $response, 403, 'forbidden' );
 	}
 
 	public function test_delete_no_scope() {
@@ -652,12 +652,7 @@ EOF;
 			'url'    => 'http://example.org/?p=' . $post_id,
 		);
 		$response = $this->dispatch( self::create_form_request( $POST ), static::$author_id );
-		$this->check(
-			$response, 401, array(
-				'error' => 'insufficient_scope',
-				'error_description' => sprintf( 'scope insufficient to delete posts', static::$subscriber_id )
-			)
-		);
+		$this->check( $response, 401, 'insufficient_scope' );
 	}
 
 
@@ -714,7 +709,7 @@ EOF;
 			'url'    => 'http://example.org/?p=' . $post_id,
 		);
 		$response = $this->dispatch( self::create_form_request( $POST ), static::$author_id );
-		$this->check( $response, 400, 'Unknown Action' );
+		$this->check( $response, 400, 'invalid_request' );
 	}
 
 	// https://github.com/snarfed/wordpress-micropub/issues/57#issuecomment-302965336

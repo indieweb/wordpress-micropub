@@ -127,7 +127,7 @@ class Micropub_Endpoint {
 		$action = $request->get_param( 'action' );
 		$action = $action ? $action : 'create';
 
-		$permission = self::check_scope( $action, get_current_user_id() );
+		$permission = self::check_action( $action );
 		if ( is_micropub_error( $permission ) ) {
 			return $permission->to_wp_error();
 		}
@@ -182,46 +182,26 @@ class Micropub_Endpoint {
 	}
 
 	/**
-	 * Check scope.
-	 * If a user id is supplied check the scope against the user permissions otherwise just check scopes
+	 * Check action and match to scope
 	 *
-	 * @param string $scope
-	 * @param id $user_id. Optional.
+	 * @param string $action
 	 *
 	 * @return boolean|WP_Micropub_Error
 	**/
-	protected static function check_scope( $scope, $user_id = null ) {
-		if ( 'undelete' === $scope ) {
-			$scope = 'delete';
-		}
-		$inscope = in_array( $scope, static::$scopes, true ) || in_array( 'post', static::$scopes, true );
-		if ( ! $inscope ) {
-			return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'scope insufficient to %1$s posts', $scope ), 401, static::$scopes );
-		}
-		// Because 0 is a user
-		if ( is_null( $user_id ) ) {
+	protected static function check_action( $action ) {
+		if ( in_array( $action, static::$scopes, true ) ) {
 			return true;
 		}
-		switch ( $scope ) {
-			case 'update':
-				if ( ! user_can( $user_id, 'edit_posts' ) ) {
-					return new WP_Micropub_Error( 'forbidden', sprintf( 'user id %1$s cannot update posts', $user_id ), 403 );
-				}
-				return true;
-			case 'undelete':
-			case 'delete':
-				if ( ! user_can( $user_id, 'delete_posts' ) ) {
-					return new WP_Micropub_Error( 'forbidden', sprintf( 'user id %1$s cannot delete posts', $user_id ), 403 );
-				}
-				return true;
-			case 'create':
-				if ( ! user_can( $user_id, 'publish_posts' ) ) {
-					return new WP_Micropub_Error( 'forbidden', sprintf( 'user id %1$s cannot create posts', $user_id ), 403 );
-				}
-				return true;
-			default:
-				return new WP_Micropub_Error( 'invalid_request', 'Unknown Action', 400 );
+		if ( 'create' === $action && in_array( 'draft', static::$scopes, true ) ) {
+			return true;
 		}
+		if ( 'undelete' === $action && in_array( 'delete', static::$scopes, true ) ) {
+			return true;
+		}
+		if ( ! in_array( $action, array( 'create', 'update', 'delete', 'undelete' ), true ) ) {
+			return new WP_Micropub_Error( 'invalid_request', 'Unknown Action', 400 );
+		}
+		return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'insufficient to %1$s posts', $action ), 401, static::$scopes );
 	}
 
 
@@ -239,11 +219,7 @@ class Micropub_Endpoint {
 		}
 
 		$action = mp_get( static::$input, 'action', 'create' );
-		if ( ! self::check_scope( $action ) ) {
-			return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'scope insufficient to %1$s posts', $action ), 403 );
-		}
-
-		$url = mp_get( static::$input, 'url' );
+		$url    = mp_get( static::$input, 'url' );
 
 		// check that we support all requested syndication targets
 		$synd_supported = self::get_syndicate_targets( $user_id );
@@ -275,7 +251,11 @@ class Micropub_Endpoint {
 				$args = static::update( static::$input );
 				break;
 			case 'delete':
-				$args = get_post( url_to_postid( $url ), ARRAY_A );
+				$post_id = url_to_postid( $url );
+				if ( ! current_user_can( 'delete_posts', $post_id ) ) {
+					return new WP_Micropub_Error( 'forbidden', 'Insufficient Permission to Delete Post', 403 );
+				}
+				$args = get_post( $post_id, ARRAY_A );
 				if ( ! $args ) {
 					return new WP_Micropub_Error( 'invalid_request', sprintf( '%1$s not found', $url ), 400 );
 				}
@@ -294,6 +274,9 @@ class Micropub_Endpoint {
 					)
 				) as $post_id ) {
 					if ( get_the_guid( $post_id ) === $url ) {
+						if ( ! current_user_can( 'delete_posts', $post_id ) ) {
+							return new WP_Micropub_Error( 'forbidden', 'Insufficient Permission to UnDelete Post', 403 );
+						}
 						wp_untrash_post( $post_id );
 						wp_publish_post( $post_id );
 						$found = true;
@@ -444,6 +427,15 @@ class Micropub_Endpoint {
 	 * Handle a create request.
 	 */
 	private static function create( $user_id ) {
+		if ( ! user_can( $user_id, 'edit_posts' ) ) {
+			return new WP_Micropub_Error( 'forbidden', 'Insufficient Permission to Create Posts', 400 );
+		}
+		//
+		if ( ! user_can( $user_id, 'publish_posts' ) ) {
+			if ( ! in_array( 'draft', static::$scopes, true ) ) {
+				return new WP_Micropub_Error( 'forbidden', 'Insufficient Permission to Create Posts', 400 );
+			}
+		}
 		$args = static::mp_to_wp( static::$input );
 		$args = static::store_micropub_auth_response( $args );
 
@@ -462,7 +454,15 @@ class Micropub_Endpoint {
 		if ( $user_id ) {
 			$args['post_author'] = $user_id;
 		}
-		$args['post_status'] = static::post_status( static::$input );
+
+		// If the current user cannot publish posts then post status is always draft
+		if ( ! user_can( $user_id, 'publish_posts' ) ) {
+			$args['post_status'] = 'draft';
+		} elseif ( in_array( 'draft', static::$scopes, true ) ) {
+			$args['post_status'] = 'draft';
+		} else {
+			$args['post_status'] = static::post_status( static::$input );
+		}
 		if ( ! $args['post_status'] ) {
 			return new WP_Micropub_Error( 'invalid_request', 'Invalid Post Status', 400 );
 		}
@@ -471,7 +471,7 @@ class Micropub_Endpoint {
 		}
 
 		kses_remove_filters();  // prevent sanitizing HTML tags in post_content
-		$args['ID'] = static::check_error( wp_insert_post( $args, true ) );
+		$args['ID']       = static::check_error( wp_insert_post( $args, true ) );
 		$args['post_url'] = get_permalink( $args['ID'] );
 		kses_init_filters();
 
@@ -487,7 +487,10 @@ class Micropub_Endpoint {
 	 */
 	private static function update( $input ) {
 		$post_id = url_to_postid( $input['url'] );
-		$args    = get_post( $post_id, ARRAY_A );
+		if ( ! current_user_can( 'edit_posts', $post_id ) ) {
+			return new WP_Micropub_Error( 'forbidden', 'Insufficient Permission to Update Post', 403 );
+		}
+		$args = get_post( $post_id, ARRAY_A );
 		if ( ! $args ) {
 			return new WP_Micropub_Error( 'invalid_request', sprintf( '%1$s not found', $input['url'] ), 400 );
 		}
@@ -505,14 +508,14 @@ class Micropub_Endpoint {
 			if ( $add_args['tags_input'] ) {
 				// i tried wp_add_post_tags here, but it didn't work
 				$args['tags_input'] = array_merge(
-					$args['tags_input'] ?: array(),
+					$args['tags_input'] ? $args['tags_input'] : array(),
 					$add_args['tags_input']
 				);
 			}
 			if ( $add_args['post_category'] ) {
 				// i tried wp_set_post_categories here, but it didn't work
 				$args['post_category'] = array_merge(
-					$args['post_category'] ?: array(),
+					$args['post_category'] ? $args['post_category'] : array(),
 					$add_args['post_category']
 				);
 			}
@@ -528,13 +531,13 @@ class Micropub_Endpoint {
 				$delete_args = static::mp_to_wp( array( 'properties' => $delete ) );
 				if ( $delete_args['tags_input'] ) {
 					$args['tags_input'] = array_diff(
-						$args['tags_input'] ?: array(),
+						$args['tags_input'] ? $args['tags_input'] : array(),
 						$delete_args['tags_input']
 					);
 				}
 				if ( $delete_args['post_category'] ) {
 					$args['post_category'] = array_diff(
-						$args['post_category'] ?: array(),
+						$args['post_category'] ? $args['post_category'] : array(),
 						$delete_args['post_category']
 					);
 				}
@@ -698,7 +701,7 @@ class Micropub_Endpoint {
 				}
 				$tz = $date->getTimezone();
 				// Pass this argument to the filter for use
-				$args['timezone']  = $tz->getName();
+				$args['timezone'] = $tz->getName();
 				$date->setTimeZone( new DateTimeZone( $tz_string ) );
 				$args['post_date'] = $date->format( 'Y-m-d H:i:s' );
 				$date->setTimeZone( new DateTimeZone( 'GMT' ) );
@@ -741,7 +744,7 @@ class Micropub_Endpoint {
 		if ( isset( $props['content'] ) ) {
 			$content = $props['content'][0];
 			if ( is_array( $content ) ) {
-				$args['post_content'] = $content['html'] ?:
+				$args['post_content'] = $content['html'] ? $content['html'] :
 							htmlspecialchars( $content['value'] );
 			} elseif ( $content ) {
 				$args['post_content'] = htmlspecialchars( $content );
