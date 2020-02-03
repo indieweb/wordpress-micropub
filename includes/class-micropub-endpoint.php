@@ -695,14 +695,11 @@ class Micropub_Endpoint {
 			$date = new DateTime( $props['published'][0] );
 			// If for whatever reason the date cannot be parsed do not include one which defaults to now
 			if ( $date ) {
-				$tz_string = get_option( 'timezone_string' );
-				if ( empty( $tz_string ) ) {
-					$tz_string = 'UTC';
-				}
-				$tz = $date->getTimezone();
+				$wptz = wp_timezone();
+				$tz   = $date->getTimezone();
+				$date->setTimeZone( $wptz );
 				// Pass this argument to the filter for use
-				$args['timezone'] = $tz->getName();
-				$date->setTimeZone( new DateTimeZone( $tz_string ) );
+				$args['timezone']  = $tz->getName();
 				$args['post_date'] = $date->format( 'Y-m-d H:i:s' );
 				$date->setTimeZone( new DateTimeZone( 'GMT' ) );
 				$args['post_date_gmt'] = $date->format( 'Y-m-d H:i:s' );
@@ -713,11 +710,8 @@ class Micropub_Endpoint {
 			$date = new DateTime( $props['updated'][0] );
 			// If for whatever reason the date cannot be parsed do not include one which defaults to now
 			if ( $date ) {
-				$tz_string = get_option( 'timezone_string' );
-				if ( empty( $tz_string ) ) {
-					$tz_string = 'UTC';
-				}
-				$date->setTimeZone( new DateTimeZone( $tz_string ) );
+				$wptz = wp_timezone();
+				$date->setTimeZone( $wptz );
 				$tz = $date->getTimezone();
 				// Pass this argument to the filter for use
 				$args['timezone']      = $tz->getName();
