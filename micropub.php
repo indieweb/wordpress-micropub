@@ -7,7 +7,7 @@
  * Author: IndieWeb WordPress Outreach Club
  * Author URI: https://indieweb.org/WordPress_Outreach_Club
  * Text Domain: micropub
- * Version: 2.0.12
+ * Version: 2.1.0
  */
 
 /* See README for supported filters and actions.
@@ -42,6 +42,9 @@ if ( ! defined( 'MICROPUB_LOCAL_AUTH' ) ) {
 
 // Global Functions
 require_once plugin_dir_path( __FILE__ ) . 'includes/functions.php';
+
+// Compatibility Functions with Newer WordPress Versions
+require_once plugin_dir_path( __FILE__ ) . 'includes/compat-functions.php';
 
 // Admin Menu Functions
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-admin.php';

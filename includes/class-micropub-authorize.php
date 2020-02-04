@@ -243,7 +243,7 @@ class Micropub_Authorize {
 			array(
 				'headers' => array(
 					'Accept'        => 'application/json',
-					'Authorization' => $auth ?: 'Bearer ' . $token,
+					'Authorization' => $auth ? $auth : 'Bearer ' . $token,
 				),
 			)
 		);
@@ -256,6 +256,14 @@ class Micropub_Authorize {
 		$body           = wp_remote_retrieve_body( $resp );
 		$params         = json_decode( $body, true );
 		static::$scopes = explode( ' ', $params['scope'] );
+
+		// If the post scope has been added silently change it to create and update
+		$p = array_search( 'post', static::$scopes, true );
+		if ( false !== $p ) {
+			unset( static::$scopes[ $p ] );
+			static::$scopes[] = 'create';
+			static::$scopes[] = 'update';
+		}
 
 		if ( ( $code / 100 ) !== 2 ) {
 			static::$error = new WP_Micropub_Error( 'invalid_request', 'invalid access token', 403 );
