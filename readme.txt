@@ -2,7 +2,7 @@
 Contributors: indieweb, snarfed, dshanske
 Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.9.9
-Requires PHP: 5.4
+Requires PHP: 5.6
 Tested up to: 5.2.3
 Stable tag: 2.1.0
 License: CC0
