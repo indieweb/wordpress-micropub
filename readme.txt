@@ -4,17 +4,17 @@ Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.9.9
 Requires PHP: 5.4
 Tested up to: 5.2.3
-Stable tag: 2.0.12
+Stable tag: 2.1.0
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
 
-Micropub is an open API standard that is used to create posts on your site using third-party clients. Web apps and native apps (e.g. iPhone, Android) 
-can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com. 
+Adds [Micropub](http://micropub.net/) server support to WordPress. 
 
 == Description ==
 
-Adds [Micropub](http://micropub.net/) server support to WordPress. 
+Micropub is an open API standard that is used to create posts on your site using third-party clients. Web apps and native apps (e.g. iPhone, Android) 
+can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com. 
 
 [![Travis CI](https://travis-ci.org/indieweb/wordpress-micropub.svg?branch=master)](https://travis-ci.org/indieweb/wordpress-micropub)
 
@@ -34,11 +34,11 @@ This project is placed in the public domain. You may also use it under the [CC0 
 == Scope ==
 
 Supports the following [scope](https://indieweb.org/scope) parameters requested by Micropub clients.
-* post (legacy) - Grants all user delegated access
-* create - Allows the client to create posts on behalf of the user
+* create - Allows the client to create and publish posts on behalf of the user
+* draft - Allows the client to create drafts on behalf of the user but not publish them
 * update - Allows the client to update posts on behalf of the user
 * delete - Allows the client to undelete/delete posts on behalf of the user
-* media  - Supports media for the media endpoint, but create or update also give media upload permissions
+* media  - Supports uploading media for the media endpoint, but create or update also give media upload permissions
 
 == WordPress details ==
 
@@ -183,7 +183,7 @@ None.
 
 The canonical repo is http://github.com/indieweb/wordpress-micropub . Feedback and pull requests are welcome!
 
-To add a new release to the WordPress plugin directory, run `push.sh`.
+To add a new release to the WordPress plugin directory, tag it with the version number and push the tag. It will automatically deploy.
 
 To set up your local environment to run the unit tests and set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https://make.wordpress.org/core/handbook/coding-standards/php/) and [PHP 5.3 Compatibility](https://github.com/wimg/PHPCompatibility):
 
@@ -215,9 +215,14 @@ into markdown and saved to readme.md.
 
 == Changelog ==
 
-= 2.0.12 (2019-xx-xx ) =
+= 2.1.0 (2020-xx-xx ) =
 * Fix bug where timezone meta key was always set to website timezone instead of provided one
 * Fix issue where title and caption were not being set for images by adopting code from WordPress core
+* Remove post scope
+* Add support for draft scope
+* Improve permission handling by ensuring someone cannot edit another users posts unless they have that capability
+* Fix issue with date rendering in events
+* return URL in response to creating a post
 
 = 2.0.11 (2019-05-25) =
 * Fix issues with empty variables
