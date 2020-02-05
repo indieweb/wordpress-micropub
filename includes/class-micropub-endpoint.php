@@ -437,6 +437,13 @@ class Micropub_Endpoint {
 			}
 		}
 		$args = static::mp_to_wp( static::$input );
+
+		// Allow Filtering of Post Type
+		$args['post_type'] = apply_filters( 'micropub_post_type', 'post', static::$input );
+
+		// Allow filtering of Tax Input
+		$args['tax_input'] = apply_filters( 'micropub_tax_input', null, static::$input );
+
 		$args = static::store_micropub_auth_response( $args );
 
 		$post_content = mp_get( $args, 'post_content', '' );
