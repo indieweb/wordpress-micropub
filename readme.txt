@@ -43,7 +43,7 @@ Supports the following [scope](https://indieweb.org/scope) parameters requested 
 == WordPress details ==
 
 = Filters and hooks =
-Adds seven filters:
+Adds nine filters:
 
 `before_micropub( $input )`
 
@@ -52,6 +52,15 @@ Called before handling a Micropub request. Returns `$input`, possibly modified.
 `micropub_post_content( $post_content, $input )` 
 
 Called during the handling of a Micropub request. The content generation function is attached to this filter by default. Returns `$post_content`, possibly modified.
+
+`micropub_post_type( $post_type = 'post', $input )`
+
+Called during the creation of a Micropub post. This defaults to post, but allows for setting Micropub posts to a custom post type.
+
+`micropub_tax_input( $tax_input, $input )`
+
+Called during the creation of a Micropub post. This defaults to nothing but allows for a Micropub post to set a custom taxonomy.
+
 
 `micropub_syndicate-to( $synd_urls, $user_id )`
 
@@ -223,6 +232,7 @@ into markdown and saved to readme.md.
 * Improve permission handling by ensuring someone cannot edit another users posts unless they have that capability
 * Fix issue with date rendering in events
 * return URL in response to creating a post
+* introduce two new filters to filter the post type and the taxonomy input for posts
 
 = 2.0.11 (2019-05-25) =
 * Fix issues with empty variables
