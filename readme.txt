@@ -224,7 +224,7 @@ into markdown and saved to readme.md.
 
 == Changelog ==
 
-= 2.1.0 (2020-xx-xx ) =
+= 2.1.0 (2020-02-06 ) =
 * Fix bug where timezone meta key was always set to website timezone instead of provided one
 * Fix issue where title and caption were not being set for images by adopting code from WordPress core
 * Remove post scope
