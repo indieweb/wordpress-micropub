@@ -6,17 +6,32 @@
 	"composer/installers": "~1.0"
     },
     "require-dev": {
-        "dealerdirect/phpcodesniffer-composer-installer": "^0.4",
+        "dealerdirect/phpcodesniffer-composer-installer": "^0.6",
 	"squizlabs/php_codesniffer": "*",
         "wp-coding-standards/wpcs": "*",
         "wpreadme2markdown/wp2md": "*",
-        "phpunit/phpunit": "<7.0",
+        "phpunit/phpunit": "^7.0",
         "phpcompatibility/phpcompatibility-wp": "^2.0",
-        "phpcompatibility/php-compatibility": "^9.1"
+        "phpcompatibility/php-compatibility": "^9.1",
+	"sebastian/phpcpd": "^5.0",
+	"php-parallel-lint/php-parallel-lint": "^1.2"
     },
     "prefer-stable" : true,
     "scripts": {
-        "lint": "phpcs",
+        "phpunit": "./vendor/bin/phpunit",
+        "lint": [
+		"@lint:php",
+		"./vendor/bin/phpcs -n -p",
+		"@phpcpd"
+	],
+	"build": [
+		"./vendor/bin/phpcbf -p",
+		"@update-readme"
+	],
+	"phpcs": "./vendor/bin/phpcs -p",
+	"phpcbf": "./vendor/bin/phpcbf -p",
+	"phpcpd": "./vendor/bin/phpcpd --fuzzy --exclude .git --exclude vendor --exclude tests .",
+	"lint:php": "@php ./vendor/bin/parallel-lint --exclude .git --exclude vendor .",
 	"install-codestandards": [
 		"Dealerdirect\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\Plugin::run"
 	],
