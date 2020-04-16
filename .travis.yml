@@ -22,6 +22,9 @@ php:
   - 7.4
 jobs:
   include:
+  - stage: lint
+    php: 7.4
+    script: composer lint
   - stage: previousversion
     php: 7.4
     env: WP_VERSION=5.3 WP_MULTISITE=0
@@ -80,6 +83,7 @@ before_script:
 - svn --version
 - locale -a
 before_install:
+- composer install
 - export PATH="$HOME/.composer/vendor/bin:$PATH"
 - |
     if [[ ! -z "$WP_VERSION" ]] ; then
