@@ -41,6 +41,7 @@ class Micropub_Authorize_Test extends WP_UnitTestCase {
 	}
 	public function setUp() {
 		// parent::setUp();
+		wp_update_user( array( 'ID' => 1, 'user_url' => '/wp-admin/' ) );
 	}
 
 	public function test_author_url() {
@@ -56,8 +57,8 @@ class Micropub_Authorize_Test extends WP_UnitTestCase {
 	}
 
 	public function test_home_url() {
-		wp_update_user( array( 'ID' => self::$author_id, 'user_url' => '/users/' . self::$author_id ) );
-		$user_id = Micropub_Authorize::url_to_user( '/users/' . self::$author_id );
+		wp_update_user( array( 'ID' => self::$author_id, 'user_url' => home_url() ) );
+		$user_id = Micropub_Authorize::url_to_user( home_url() );
 		$this->assertEquals( self::$author_id, $user_id );
 		wp_update_user( array( 'ID' => self::$author_id, 'user_url' => 'http://tacos.com' ) );
 	}
