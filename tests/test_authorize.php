@@ -41,6 +41,7 @@ class Micropub_Authorize_Test extends WP_UnitTestCase {
 	}
 	public function setUp() {
 		// parent::setUp();
+		wp_update_user( array( 'ID' => 1, 'user_url' => '/wp-admin/' ) );
 	}
 
 	public function test_author_url() {
