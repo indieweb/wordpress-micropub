@@ -22,9 +22,6 @@ php:
   - 7.4
 jobs:
   include:
-  - stage: multisitetest
-    env: WP_VERSION=latest WP_MULTISITE=1
-    php: 7.4
   - stage: previousversion
     php: 7.4
     env: WP_VERSION=5.3 WP_MULTISITE=0
@@ -48,7 +45,7 @@ before_script:
   # Install the specified version of PHPUnit depending on the PHP version:
   if [[ "$WP_TRAVISCI" == "travis:phpunit" ]]; then
     case "$TRAVIS_PHP_VERSION" in
-      7.4|7.2|7.1|nightly)
+      7.4|7.3|7.2|7.1|nightly)
         echo "Using PHPUnit 7.x"
         composer global require "phpunit/phpunit:^7"
         ;;
