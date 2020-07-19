@@ -467,9 +467,7 @@ class Micropub_Endpoint {
 		}
 
 		// If the current user cannot publish posts then post status is always draft
-		if ( ! user_can( $user_id, 'publish_posts' ) ) {
-			$args['post_status'] = 'draft';
-		} elseif ( in_array( 'draft', static::$scopes, true ) ) {
+		if ( ! user_can( $user_id, 'publish_posts' ) && user_can( $user_id, 'edit_posts' ) ) {
 			$args['post_status'] = 'draft';
 		} else {
 			$args['post_status'] = static::post_status( static::$input );
