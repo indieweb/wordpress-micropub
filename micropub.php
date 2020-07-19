@@ -28,27 +28,34 @@ if ( ! defined( 'MICROPUB_DISABLE_NAG' ) ) {
 	define( 'MICROPUB_DISABLE_NAG', 0 );
 }
 
-// Global Functions
-require_once plugin_dir_path( __FILE__ ) . 'includes/functions.php';
 
-// Compatibility Functions with Newer WordPress Versions
-require_once plugin_dir_path( __FILE__ ) . 'includes/compat-functions.php';
+if ( class_exists( 'IndieAuth_Plugin' ) ) {
 
-// Admin Menu Functions
-require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-admin.php';
+	// Global Functions
+	require_once plugin_dir_path( __FILE__ ) . 'includes/functions.php';
 
-// Error Handling Class
-require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-error.php';
+	// Compatibility Functions with Newer WordPress Versions
+	require_once plugin_dir_path( __FILE__ ) . 'includes/compat-functions.php';
 
-// Media Endpoint and Handling Functions
-require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-media.php';
+	// Admin Menu Functions
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-admin.php';
 
-// Server Functions
-require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-endpoint.php';
+	// Error Handling Class
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-error.php';
 
-// Render Functions
-require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-render.php';
+	// Media Endpoint and Handling Functions
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-media.php';
 
+	// Server Functions
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-endpoint.php';
+
+	// Render Functions
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-render.php';
+
+} else {
+
+	add_action( 'admin_notices', 'micropub_indieauth_not_installed_notice' );
+}
 function micropub_not_ssl_notice() {
 	if ( is_ssl() || MICROPUB_DISABLE_NAG ) {
 		return;
@@ -60,4 +67,13 @@ function micropub_not_ssl_notice() {
 	<?php
 }
 add_action( 'admin_notices', 'micropub_not_ssl_notice' );
+
+
+function micropub_indieauth_not_installed_notice() {
+	?>
+	<div class="notice notice-error">
+		<p>To use Micropub, you must have IndieAuth support. Please install the IndieAuth plugin.</p>
+	</div>
+	<?php
+}
 
