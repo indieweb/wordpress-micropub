@@ -39,8 +39,22 @@ class Micropub_Endpoint {
 		add_filter( 'rest_request_after_callbacks', array( $cls, 'return_micropub_error' ), 10, 3 );
 	}
 
+	public static function get_namespace() {
+		return defined( MICROPUB_NAMESPACE ) ? MICROPUB_NAMESPACE : 'micropub/1.0';
+	}
+
+	public static function get_micropub_rest_route( $slash = false ) {
+		$return = static::get_namespace() . '/endpoint';
+		return $slash ? '/' . $return : $return;
+	}
+
+	public static function get_micropub_endpoint() {
+		return rest_url( static::get_micropub_rest_route() );
+	}
+
+
 	public static function return_micropub_error( $response, $handler, $request ) {
-		if ( '/micropub/1.0/endpoint' !== $request->get_route() ) {
+		if ( static::get_namespace() . '/endpoint' !== $request->get_route() ) {
 				return $response;
 		}
 		if ( is_wp_error( $response ) ) {
@@ -70,7 +84,7 @@ class Micropub_Endpoint {
 	public static function register_route() {
 		$cls = get_called_class();
 		register_rest_route(
-			MICROPUB_NAMESPACE,
+			static::get_namespace(),
 			'/endpoint',
 			array(
 				array(
@@ -189,17 +203,22 @@ class Micropub_Endpoint {
 	 * @return boolean|WP_Micropub_Error
 	**/
 	protected static function check_action( $action ) {
-		if ( in_array( $action, static::$scopes, true ) ) {
-			return true;
+		switch ( $action ) {
+			case 'delete':
+			case 'undelete':
+				$return = current_user_can( 'delete_posts' );
+				break;
+			case 'update':
+				$return = current_user_can( 'edit_published_posts' );
+				break;
+			case 'create':
+				$return = current_user_can( 'edit_posts' );
+				break;
+			default:
+				return new WP_Micropub_Error( 'invalid_request', 'Unknown Action', 400 );
 		}
-		if ( 'create' === $action && in_array( 'draft', static::$scopes, true ) ) {
+		if ( $return ) {
 			return true;
-		}
-		if ( 'undelete' === $action && in_array( 'delete', static::$scopes, true ) ) {
-			return true;
-		}
-		if ( ! in_array( $action, array( 'create', 'update', 'delete', 'undelete' ), true ) ) {
-			return new WP_Micropub_Error( 'invalid_request', 'Unknown Action', 400 );
 		}
 		return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'insufficient to %1$s posts', $action ), 401, static::$scopes );
 	}
@@ -252,10 +271,7 @@ class Micropub_Endpoint {
 				break;
 			case 'delete':
 				$post_id = url_to_postid( $url );
-				if ( ! current_user_can( 'delete_posts', $post_id ) ) {
-					return new WP_Micropub_Error( 'forbidden', 'Insufficient Permission to Delete Post', 403 );
-				}
-				$args = get_post( $post_id, ARRAY_A );
+				$args    = get_post( $post_id, ARRAY_A );
 				if ( ! $args ) {
 					return new WP_Micropub_Error( 'invalid_request', sprintf( '%1$s not found', $url ), 400 );
 				}
@@ -274,9 +290,6 @@ class Micropub_Endpoint {
 					)
 				) as $post_id ) {
 					if ( get_the_guid( $post_id ) === $url ) {
-						if ( ! current_user_can( 'delete_posts', $post_id ) ) {
-							return new WP_Micropub_Error( 'forbidden', 'Insufficient Permission to UnDelete Post', 403 );
-						}
 						wp_untrash_post( $post_id );
 						wp_publish_post( $post_id );
 						$found = true;
@@ -320,7 +333,7 @@ class Micropub_Endpoint {
 			case 'config':
 				$resp = array(
 					'syndicate-to'   => static::get_syndicate_targets( $user_id ),
-					'media-endpoint' => rest_url( MICROPUB_NAMESPACE . '/media' ),
+					'media-endpoint' => rest_url( static::get_namespace() . '/media' ),
 					'mp'             => array(
 						'slug',
 						'syndicate-to',
@@ -427,15 +440,6 @@ class Micropub_Endpoint {
 	 * Handle a create request.
 	 */
 	private static function create( $user_id ) {
-		if ( ! user_can( $user_id, 'edit_posts' ) ) {
-			return new WP_Micropub_Error( 'forbidden', 'Insufficient Permission to Create Posts', 400 );
-		}
-		//
-		if ( ! user_can( $user_id, 'publish_posts' ) ) {
-			if ( ! in_array( 'draft', static::$scopes, true ) ) {
-				return new WP_Micropub_Error( 'forbidden', 'Insufficient Permission to Create Posts', 400 );
-			}
-		}
 		$args = static::mp_to_wp( static::$input );
 
 		// Allow Filtering of Post Type
@@ -494,10 +498,7 @@ class Micropub_Endpoint {
 	 */
 	private static function update( $input ) {
 		$post_id = url_to_postid( $input['url'] );
-		if ( ! current_user_can( 'edit_posts', $post_id ) ) {
-			return new WP_Micropub_Error( 'forbidden', 'Insufficient Permission to Update Post', 403 );
-		}
-		$args = get_post( $post_id, ARRAY_A );
+		$args    = get_post( $post_id, ARRAY_A );
 		if ( ! $args ) {
 			return new WP_Micropub_Error( 'invalid_request', sprintf( '%1$s not found', $input['url'] ), 400 );
 		}
@@ -1063,10 +1064,6 @@ class Micropub_Endpoint {
 			return micropub_wp_error( $result );
 		}
 		return $result;
-	}
-
-	public static function get_micropub_endpoint() {
-		return rest_url( MICROPUB_NAMESPACE . '/endpoint' );
 	}
 
 	/**
