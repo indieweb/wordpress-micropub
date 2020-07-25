@@ -27,13 +27,22 @@ class Micropub_Media {
 
 	}
 
-	public static function get_micropub_media_endpoint() {
-			return rest_url( MICROPUB_NAMESPACE . '/media' );
+	public static function get_namespace() {
+		return defined( MICROPUB_NAMESPACE ) ? MICROPUB_NAMESPACE : 'micropub/1.0';
 	}
 
-		/**
-		 * The micropub autodicovery meta tags
-		 */
+	public static function get_rest_route( $slash = false ) {
+		$return = static::get_namespace() . '/media';
+		return $slash ? '/' . $return : $return;
+	}
+
+	public static function get_micropub_media_endpoint() {
+		return rest_url( static::get_rest_route() );
+	}
+
+	/**
+	 * The micropub autodicovery meta tags
+	 */
 	public static function micropub_media_html_header() {
 			// phpcs:ignore
 			printf( '<link rel="micropub_media" href="%s" />' . PHP_EOL, static::get_micropub_media_endpoint() );

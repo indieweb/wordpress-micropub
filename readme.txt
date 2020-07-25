@@ -3,8 +3,8 @@ Contributors: indieweb, snarfed, dshanske
 Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.9.9
 Requires PHP: 5.6
-Tested up to: 5.2.3
-Stable tag: 2.1.0
+Tested up to: 5.4.2
+Stable tag: 2.2.0
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
@@ -14,7 +14,7 @@ Adds [Micropub](http://micropub.net/) server support to WordPress.
 == Description ==
 
 Micropub is an open API standard that is used to create posts on your site using third-party clients. Web apps and native apps (e.g. iPhone, Android) 
-can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com. 
+can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com. Requires the IndieAuth plugin.
 
 [![Travis CI](https://travis-ci.org/indieweb/wordpress-micropub.svg?branch=master)](https://travis-ci.org/indieweb/wordpress-micropub)
 
@@ -76,11 +76,11 @@ Allows a suggested title to be generated. This can be used either to generate th
 
 `indieauth_scopes( $scopes )`
 
-This returns scopes from a plugin implementing IndieAuth or from the internal IndieAuth code. This filter is empty by default.
+This returns scopes from a plugin implementing IndieAuth. This filter is empty by default.
 
 `indieauth_response( $response )`
 
-This returns the token auth response from a plugin implementing IndieAuth or from the internal IndieAuth code. This filter is empty by default.
+This returns the token auth response from a plugin implementing IndieAuth. This filter is empty by default.
 
 ...and two hooks:
 
@@ -113,7 +113,8 @@ Supports Experimental Extensions to Micropub:
 * [Query for Supported Properties](https://github.com/indieweb/micropub-extensions/issues/8) - Returns a list of which supported experimental properties the endpoint supports so the client can choose to hide unsupported ones.
 * [Discovery of Media Endpoint using Link Rel](https://github.com/indieweb/micropub-extensions/issues/15) - Adds a link header for the media endpoint
 * [Last Media Uploaded](https://github.com/indieweb/micropub-extensions/issues/10) - Supports querying for the last image uploaded ...set to within the last hour
-
+* [Query for Category/Tag List](https://indieweb.org/Micropub-extensions#Query_for_Category.2FTag_List) - Supports querying for categories and tags.
+* [Slug](https://indieweb.org/Micropub-extensions#Slug) - Custom slug
 
 If an experimental property is not set to one of the noted options, the plugin will return HTTP 400 with body:
 
@@ -131,54 +132,36 @@ WordPress has a [whitelist of file extensions that it allows in uploads](https:/
 
 == Authentication and authorization ==
 
-For reasons of security it is recommended that you only use this plugin on sites that implement HTTPS.
+For reasons of security it is recommended that you only use this plugin on sites that implement HTTPS. Authentication is not built into this plugin.
 
-Supports the full OAuth2/IndieAuth authentication and authorization flow. Defaults to IndieAuth.com. Custom auth and token endpoints can be used by overriding the `MICROPUB_AUTHENTICATION_ENDPOINT`
-and `MICROPUB_TOKEN_ENDPOINT` endpoints or by setting the options `indieauth_authorization_endpoint` and `indieauth_token_endpoint`.
-
-If you want to use your own site as an IndieAuth endpoint, you can activate the IndieAuth plugin which is recommended but not required. You can disable the authentication in favor of an alternative plugin.
-This can be done by removing the loading of the auth flow or setting MICROPUB_LOCAL_AUTH to 1.
-
-`remove_action( 'plugins_loaded', 'load_micropub_auth', 20 );` 
-
-If the token's `me` value matches a WordPress user's or author post URL, that user will be used. If there is only one site author that will be matched otherwise.
+In order to use this, the IndieAuth plugin is required. Other plugins may be written in future as alternatives and will be noted if they exist.
 
 == Installation ==
 
-Install from the WordPress plugin directory. No setup needed.
-
+Install the IndieAuth plugin from the WordPress plugin directory, then install this plugin. No setup needed.
 
 == Configuration Options ==
 
 These configuration options can be enabled by adding them to your wp-config.php
 
-* `define('MICROPUB_AUTHENTICATION_ENDPOINT', 'https://indieauth.com/auth')` - Define a custom authentication endpoint. Can be overridden in the settings interface
-* `define('MICROPUB_TOKEN_ENDPOINT', 'https://tokens.indieauth.com/token')` - Define a custom token endpoint. Can be overridden in the settings interface.
 * `define('MICROPUB_NAMESPACE', 'micropub/1.0' )` - By default the namespace for micropub is micropub/1.0. This would allow you to change this for your endpoint
 * `define('MICROPUB_DISABLE_NAG', 1 ) - Disable notices for insecure sites
-* `define('MICROPUB_LOCAL_AUTH', 1 ) - Disable built in AUTH in favor of your own plugin.
 
 These configuration options can be enabled by setting them in the WordPress options table.
-* `indieauth_authorization_endpoint` - if set will override MICROPUB_AUTHENTICATION_ENDPOINT for setting a custom endpoint
-* `indieauth_token_endpoint` - if set will override MICROPUB_TOKEN_ENDPOINT for setting a custom endpoint
 * `micropub_default_post_status` - if set, Micropub posts will be set to this status by default( publish, draft, or private ). Can also be set on the settings page.
 
 == Frequently Asked Questions ==
 
-If your Micropub client includes an `Authorization` HTTP request header but you still get an HTTP 401 response with body `missing access token`, your server may be stripping the `Authorization` header. If you're on Apache, [try adding this line to your `.htaccess` file](https://github.com/indieweb/wordpress-micropub/issues/56#issuecomment-299202820):
+= I am experiencing issues in logging in with IndieAuth. =
 
-    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
-
-If that doesn't work, [try this line](https://github.com/georgestephanis/application-passwords/wiki/Basic-Authorization-Header----Missing):
-
-    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-
-If that doesn't work either, you may need to ask your hosting provider to whitelist the `Authorization` header for your account. If they refuse, you can [pass it through Apache with an alternate name](https://github.com/indieweb/wordpress-micropub/issues/56#issuecomment-299569822). The plugin searches for the header in REDIRECT_HTTP_AUTHORIZATION, as some FastCGI implementations store the header in this location.
-
-If you are getting an `Unauthorized` error despite passing a valid access token then your WordPress installation may not be able to match your user account with the provided URL. The easiest way to 
-resolve is to add the URL you are using as the URL in your user profile. 
+There are a series of troubleshooting steps in the IndieAuth plugin for this. The most common problem involves the token not being passed due the configuration
+of your hosting provider.
 
 == Upgrade Notice ==
+
+= Version 2.2.0 = 
+
+The Micropub plugin will no longer function without the IndieAuth plugin installed.
 
 = Version 2.0.0 =
 
@@ -194,7 +177,7 @@ The canonical repo is http://github.com/indieweb/wordpress-micropub . Feedback a
 
 To add a new release to the WordPress plugin directory, tag it with the version number and push the tag. It will automatically deploy.
 
-To set up your local environment to run the unit tests and set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https://make.wordpress.org/core/handbook/coding-standards/php/) and [PHP 5.3 Compatibility](https://github.com/wimg/PHPCompatibility):
+To set up your local environment to run the unit tests and set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https://make.wordpress.org/core/handbook/coding-standards/php/) and [PHP Compatibility](https://github.com/wimg/PHPCompatibility):
 
 1. Install [Composer](https://getcomposer.org). Composer is only used for development and is not required to run the plugin.
 1. Run `composer install` which will install PHP Codesniffer, PHPUnit, the standards required, and all dependencies.
@@ -216,13 +199,17 @@ To configure PHPUnit
 
 To set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https://make.wordpress.org/core/handbook/coding-standards/php/) and [PHP 5.3 Compatibility](https://github.com/wimg/PHPCompatibility):
 
-1. To list coding standard issues in a file, run `phpcs --standard=phpcs.xml`
-1. If you want to try to automatically fix issues, run `phpcbf` with the same arguments as `phpcs`.
+1. To list coding standard issues in a file, run `composer phpcs`
+1. If you want to try to automatically fix issues, run `composer phpcbf``.
 
 To automatically convert the readme.txt file to readme.md, you may, if you have installed composer as noted in the previous section, enter `composer update-readme` to have the .txt file converted
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.2.0 (2020-07-25 ) =
+* Deprecate MICROPUB_LOCAL_AUTH, MICROPUB_AUTHENTICATION_ENDPOINT and MICROPUB_TOKEN_ENDPOINT constants.
+* Remove IndieAuth Client code, will now require the IndieAuth or other plugin that does not yet exist.
 
 = 2.1.0 (2020-02-06 ) =
 * Fix bug where timezone meta key was always set to website timezone instead of provided one
@@ -319,7 +306,7 @@ into markdown and saved to readme.md.
 * Add `micropub_syndication` hook that only fires on a request to syndicate to make it easier for third-party plugins to hook in
 
 = 1.3 (2017-12-31) =
-* Saves [access token response](https://tokens.indieauth.com/) in a post meta field `micropub_auth_response`.
+* Saves access token response in a post meta field `micropub_auth_response`.
 * Bug fix for `post_date_gmt`
 * Store timezone from published in arguments passed to micropub filter
 * Correctly handle published times that are in a different timezone than the site.
