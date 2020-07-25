@@ -4,7 +4,7 @@ Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.9.9
 Requires PHP: 5.6
 Tested up to: 5.4.2
-Stable tag: 2.1.0
+Stable tag: 2.2.0
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
@@ -113,7 +113,8 @@ Supports Experimental Extensions to Micropub:
 * [Query for Supported Properties](https://github.com/indieweb/micropub-extensions/issues/8) - Returns a list of which supported experimental properties the endpoint supports so the client can choose to hide unsupported ones.
 * [Discovery of Media Endpoint using Link Rel](https://github.com/indieweb/micropub-extensions/issues/15) - Adds a link header for the media endpoint
 * [Last Media Uploaded](https://github.com/indieweb/micropub-extensions/issues/10) - Supports querying for the last image uploaded ...set to within the last hour
-
+* [Query for Category/Tag List](https://indieweb.org/Micropub-extensions#Query_for_Category.2FTag_List) - Supports querying for categories and tags.
+* [Slug](https://indieweb.org/Micropub-extensions#Slug) - Custom slug
 
 If an experimental property is not set to one of the noted options, the plugin will return HTTP 400 with body:
 
@@ -158,6 +159,10 @@ of your hosting provider.
 
 == Upgrade Notice ==
 
+= Version 2.2.0 = 
+
+The Micropub plugin will no longer function without the IndieAuth plugin installed.
+
 = Version 2.0.0 =
 
 This version changes the Micropub endpoint URL as it now uses the REST API. You may have to update any third-parties that have cached this info.
@@ -172,7 +177,7 @@ The canonical repo is http://github.com/indieweb/wordpress-micropub . Feedback a
 
 To add a new release to the WordPress plugin directory, tag it with the version number and push the tag. It will automatically deploy.
 
-To set up your local environment to run the unit tests and set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https://make.wordpress.org/core/handbook/coding-standards/php/) and [PHP 5.3 Compatibility](https://github.com/wimg/PHPCompatibility):
+To set up your local environment to run the unit tests and set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https://make.wordpress.org/core/handbook/coding-standards/php/) and [PHP Compatibility](https://github.com/wimg/PHPCompatibility):
 
 1. Install [Composer](https://getcomposer.org). Composer is only used for development and is not required to run the plugin.
 1. Run `composer install` which will install PHP Codesniffer, PHPUnit, the standards required, and all dependencies.
@@ -194,15 +199,15 @@ To configure PHPUnit
 
 To set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https://make.wordpress.org/core/handbook/coding-standards/php/) and [PHP 5.3 Compatibility](https://github.com/wimg/PHPCompatibility):
 
-1. To list coding standard issues in a file, run `phpcs --standard=phpcs.xml`
-1. If you want to try to automatically fix issues, run `phpcbf` with the same arguments as `phpcs`.
+1. To list coding standard issues in a file, run `composer phpcs`
+1. If you want to try to automatically fix issues, run `composer phpcbf``.
 
 To automatically convert the readme.txt file to readme.md, you may, if you have installed composer as noted in the previous section, enter `composer update-readme` to have the .txt file converted
 into markdown and saved to readme.md.
 
 == Changelog ==
 
-= 2.2.0 (2020-07-xx ) =
+= 2.2.0 (2020-07-25 ) =
 * Deprecate MICROPUB_LOCAL_AUTH, MICROPUB_AUTHENTICATION_ENDPOINT and MICROPUB_TOKEN_ENDPOINT constants.
 * Remove IndieAuth Client code, will now require the IndieAuth or other plugin that does not yet exist.
 
