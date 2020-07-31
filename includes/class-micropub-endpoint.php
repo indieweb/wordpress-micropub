@@ -366,14 +366,7 @@ class Micropub_Endpoint {
 				);
 				if ( array_key_exists( 'filter', static::$input ) ) {
 					$filter = static::$input['filter'];
-					$resp   = array_values(
-						array_filter(
-							$resp,
-							function( $value ) use ( $filter ) {
-								return ( false !== stripos( $value, $filter ) );
-							}
-						)
-					);
+					$resp = mp_filter( $resp, $filter );
 				}
 				$resp = array( 'categories' => $resp );
 				break;
