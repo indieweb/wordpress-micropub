@@ -72,9 +72,7 @@ class Micropub_Media_Test extends WP_UnitTestCase {
 		$this->assertInternalType( "int", $id );
 	}
 
-	public function test_upload_file_with_scope() {
-		static::$scopes = array( 'create' );
-		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ), 12 );
+	public function test_upload_file() {
 		wp_set_current_user( self::$author_id );
 		$response = rest_get_server()->dispatch( self::upload_request() );
 		$data     = $response->get_data();
@@ -89,8 +87,6 @@ class Micropub_Media_Test extends WP_UnitTestCase {
 	}
 
 	public function test_empty_upload() {
-		static::$scopes = array( 'create' );
-		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ), 12 );
 		wp_set_current_user( self::$author_id );
 		$request = new WP_REST_Request( 'POST', Micropub_Media::get_rest_route( true ) );
 		$response = rest_get_server()->dispatch( $request );
@@ -99,22 +95,10 @@ class Micropub_Media_Test extends WP_UnitTestCase {
 	}
 
 	public function test_upload_file_without_scope() {
-		static::$scopes = array();
-		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ), 12 );
-		wp_set_current_user( self::$author_id );
+		wp_set_current_user( self::$subscriber_id );
 		$response = rest_get_server()->dispatch( self::upload_request() );
 		$data     = $response->get_data();
 		$this->assertEquals( 401, $response->get_status(), wp_json_encode( $data ) );
 	}
-
-	public function test_upload_file_with_scope_but_insufficient_permissions() {
-		static::$scopes = array( 'create' );
-		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ), 12 );
-		wp_set_current_user( self::$subscriber_id );
-		$response = rest_get_server()->dispatch( self::upload_request() );
-		$data     = $response->get_data();
-		$this->assertEquals( 403, $response->get_status(), wp_json_encode( $data ) );
-	}
-
 
 }
