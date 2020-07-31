@@ -4,7 +4,7 @@ Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.9.9
 Requires PHP: 5.6
 Tested up to: 5.4.2
-Stable tag: 2.2.0
+Stable tag: 2.2.1
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
@@ -206,6 +206,11 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.2.1 (2020-07-31 ) =
+* Change category query parameter from search to filter per decision at Micropub Popup Session
+* Fix permissions for Media Endpoint to match Endpoint
+* For source query on both media and micropub endpoint support offset parameter
 
 = 2.2.0 (2020-07-25 ) =
 * Deprecate MICROPUB_LOCAL_AUTH, MICROPUB_AUTHENTICATION_ENDPOINT and MICROPUB_TOKEN_ENDPOINT constants.

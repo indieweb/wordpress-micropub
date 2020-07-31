@@ -214,6 +214,12 @@ into markdown and saved to readme.md.
 ## Changelog 
 
 
+### 2.2.1 (2020-07-31 ) 
+* Change category query parameter from search to filter per decision at Micropub Popup Session
+* Fix permissions for Media Endpoint to match Endpoint
+* For source query on both media and micropub endpoint support offset parameter
+
+
 ### 2.2.0 (2020-07-25 ) 
 * Deprecate MICROPUB_LOCAL_AUTH, MICROPUB_AUTHENTICATION_ENDPOINT and MICROPUB_TOKEN_ENDPOINT constants.
 * Remove IndieAuth Client code, will now require the IndieAuth or other plugin that does not yet exist.
