@@ -56,7 +56,7 @@ Called during the creation of a Micropub post. This defaults to post, but allows
 Called during the creation of a Micropub post. This defaults to nothing but allows for a Micropub post to set a custom taxonomy.
 
 
-`micropub_syndicate-to( $synd_urls, $user_id )`
+`micropub_syndicate-to( $synd_urls, $user_id, $input )`
 
 Called to generate the list of `syndicate-to` targets to return in response to a query. Returns `$synd_urls`, an array, possibly modified. This filter is empty by default
 

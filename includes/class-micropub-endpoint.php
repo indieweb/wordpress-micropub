@@ -316,8 +316,8 @@ class Micropub_Endpoint {
 		return $response;
 	}
 
-	private static function get_syndicate_targets( $user_id ) {
-		return apply_filters( 'micropub_syndicate-to', array(), $user_id );
+	private static function get_syndicate_targets( $user_id, $input = null ) {
+		return apply_filters( 'micropub_syndicate-to', array(), $user_id, $input );
 	}
 
 	/**
@@ -332,7 +332,7 @@ class Micropub_Endpoint {
 		switch ( static::$input['q'] ) {
 			case 'config':
 				$resp = array(
-					'syndicate-to'   => static::get_syndicate_targets( $user_id ),
+					'syndicate-to'   => static::get_syndicate_targets( $user_id, static::$input ),
 					'media-endpoint' => rest_url( static::get_namespace() . '/media' ),
 					'mp'             => array(
 						'slug',
@@ -351,7 +351,7 @@ class Micropub_Endpoint {
 				break;
 			case 'syndicate-to':
 				// return syndication targets with filter
-				$resp = array( 'syndicate-to' => static::get_syndicate_targets( $user_id ) );
+				$resp = array( 'syndicate-to' => static::get_syndicate_targets( $user_id, static::$input ) );
 				break;
 			case 'category':
 				// https://github.com/indieweb/micropub-extensions/issues/5
