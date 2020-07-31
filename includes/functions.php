@@ -34,3 +34,17 @@ if ( ! function_exists( 'mp_get' ) ) {
 		return $return;
 	}
 }
+
+if ( ! function_exists( 'mp_filter' ) ) {
+	// Searches for partial matches in an array of strings
+	function mp_filter( $array, $filter ) {
+		return array_values(
+			array_filter(
+				$array,
+				function( $value ) use ( $filter ) {
+					return ( false !== stripos( $value, $filter ) );
+				}
+			)
+		);
+	}
+}

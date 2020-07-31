@@ -316,8 +316,8 @@ class Micropub_Endpoint {
 		return $response;
 	}
 
-	private static function get_syndicate_targets( $user_id ) {
-		return apply_filters( 'micropub_syndicate-to', array(), $user_id );
+	private static function get_syndicate_targets( $user_id, $input = null ) {
+		return apply_filters( 'micropub_syndicate-to', array(), $user_id, $input );
 	}
 
 	/**
@@ -332,7 +332,7 @@ class Micropub_Endpoint {
 		switch ( static::$input['q'] ) {
 			case 'config':
 				$resp = array(
-					'syndicate-to'   => static::get_syndicate_targets( $user_id ),
+					'syndicate-to'   => static::get_syndicate_targets( $user_id, static::$input ),
 					'media-endpoint' => rest_url( static::get_namespace() . '/media' ),
 					'mp'             => array(
 						'slug',
@@ -351,7 +351,7 @@ class Micropub_Endpoint {
 				break;
 			case 'syndicate-to':
 				// return syndication targets with filter
-				$resp = array( 'syndicate-to' => static::get_syndicate_targets( $user_id ) );
+				$resp = array( 'syndicate-to' => static::get_syndicate_targets( $user_id, static::$input ) );
 				break;
 			case 'category':
 				// https://github.com/indieweb/micropub-extensions/issues/5
@@ -364,18 +364,10 @@ class Micropub_Endpoint {
 						)
 					)
 				);
-				if ( array_key_exists( 'search', static::$input ) ) {
-					$search = static::$input['search'];
-					$resp   = array_values(
-						array_filter(
-							$resp,
-							function( $value ) use ( $search ) {
-								return ( false !== stripos( $value, $search ) );
-							}
-						)
-					);
+				if ( array_key_exists( 'filter', static::$input ) ) {
+					$filter = static::$input['filter'];
+					$resp   = mp_filter( $resp, $filter );
 				}
-
 				$resp = array( 'categories' => $resp );
 				break;
 			case 'source':
@@ -386,14 +378,40 @@ class Micropub_Endpoint {
 					}
 					$resp = self::query( $post_id );
 				} else {
-					$numberposts = mp_get( static::$input, 'limit', 10 );
-					$posts       = get_posts(
-						array(
-							'posts_per_page' => $numberposts,
-							'fields'         => 'ids',
-						)
+					$args = array(
+						'posts_per_page' => mp_get( static::$input, 'limit', 10 ),
+						'fields'         => 'ids',
 					);
-					$resp        = array();
+					if ( array_key_exists( 'offset', static::$input ) ) {
+						$args['offset'] = mp_get( static::$input, 'offset' );
+					}
+
+					if ( array_key_exists( 'visibility', static::$input ) ) {
+						$visibilitylist = array( array( 'private' ), array( 'public' ) );
+						if ( ! in_array( $props['visibility'], $visibilitylist, true ) ) {
+							// Returning null will cause the server to return a 400 error
+							return null;
+						}
+						if ( array( 'private' ) === $props['visibility'] ) {
+							if ( user_can( $user_id, 'read_private_posts' ) ) {
+								$args['post-status'] = 'private';
+							}
+						}
+					} elseif ( array_key_exists( 'post-status', static::$input ) ) {
+						//  According to the proposed specification these are the only two properties supported.
+						// https://indieweb.org/Micropub-extensions#Post_Status
+						// For now these are the only two we will support even though WordPress defaults to 8 and allows custom
+						// But makes it easy to change
+
+						// Map published to the WordPress property publish.
+						if ( 'published' === mp_get( static::$input, 'post-status' ) ) {
+							$args['post-status'] = 'publish';
+						} elseif ( 'draft' === mp_get( static::$input, 'post-status' ) ) {
+							$args['post-status'] = 'draft';
+						}
+					}
+					$posts = get_posts( $args );
+					$resp  = array();
 					foreach ( $posts as $post ) {
 						$resp[] = self::query( $post );
 					}

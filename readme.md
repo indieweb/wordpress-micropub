@@ -56,7 +56,7 @@ Called during the creation of a Micropub post. This defaults to post, but allows
 Called during the creation of a Micropub post. This defaults to nothing but allows for a Micropub post to set a custom taxonomy.
 
 
-`micropub_syndicate-to( $synd_urls, $user_id )`
+`micropub_syndicate-to( $synd_urls, $user_id, $input )`
 
 Called to generate the list of `syndicate-to` targets to return in response to a query. Returns `$synd_urls`, an array, possibly modified. This filter is empty by default
 
@@ -212,6 +212,12 @@ into markdown and saved to readme.md.
 
 
 ## Changelog 
+
+
+### 2.2.1 (2020-07-31 ) 
+* Change category query parameter from search to filter per decision at Micropub Popup Session
+* Fix permissions for Media Endpoint to match Endpoint
+* For source query on both media and micropub endpoint support offset parameter
 
 
 ### 2.2.0 (2020-07-25 ) 
