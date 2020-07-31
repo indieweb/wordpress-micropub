@@ -365,14 +365,16 @@ class Micropub_Media {
 						$resp = self::return_media_data( $attachment_id );
 					} else {
 						$numberposts = mp_get( $params, 'limit', 10 );
-						$attachments = get_posts(
-							array(
-								'posts_per_page' => $numberposts,
-								'post_type'      => 'attachment',
-								'fields'         => 'ids',
-								'order'          => 'DESC',
-							)
+						$args        = array(
+							'posts_per_page' => $numberposts,
+							'post_type'      => 'attachment',
+							'fields'         => 'ids',
+							'order'          => 'DESC',
 						);
+						if ( array_key_exists( 'offset', $params ) ) {
+							$args['offset'] = mp_get( $params, 'offset' );
+						}
+						$attachments = get_posts( $args );
 						$resp        = array();
 						foreach ( $attachments as $attachment ) {
 							$resp[] = self::return_media_data( $attachment );
