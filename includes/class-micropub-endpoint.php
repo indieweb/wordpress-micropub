@@ -364,18 +364,17 @@ class Micropub_Endpoint {
 						)
 					)
 				);
-				if ( array_key_exists( 'search', static::$input ) ) {
-					$search = static::$input['search'];
+				if ( array_key_exists( 'filter', static::$input ) ) {
+					$filter = static::$input['filter'];
 					$resp   = array_values(
 						array_filter(
 							$resp,
-							function( $value ) use ( $search ) {
-								return ( false !== stripos( $value, $search ) );
+							function( $value ) use ( $filter ) {
+								return ( false !== stripos( $value, $filter ) );
 							}
 						)
 					);
 				}
-
 				$resp = array( 'categories' => $resp );
 				break;
 			case 'source':
