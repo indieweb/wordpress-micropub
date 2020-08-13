@@ -1,22 +1,31 @@
 <?php
-require dirname( __FILE__ ) . '/class-indieauth-plugin.php';
-error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_WARNING);
-
-define( 'WP_DEBUG', false );
-define( 'DIR_TESTDATA', dirname( __FILE__ ) . '/data' );
+/**
+ * PHPUnit bootstrap file
+ *
+ * @package micropub
+ */
 
 $_tests_dir = getenv( 'WP_TESTS_DIR' );
+
 if ( ! $_tests_dir ) {
-	$_tests_dir = '/tmp/wordpress-tests-lib';
+	$_tests_dir = rtrim( sys_get_temp_dir(), '/\\' ) . '/wordpress-tests-lib';
 }
 
+if ( ! file_exists( $_tests_dir . '/includes/functions.php' ) ) {
+	echo "Could not find $_tests_dir/includes/functions.php, have you run bin/install-wp-tests.sh ?" . PHP_EOL; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	exit( 1 );
+}
+
+// Give access to tests_add_filter() function.
 require_once $_tests_dir . '/includes/functions.php';
 
+/**
+ * Manually load the plugin being tested.
+ */
 function _manually_load_plugin() {
 	require dirname( dirname( __FILE__ ) ) . '/micropub.php';
 }
 tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
 
+// Start up the WP testing environment.
 require $_tests_dir . '/includes/bootstrap.php';
-
-error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_WARNING);
