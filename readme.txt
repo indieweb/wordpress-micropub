@@ -3,17 +3,17 @@ Contributors: indieweb, snarfed, dshanske
 Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.9.9
 Requires PHP: 5.6
-Tested up to: 5.4.2
+Tested up to: 5.5
 Stable tag: 2.2.1
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
 
-Adds [Micropub](http://micropub.net/) server support to WordPress. 
+Adds [Micropub](http://micropub.net/) server support to WordPress.
 
 == Description ==
 
-Micropub is an open API standard that is used to create posts on your site using third-party clients. Web apps and native apps (e.g. iPhone, Android) 
+Micropub is an open API standard that is used to create posts on your site using third-party clients. Web apps and native apps (e.g. iPhone, Android)
 can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com. Requires the IndieAuth plugin.
 
 [![Travis CI](https://travis-ci.org/indieweb/wordpress-micropub.svg?branch=master)](https://travis-ci.org/indieweb/wordpress-micropub)
@@ -34,6 +34,7 @@ This project is placed in the public domain. You may also use it under the [CC0 
 == Scope ==
 
 Supports the following [scope](https://indieweb.org/scope) parameters requested by Micropub clients.
+
 * create - Allows the client to create and publish posts on behalf of the user
 * draft - Allows the client to create drafts on behalf of the user but not publish them
 * update - Allows the client to update posts on behalf of the user
@@ -49,7 +50,7 @@ Adds nine filters:
 
 Called before handling a Micropub request. Returns `$input`, possibly modified.
 
-`micropub_post_content( $post_content, $input )` 
+`micropub_post_content( $post_content, $input )`
 
 Called during the handling of a Micropub request. The content generation function is attached to this filter by default. Returns `$post_content`, possibly modified.
 
@@ -61,7 +62,6 @@ Called during the creation of a Micropub post. This defaults to post, but allows
 
 Called during the creation of a Micropub post. This defaults to nothing but allows for a Micropub post to set a custom taxonomy.
 
-
 `micropub_syndicate-to( $synd_urls, $user_id, $input )`
 
 Called to generate the list of `syndicate-to` targets to return in response to a query. Returns `$synd_urls`, an array, possibly modified. This filter is empty by default
@@ -72,7 +72,7 @@ Allows you to replace a query response with your own customized version to add a
 
 `micropub_suggest_title( $mf2 )`
 
-Allows a suggested title to be generated. This can be used either to generate the post slug or for individuals who want to use it to set a WordPress title 
+Allows a suggested title to be generated. This can be used either to generate the post slug or for individuals who want to use it to set a WordPress title
 
 `indieauth_scopes( $scopes )`
 
@@ -105,10 +105,11 @@ Stores [microformats2](http://microformats.org/wiki/microformats2) properties in
 Does *not* support multithreading. PHP doesn't really either, so it generally won't matter, but just for the record.
 
 Supports Experimental Extensions to Micropub:
+
 * [Post Status](https://github.com/indieweb/micropub-extensions/issues/19) - Either `published` or `draft`
 * [Visibility](https://github.com/indieweb/micropub-extensions/issues/11) - Either `public` or `private`.
 * [Location Visiblity](https://indieweb.org/Micropub-extensions#Location_Visibility) - Either `public`, `private`, or `protected`
-* [Query for Post List](https://github.com/indieweb/micropub-extensions/issues/4) - Supports query for the last x number of posts. 
+* [Query for Post List](https://github.com/indieweb/micropub-extensions/issues/4) - Supports query for the last x number of posts.
 * [Query for Supported Queries](https://github.com/indieweb/micropub-extensions/issues/7) - Returns a list of query parameters the endpoint supports
 * [Query for Supported Properties](https://github.com/indieweb/micropub-extensions/issues/8) - Returns a list of which supported experimental properties the endpoint supports so the client can choose to hide unsupported ones.
 * [Discovery of Media Endpoint using Link Rel](https://github.com/indieweb/micropub-extensions/issues/15) - Adds a link header for the media endpoint
@@ -148,6 +149,7 @@ These configuration options can be enabled by adding them to your wp-config.php
 * `define('MICROPUB_DISABLE_NAG', 1 ) - Disable notices for insecure sites
 
 These configuration options can be enabled by setting them in the WordPress options table.
+
 * `micropub_default_post_status` - if set, Micropub posts will be set to this status by default( publish, draft, or private ). Can also be set on the settings page.
 
 == Frequently Asked Questions ==
@@ -159,7 +161,7 @@ of your hosting provider.
 
 == Upgrade Notice ==
 
-= Version 2.2.0 = 
+= Version 2.2.0 =
 
 The Micropub plugin will no longer function without the IndieAuth plugin installed.
 
@@ -189,13 +191,11 @@ To configure PHPUnit
 1. Open `wordpress-tests-lib/wp-tests-config.php` and add a slash to the end of the ABSPATH value. No clue why it leaves off the slash; it doesn't work without it.
 1. Run `phpunit` in the repo root dir. If you set `WP_CORE_DIR` and `WP_TESTS_DIR` above, you'll need to set them for this too. You should see output like this:
 
-    ```
     Installing...
     ...
     1 / 1 (100%)
     Time: 703 ms, Memory: 33.75Mb
     OK (1 test, 3 assertions)
-    ```
 
 To set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https://make.wordpress.org/core/handbook/coding-standards/php/) and [PHP 5.3 Compatibility](https://github.com/wimg/PHPCompatibility):
 
@@ -230,10 +230,10 @@ into markdown and saved to readme.md.
 * Fix issues with empty variables
 * Update last media query to limit itself to last hour
 * Undelete is now part of delete scope as there is no undelete scope
-* Address issue where properties in upload are single property arrays  
+* Address issue where properties in upload are single property arrays
 
 = 2.0.10 (2019-04-13) =
-* Fix issue with media not being attached to post 
+* Fix issue with media not being attached to post
 
 = 2.0.9 (2019-03-25) =
 * Add filter `micropub_suggest_title` and related function to generate slugs
@@ -318,7 +318,7 @@ into markdown and saved to readme.md.
 * Set minimum version to PHP 5.3
 * Adhere to WordPress Coding Standards
 * Add `micropub_query` filter
-* Support Nested Properties in Content Generation 
+* Support Nested Properties in Content Generation
 * Deprecate `MICROPUB_DRAFT_MODE` configuration option in favor of setting option
 * Remove post content generation override in case of microformats2 capable theme or Post Kinds plugin installed
 * Introduce `micropub_post_content` filter to which post content generation is attached so that a theme or plugin can modify/remove the post generation as needed
