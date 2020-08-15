@@ -91,6 +91,8 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 	public static function wpTearDownAfterClass() {
 		self::delete_user( self::$author_id );
 		remove_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ) );
+		global $wp_rest_server;
+		$wp_rest_server = null;
 	}
 
 	public function setUp() {
@@ -541,7 +543,7 @@ EOF;
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
 		$this->check( $response, 200 );
-		$this->assertEquals( 0, count( wp_get_post_tags( $post_id ) ) );
+		$this->assertEquals( 0, count( wp_get_post_tags( $post_id ) ), wp_json_encode( wp_get_post_tags( $post_id ) ) );
 	}
 	function test_update_delete_bad_property() {
 		$post_id  = self::insert_post();

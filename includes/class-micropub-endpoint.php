@@ -565,14 +565,17 @@ class Micropub_Endpoint {
 						$delete_args['post_category']
 					);
 				}
-			} elseif ( is_array( $delete ) ) {
-				foreach ( static::mp_to_wp( array( 'properties' => array_flip( $delete ) ) )
-					as $name => $_ ) {
-					$args[ $name ] = null;
-				}
-				if ( in_array( 'category', $delete, true ) ) {
-					wp_set_post_tags( $post_id, '', false );
+			} elseif ( wp_is_numeric_array( $delete ) ) {
+				$delete = array_flip( $delete );
+				if ( array_key_exists( 'category', $delete ) ) {
+					wp_set_object_terms( $post_id, '', 'post_tag' );
 					wp_set_post_categories( $post_id, '' );
+				}
+				$delete = static::mp_to_wp( array( 'properties' => $delete ) );
+				if ( ! empty( $delete ) && is_assoc_array( $delete ) ) {
+					foreach ( $delete as $name => $_ ) {
+						$args[ $name ] = null;
+					}
 				}
 			} else {
 				return new WP_Micropub_Error( 'invalid_request', 'delete must be an array or object', 400 );
@@ -747,7 +750,7 @@ class Micropub_Endpoint {
 
 		// Map micropub categories to WordPress categories if they exist, otherwise
 		// to WordPress tags.
-		if ( isset( $props['category'] ) ) {
+		if ( isset( $props['category'] ) && is_array( $props['category' ] ) ) {
 			$args['post_category'] = array();
 			$args['tags_input']    = array();
 			foreach ( $props['category'] as $mp_cat ) {
