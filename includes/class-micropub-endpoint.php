@@ -953,7 +953,7 @@ class Micropub_Endpoint {
 			$properties[ $g[0] ] = array( $g[1] );
 		}
 		// If geo URI is overloaded h-card... e.g. geo:37.786971,-122.399677;u=35;h=card;name=Home;url=https://example.com
-		if ( array_key_exists( 'h', $return ) ) {
+		if ( array_key_exists( 'h', $properties ) ) {
 			$type = array( 'h-' . $properties['h'][0] );
 			unset( $properties['h'] );
 		} else {
