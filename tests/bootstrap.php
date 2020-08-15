@@ -8,7 +8,7 @@
 require dirname( __FILE__ ) . '/class-indieauth-plugin.php';
 
 define( 'WP_DEBUG', false );
-define( 'DIR_TESTDATA', dirname( __FILE__ ) . '/data' );
+define( 'DIR_MEDIATESTDATA', dirname( __FILE__ ) . '/data' );
 
 $_tests_dir = getenv( 'WP_TESTS_DIR' );
 

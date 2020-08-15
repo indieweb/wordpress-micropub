@@ -31,10 +31,10 @@ class Micropub_Media_Test extends WP_UnitTestCase {
 	}
 	public function setUp() {
 		// parent::setUp();
-		$orig_file       = DIR_TESTDATA . '/canola.jpg';
+		$orig_file       = DIR_MEDIATESTDATA . '/canola.jpg';
 		$this->test_file = '/tmp/canola.jpg';
 		copy( $orig_file, $this->test_file );
-		$orig_file2       = DIR_TESTDATA . '/codeispoetry.png';
+		$orig_file2       = DIR_MEDIATESTDATA . '/codeispoetry.png';
 		$this->test_file2 = '/tmp/codeispoetry.png';
 		copy( $orig_file2, $this->test_file2 );
 	}
