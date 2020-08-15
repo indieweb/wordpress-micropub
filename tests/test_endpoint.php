@@ -6,6 +6,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 
 	protected static $author_id;
 	protected static $subscriber_id;
+	protected static $scopes;
 
 	// POST args
 	protected static $post = array(
@@ -63,6 +64,9 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 		'guid'         => 'http://localhost/1/2/my_slug',
 	);
 
+	public static function scopes( $scope ) {
+		return static::$scopes;
+	}
 
 	public static function auth_response( $response ) {
 		return static::$micropub_auth_response;
@@ -87,16 +91,21 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 	public static function wpTearDownAfterClass() {
 		self::delete_user( self::$author_id );
 		remove_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ) );
+		global $wp_rest_server;
+		$wp_rest_server = null;
 	}
 
 	public function setUp() {
+		global $wp_rest_server;
+		$wp_rest_server = new Spy_REST_Server;
+		do_action( 'rest_api_init', $wp_rest_server );
 		parent::setUp();
 	}
 
 	public function test_register_routes() {
 		$routes = rest_get_server()->get_routes();
-		$this->assertArrayHasKey( '/' . Micropub_Endpoint::get_micropub_rest_route(), $routes, wp_json_encode( array_keys( $routes ) ) );
-		$this->assertCount( 2, $routes[ '/' . Micropub_Endpoint::get_micropub_rest_route() ] );
+		$this->assertArrayHasKey( Micropub_Endpoint::get_micropub_rest_route( true ), $routes, wp_json_encode( array_keys( $routes ) ) );
+		$this->assertCount( 2, $routes[ Micropub_Endpoint::get_micropub_rest_route(true) ] );
 	}
 
 	public function test_parse_geo_uri() {
@@ -248,7 +257,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 	public function test_create_with_unsupported_syndicate_to() {
 		add_filter( 'micropub_syndicate-to', array( $this, 'syndications' ), 10, 2 );
 		$input                                  = static::$mf2;
-		$input['properties']['mp-syndicate-to'] = array( 'twitter', facebook );
+		$input['properties']['mp-syndicate-to'] = array( 'twitter', 'facebook' );
 		$response                               = $this->dispatch( self::create_json_request( $input ), static::$author_id );
 		self::check( $response, 400, 'invalid_request' );
 	}
@@ -534,7 +543,7 @@ EOF;
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
 		$this->check( $response, 200 );
-		$this->assertEquals( 0, count( wp_get_post_tags( $post_id ) ) );
+		$this->assertEquals( 0, count( wp_get_post_tags( $post_id ) ), wp_json_encode( wp_get_post_tags( $post_id ) ) );
 	}
 	function test_update_delete_bad_property() {
 		$post_id  = self::insert_post();
