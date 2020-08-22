@@ -220,7 +220,7 @@ class Micropub_Endpoint {
 		if ( $return ) {
 			return true;
 		}
-		return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'insufficient to %1$s posts', $action ), 401, static::$scopes );
+		return new WP_Micropub_Error( 'insufficient_scope', sprintf( 'insufficient to %1$s posts', $action ), 403, static::$scopes );
 	}
 
 

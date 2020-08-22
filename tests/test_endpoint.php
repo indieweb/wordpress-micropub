@@ -225,7 +225,7 @@ class Micropub_Endpoint_Test extends WP_UnitTestCase {
 
 	public function test_create_post_subscriber_id() {
 		$response       = $this->dispatch( self::create_form_request( static::$post ), static::$subscriber_id );
-		self::check( $response, 401, 'insufficient_scope' );
+		self::check( $response, 403, 'insufficient_scope' );
 	}
 
 	public function test_form_to_json_encode() {
@@ -506,7 +506,7 @@ EOF;
 			'replace' => array( 'content' => array( 'unused' ) ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$subscriber_id );
-		$this->check( $response, 401, 'insufficient_scope' );
+		$this->check( $response, 403, 'insufficient_scope' );
 	}
 
 	function test_update_delete_value() {
@@ -605,7 +605,7 @@ EOF;
 			'url'    => 'http://example.org/?p=' . $post_id,
 		);
 		$response = $this->dispatch( self::create_form_request( $POST ), static::$subscriber_id );
-		$this->check( $response, 401, 'insufficient_scope' );
+		$this->check( $response, 403, 'insufficient_scope' );
 	}
 
 	public function test_delete_post_not_found() {
