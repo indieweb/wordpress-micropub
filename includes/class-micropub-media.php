@@ -203,7 +203,7 @@ class Micropub_Media {
 		static::$micropub_auth_response = apply_filters( 'indieauth_response', static::$micropub_auth_response );
 		if ( 'POST' === $request->get_method() ) {
 			if ( ! current_user_can( 'upload_files' ) ) {
-				return new WP_Micropub_Error( 'insufficient_scope', 'You do not have permission to create or upload media', 401 );
+				return new WP_Micropub_Error( 'insufficient_scope', 'You do not have permission to create or upload media', 403 );
 			}
 		} else if ( ! current_user_can( 'read' ) ) {
 				return new WP_Micropub_Error( 'forbidden', 'Unauthorized', 403 );

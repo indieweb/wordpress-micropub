@@ -98,7 +98,7 @@ class Micropub_Media_Test extends WP_UnitTestCase {
 		wp_set_current_user( self::$subscriber_id );
 		$response = rest_get_server()->dispatch( self::upload_request() );
 		$data     = $response->get_data();
-		$this->assertEquals( 401, $response->get_status(), wp_json_encode( $data ) );
+		$this->assertEquals( 403, $response->get_status(), wp_json_encode( $data ) );
 	}
 
 }
