@@ -25,18 +25,16 @@ class Micropub_Endpoint {
 	 * Initialize the plugin.
 	 */
 	public static function init() {
-		$cls = get_called_class();
-
 		// endpoint discovery
-		add_action( 'wp_head', array( $cls, 'micropub_html_header' ), 99 );
-		add_action( 'send_headers', array( $cls, 'micropub_http_header' ) );
-		add_filter( 'host_meta', array( $cls, 'micropub_jrd_links' ) );
-		add_filter( 'webfinger_user_data', array( $cls, 'micropub_jrd_links' ) );
+		add_action( 'wp_head', array( static::class, 'micropub_html_header' ), 99 );
+		add_action( 'send_headers', array( static::class, 'micropub_http_header' ) );
+		add_filter( 'host_meta', array( static::class, 'micropub_jrd_links' ) );
+		add_filter( 'webfinger_user_data', array( static::class, 'micropub_jrd_links' ) );
 
 		// register endpoint
-		add_action( 'rest_api_init', array( $cls, 'register_route' ) );
+		add_action( 'rest_api_init', array( static::class, 'register_route' ) );
 
-		add_filter( 'rest_request_after_callbacks', array( $cls, 'return_micropub_error' ), 10, 3 );
+		add_filter( 'rest_request_after_callbacks', array( static::class, 'return_micropub_error' ), 10, 3 );
 	}
 
 	public static function get_namespace() {
@@ -82,21 +80,20 @@ class Micropub_Endpoint {
 	}
 
 	public static function register_route() {
-		$cls = get_called_class();
 		register_rest_route(
 			static::get_namespace(),
 			'/endpoint',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $cls, 'post_handler' ),
-					'permission_callback' => array( $cls, 'check_post_permissions' ),
+					'callback'            => array( static::class, 'post_handler' ),
+					'permission_callback' => array( static::class, 'check_post_permissions' ),
 
 				),
 				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $cls, 'query_handler' ),
-					'permission_callback' => array( $cls, 'check_query_permissions' ),
+					'callback'            => array( static::class, 'query_handler' ),
+					'permission_callback' => array( static::class, 'check_query_permissions' ),
 
 				),
 			)

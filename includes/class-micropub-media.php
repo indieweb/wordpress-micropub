@@ -14,16 +14,14 @@ class Micropub_Media {
 	 * Initialize the plugin.
 	 */
 	public static function init() {
-		$cls = get_called_class();
-
 		// register endpoint
-		add_action( 'rest_api_init', array( $cls, 'register_route' ) );
+		add_action( 'rest_api_init', array( static::class, 'register_route' ) );
 
-				// endpoint discovery
-				add_action( 'wp_head', array( $cls, 'micropub_media_html_header' ), 99 );
-				add_action( 'send_headers', array( $cls, 'micropub_media_http_header' ) );
-				add_filter( 'host_meta', array( $cls, 'micropub_media_jrd_links' ) );
-				add_filter( 'webfinger_user_data', array( $cls, 'micropub_media_jrd_links' ) );
+		// endpoint discovery
+		add_action( 'wp_head', array( static::class, 'micropub_media_html_header' ), 99 );
+		add_action( 'send_headers', array( static::class, 'micropub_media_http_header' ) );
+		add_filter( 'host_meta', array( static::class, 'micropub_media_jrd_links' ) );
+		add_filter( 'webfinger_user_data', array( static::class, 'micropub_media_jrd_links' ) );
 
 	}
 
@@ -68,18 +66,17 @@ class Micropub_Media {
 
 
 	public static function register_route() {
-		$cls = get_called_class();
 		register_rest_route(
 			MICROPUB_NAMESPACE,
 			'/media',
 			array(
 				array(
 					'methods'  => WP_REST_Server::CREATABLE,
-					'callback' => array( $cls, 'upload_handler' ),
+					'callback' => array( static::class, 'upload_handler' ),
 				),
 				array(
 					'methods'  => WP_REST_Server::READABLE,
-					'callback' => array( $cls, 'query_handler' ),
+					'callback' => array( static::class, 'query_handler' ),
 				),
 			)
 		);

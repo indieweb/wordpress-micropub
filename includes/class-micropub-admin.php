@@ -16,9 +16,7 @@ class Micropub_Admin {
 	 * Initialize the admin screens.
 	 */
 	public static function init() {
-		$cls = get_called_class();
-
-		add_action( 'admin_init', array( $cls, 'admin_init' ) );
+		add_action( 'admin_init', array( static::class, 'admin_init' ) );
 
 		// Register Setting
 		register_setting(
@@ -34,7 +32,6 @@ class Micropub_Admin {
 	}
 
 	public static function admin_init() {
-		$cls  = get_called_class();
 		$page = 'micropub';
 		add_settings_section(
 			'micropub_writing',
@@ -46,7 +43,7 @@ class Micropub_Admin {
 		add_settings_field(
 			'micropub_default_post_status',
 			__( 'Default Status for Micropub Posts', 'micropub' ),
-			array( $cls, 'default_post_status_setting' ),
+			array( static::class, 'default_post_status_setting' ),
 			$page,
 			'micropub_writing'
 		);
@@ -57,7 +54,6 @@ class Micropub_Admin {
 	 */
 	public static function admin_menu() {
 		$title = 'Micropub';
-		$cls   = get_called_class();
 		// If the IndieWeb Plugin is installed use its menu.
 		if ( class_exists( 'IndieWeb_Plugin' ) ) {
 			$options_page = add_submenu_page(
@@ -66,7 +62,7 @@ class Micropub_Admin {
 				$title,
 				'manage_options',
 				'micropub',
-				array( $cls, 'settings_page' )
+				array( static::class, 'settings_page' )
 			);
 		} else {
 			$options_page = add_options_page(
@@ -74,7 +70,7 @@ class Micropub_Admin {
 				$title,
 				'manage_options',
 				'micropub',
-				array( $cls, 'settings_page' )
+				array( static::class, 'settings_page' )
 			);
 		}
 
