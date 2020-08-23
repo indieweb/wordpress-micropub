@@ -13,8 +13,7 @@ Adds [Micropub](http://micropub.net/) server support to WordPress.
 
 == Description ==
 
-Micropub is an open API standard that is used to create posts on your site using third-party clients. Web apps and native apps (e.g. iPhone, Android)
-can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com. Requires the IndieAuth plugin for authentication.
+Micropub is an open API standard that is used to create posts on your site using third-party clients. Web apps and native apps (e.g. iPhone, Android) can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com. Requires the IndieAuth plugin for authentication.
 
 [![Travis CI](https://travis-ci.org/indieweb/wordpress-micropub.svg?branch=master)](https://travis-ci.org/indieweb/wordpress-micropub)
 
@@ -22,8 +21,7 @@ Once you've installed and activated the plugin, try using [Quill](http://quill.p
 
 Supports the [full W3C Micropub CR spec](https://www.w3.org/TR/micropub/) as of version 2.0.0.
 
-As this allows the creation of posts without entering the WordPress admin, it is not subject to any Gutenberg compatibility concerns per se. Posts created will not have Gutenberg blocks
-as they were not created with Gutenberg, but otherwise there should be no issues at this time.
+As this allows the creation of posts without entering the WordPress admin, it is not subject to any Gutenberg compatibility concerns per se. Posts created will not have Gutenberg blocks as they were not created with Gutenberg, but otherwise there should be no issues at this time.
 
 Available in the WordPress plugin directory at [wordpress.org/plugins/micropub](https://wordpress.org/plugins/micropub/).
 
@@ -105,7 +103,7 @@ Supports Stable Extensions to Micropub:
 Supports Proposed Extensions to Micropub:
 
 * [Limit Parameter for Query](https://github.com/indieweb/micropub-extensions/issues/35) - Supports adding limit to any query designed to return a list of options to limit it to that number.
-* [Offset Parameter for Query](https://github.com/indieweb/micropub-extensions/issues/36) - Supports adding offset to any query. Must be used with limit. 
+* [Offset Parameter for Query](https://github.com/indieweb/micropub-extensions/issues/36) - Supports adding offset to any query. Must be used with limit.
 * [Filter Parameter for Query](https://github.com/indieweb/micropub-extensions/issues/34) - Supported for the Category/Tag List query.
 * [Location Visiblity](https://github.com/indieweb/micropub-extensions/issues/16) - Either `public`, `private`, or `protected`
 * [Query for Supported Queries](https://github.com/indieweb/micropub-extensions/issues/7) - Returns a list of query parameters the endpoint supports
@@ -114,9 +112,11 @@ Supports Proposed Extensions to Micropub:
 * [Supports extended GEO URIs](https://github.com/indieweb/micropub-extensions/issues/32) - Supports adding arbitrary parameters to the GEO URI. Micropub converts this into an mf2 object. Supported as built into the Indigenous client.
 
 Deprecated Extensions still Supported:
-* [Last Media Uploaded](https://github.com/indieweb/micropub-extensions/issues/10) - Supports querying for the last image uploaded ...set to within the last hour. This was superseded by supporting =source&limit=1 on the media endpoint.
+
+* [Last Media Uploaded](https://github.com/indieweb/micropub-extensions/issues/10) - Supports querying for the last image uploaded ...set to within the last hour. This was superseded by supporting `q=source&limit=1` on the media endpoint.
 
 Extensions Supported by Other Plugins:
+
 * [Query for Location](https://github.com/indieweb/micropub-extensions/issues/6) - Suported by Simple Location if installed.
 
 If an experimental property is not set to one of the noted options, the plugin will return HTTP 400 with body:
@@ -148,7 +148,7 @@ Install the IndieAuth plugin from the WordPress plugin directory, then install t
 These configuration options can be enabled by adding them to your wp-config.php
 
 * `define('MICROPUB_NAMESPACE', 'micropub/1.0' )` - By default the namespace for micropub is micropub/1.0. This would allow you to change this for your endpoint
-* `define('MICROPUB_DISABLE_NAG', 1 ) - Disable notices for insecure sites
+* `define('MICROPUB_DISABLE_NAG', 1 )` - Disable notices for insecure sites
 
 These configuration options can be enabled by setting them in the WordPress options table.
 
@@ -158,8 +158,7 @@ These configuration options can be enabled by setting them in the WordPress opti
 
 = I am experiencing issues in logging in with IndieAuth. =
 
-There are a series of troubleshooting steps in the IndieAuth plugin for this. The most common problem involves the token not being passed due the configuration
-of your hosting provider.
+There are a series of troubleshooting steps in the IndieAuth plugin for this. The most common problem involves the token not being passed due the configuration of your hosting provider.
 
 == Upgrade Notice ==
 
@@ -192,6 +191,7 @@ To configure PHPUnit
 1. Run `./bin/install-wp-tests.sh wordpress_micropub_test root '' localhost` to download WordPress and [its unit test library](https://develop.svn.wordpress.org/trunk/tests/phpunit/), into your systems tmp directory by default, and create a MySQL db to test against. [Background here](http://wp-cli.org/docs/plugin-unit-tests/). Feel free to use a MySQL user other than `root`. You can set the `WP_CORE_DIR` and `WP_TESTS_DIR` environment variables to change where WordPress and its test library are installed. For example, I put them both in the repo dir.
 1. Open `wordpress-tests-lib/wp-tests-config.php` and add a slash to the end of the ABSPATH value. No clue why it leaves off the slash; it doesn't work without it.
 1. Run `phpunit` in the repo root dir. If you set `WP_CORE_DIR` and `WP_TESTS_DIR` above, you'll need to set them for this too. You should see output like this:
+
 
     Installing...
     ...
