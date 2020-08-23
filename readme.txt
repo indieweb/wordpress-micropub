@@ -4,7 +4,7 @@ Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.9.9
 Requires PHP: 5.6
 Tested up to: 5.5
-Stable tag: 2.2.1
+Stable tag: 2.2.2
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
@@ -14,7 +14,7 @@ Adds [Micropub](http://micropub.net/) server support to WordPress.
 == Description ==
 
 Micropub is an open API standard that is used to create posts on your site using third-party clients. Web apps and native apps (e.g. iPhone, Android)
-can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com. Requires the IndieAuth plugin.
+can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com. Requires the IndieAuth plugin for authentication.
 
 [![Travis CI](https://travis-ci.org/indieweb/wordpress-micropub.svg?branch=master)](https://travis-ci.org/indieweb/wordpress-micropub)
 
@@ -30,16 +30,6 @@ Available in the WordPress plugin directory at [wordpress.org/plugins/micropub](
 == License ==
 
 This project is placed in the public domain. You may also use it under the [CC0 license](http://creativecommons.org/publicdomain/zero/1.0/).
-
-== Scope ==
-
-Supports the following [scope](https://indieweb.org/scope) parameters requested by Micropub clients.
-
-* create - Allows the client to create and publish posts on behalf of the user
-* draft - Allows the client to create drafts on behalf of the user but not publish them
-* update - Allows the client to update posts on behalf of the user
-* delete - Allows the client to undelete/delete posts on behalf of the user
-* media  - Supports uploading media for the media endpoint, but create or update also give media upload permissions
 
 == WordPress details ==
 
@@ -104,18 +94,30 @@ Stores [microformats2](http://microformats.org/wiki/microformats2) properties in
 
 Does *not* support multithreading. PHP doesn't really either, so it generally won't matter, but just for the record.
 
-Supports Experimental Extensions to Micropub:
+Supports Stable Extensions to Micropub:
 
-* [Post Status](https://github.com/indieweb/micropub-extensions/issues/19) - Either `published` or `draft`
-* [Visibility](https://github.com/indieweb/micropub-extensions/issues/11) - Either `public` or `private`.
-* [Location Visiblity](https://indieweb.org/Micropub-extensions#Location_Visibility) - Either `public`, `private`, or `protected`
-* [Query for Post List](https://github.com/indieweb/micropub-extensions/issues/4) - Supports query for the last x number of posts.
+* [Post Status](https://indieweb.org/Micropub-extensions#Post_Status) - Either `published` or `draft`
+* [Visibility](https://indieweb.org/Micropub-extensions#Visibility) - Either `public` or `private`.
+* [Query for Category/Tag List](https://indieweb.org/Micropub-extensions#Query_for_Category.2FTag_List) - Supports querying for categories and tags.
+* [Slug](https://indieweb.org/Micropub-extensions#Slug) - Custom slug.
+* [Query for Post List](https://indieweb.org/Micropub-extensions#Query_for_Post_List) - Supports query for the last x number of posts.
+
+Supports Proposed Extensions to Micropub:
+
+* [Limit Parameter for Query](https://github.com/indieweb/micropub-extensions/issues/35) - Supports adding limit to any query designed to return a list of options to limit it to that number.
+* [Offset Parameter for Query](https://github.com/indieweb/micropub-extensions/issues/36) - Supports adding offset to any query. Must be used with limit. 
+* [Filter Parameter for Query](https://github.com/indieweb/micropub-extensions/issues/34) - Supported for the Category/Tag List query.
+* [Location Visiblity](https://github.com/indieweb/micropub-extensions/issues/16) - Either `public`, `private`, or `protected`
 * [Query for Supported Queries](https://github.com/indieweb/micropub-extensions/issues/7) - Returns a list of query parameters the endpoint supports
 * [Query for Supported Properties](https://github.com/indieweb/micropub-extensions/issues/8) - Returns a list of which supported experimental properties the endpoint supports so the client can choose to hide unsupported ones.
 * [Discovery of Media Endpoint using Link Rel](https://github.com/indieweb/micropub-extensions/issues/15) - Adds a link header for the media endpoint
-* [Last Media Uploaded](https://github.com/indieweb/micropub-extensions/issues/10) - Supports querying for the last image uploaded ...set to within the last hour
-* [Query for Category/Tag List](https://indieweb.org/Micropub-extensions#Query_for_Category.2FTag_List) - Supports querying for categories and tags.
-* [Slug](https://indieweb.org/Micropub-extensions#Slug) - Custom slug
+* [Supports extended GEO URIs](https://github.com/indieweb/micropub-extensions/issues/32) - Supports adding arbitrary parameters to the GEO URI. Micropub converts this into an mf2 object. Supported as built into the Indigenous client.
+
+Deprecated Extensions still Supported:
+* [Last Media Uploaded](https://github.com/indieweb/micropub-extensions/issues/10) - Supports querying for the last image uploaded ...set to within the last hour. This was superseded by supporting =source&limit=1 on the media endpoint.
+
+Extensions Supported by Other Plugins:
+* [Query for Location](https://github.com/indieweb/micropub-extensions/issues/6) - Suported by Simple Location if installed.
 
 If an experimental property is not set to one of the noted options, the plugin will return HTTP 400 with body:
 
@@ -187,7 +189,7 @@ To set up your local environment to run the unit tests and set up PHPCodesniffer
 To configure PHPUnit
 
 1. Install and start MySQL. (You may already have it.)
-1. Run `./bin/install-wp-tests.sh wordpress_micropub_test root '' localhost` to download WordPress and [its unit test library](https://develop.svn.wordpress.org/trunk/tests/phpunit/), into `/tmp` and `./temp` by default, and create a MySQL db to test against. [Background here](http://wp-cli.org/docs/plugin-unit-tests/). Feel free to use a MySQL user other than `root`. You can set the `WP_CORE_DIR` and `WP_TESTS_DIR` environment variables to change where WordPress and its test library are installed. For example, I put them both in the repo dir.
+1. Run `./bin/install-wp-tests.sh wordpress_micropub_test root '' localhost` to download WordPress and [its unit test library](https://develop.svn.wordpress.org/trunk/tests/phpunit/), into your systems tmp directory by default, and create a MySQL db to test against. [Background here](http://wp-cli.org/docs/plugin-unit-tests/). Feel free to use a MySQL user other than `root`. You can set the `WP_CORE_DIR` and `WP_TESTS_DIR` environment variables to change where WordPress and its test library are installed. For example, I put them both in the repo dir.
 1. Open `wordpress-tests-lib/wp-tests-config.php` and add a slash to the end of the ABSPATH value. No clue why it leaves off the slash; it doesn't work without it.
 1. Run `phpunit` in the repo root dir. If you set `WP_CORE_DIR` and `WP_TESTS_DIR` above, you'll need to set them for this too. You should see output like this:
 
@@ -206,6 +208,11 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.2.2 (2020-08-23 ) =
+* Fixed and updated testing environment
+* Fixed failing tests as a result of update to testing environment
+* Change return response code based on spec update from 401 to 403
 
 = 2.2.1 (2020-07-31 ) =
 * Change category query parameter from search to filter per decision at Micropub Popup Session
