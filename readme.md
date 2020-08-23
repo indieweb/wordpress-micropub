@@ -1,10 +1,9 @@
+
 Adds [Micropub](http://micropub.net/) server support to WordPress.
 
+## Description
 
-## Description 
-
-Micropub is an open API standard that is used to create posts on your site using third-party clients. Web apps and native apps (e.g. iPhone, Android)
-can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com. Requires the IndieAuth plugin for authentication.
+Micropub is an open API standard that is used to create posts on your site using third-party clients. Web apps and native apps (e.g. iPhone, Android) can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com. Requires the IndieAuth plugin for authentication.
 
 [![Travis CI](https://travis-ci.org/indieweb/wordpress-micropub.svg?branch=master)](https://travis-ci.org/indieweb/wordpress-micropub)
 
@@ -12,21 +11,18 @@ Once you've installed and activated the plugin, try using [Quill](http://quill.p
 
 Supports the [full W3C Micropub CR spec](https://www.w3.org/TR/micropub/) as of version 2.0.0.
 
-As this allows the creation of posts without entering the WordPress admin, it is not subject to any Gutenberg compatibility concerns per se. Posts created will not have Gutenberg blocks
-as they were not created with Gutenberg, but otherwise there should be no issues at this time.
+As this allows the creation of posts without entering the WordPress admin, it is not subject to any Gutenberg compatibility concerns per se. Posts created will not have Gutenberg blocks as they were not created with Gutenberg, but otherwise there should be no issues at this time.
 
 Available in the WordPress plugin directory at [wordpress.org/plugins/micropub](https://wordpress.org/plugins/micropub/).
 
-
-## License 
+## License
 
 This project is placed in the public domain. You may also use it under the [CC0 license](http://creativecommons.org/publicdomain/zero/1.0/).
 
+## WordPress details
 
-## WordPress details 
+### Filters and hooks
 
-
-### Filters and hooks 
 Adds nine filters:
 
 `before_micropub( $input )`
@@ -81,8 +77,7 @@ Arguments:
 * `$input`: associative array, the Micropub request in [JSON format](http://micropub.net/draft/index.html#json-syntax). If the request was form-encoded or a multipart file upload, it's converted to JSON format.
 * `$wp_args`: optional associative array. For creates and updates, this is the arguments passed to `wp_insert_post` or `wp_update_post`. For deletes and undeletes, `args['ID']` contains the post id to be (un)deleted. Null for queries.
 
-
-### Other 
+### Other
 
 Stores [microformats2](http://microformats.org/wiki/microformats2) properties in [post metadata](http://codex.wordpress.org/Function_Reference/post_meta_Function_Examples) with keys prefixed by `mf2_`. [Details here.](https://indiewebcamp.com/WordPress_Data#Microformats_data) All values are arrays; use `unserialize()` to deserialize them.
 
@@ -99,7 +94,7 @@ Supports Stable Extensions to Micropub:
 Supports Proposed Extensions to Micropub:
 
 * [Limit Parameter for Query](https://github.com/indieweb/micropub-extensions/issues/35) - Supports adding limit to any query designed to return a list of options to limit it to that number.
-* [Offset Parameter for Query](https://github.com/indieweb/micropub-extensions/issues/36) - Supports adding offset to any query. Must be used with limit. 
+* [Offset Parameter for Query](https://github.com/indieweb/micropub-extensions/issues/36) - Supports adding offset to any query. Must be used with limit.
 * [Filter Parameter for Query](https://github.com/indieweb/micropub-extensions/issues/34) - Supported for the Category/Tag List query.
 * [Location Visiblity](https://github.com/indieweb/micropub-extensions/issues/16) - Either `public`, `private`, or `protected`
 * [Query for Supported Queries](https://github.com/indieweb/micropub-extensions/issues/7) - Returns a list of query parameters the endpoint supports
@@ -108,9 +103,11 @@ Supports Proposed Extensions to Micropub:
 * [Supports extended GEO URIs](https://github.com/indieweb/micropub-extensions/issues/32) - Supports adding arbitrary parameters to the GEO URI. Micropub converts this into an mf2 object. Supported as built into the Indigenous client.
 
 Deprecated Extensions still Supported:
-* [Last Media Uploaded](https://github.com/indieweb/micropub-extensions/issues/10) - Supports querying for the last image uploaded ...set to within the last hour. This was superseded by supporting =source&limit=1 on the media endpoint.
+
+* [Last Media Uploaded](https://github.com/indieweb/micropub-extensions/issues/10) - Supports querying for the last image uploaded ...set to within the last hour. This was superseded by supporting `q=source&limit=1` on the media endpoint.
 
 Extensions Supported by Other Plugins:
+
 * [Query for Location](https://github.com/indieweb/micropub-extensions/issues/6) - Suported by Simple Location if installed.
 
 If an experimental property is not set to one of the noted options, the plugin will return HTTP 400 with body:
@@ -126,60 +123,48 @@ WordPress has a [whitelist of file extensions that it allows in uploads](https:/
       "error_description": "Sorry, this file is not permitted for security reasons."
     }
 
-
-
-## Authentication and authorization 
+## Authentication and authorization
 
 For reasons of security it is recommended that you only use this plugin on sites that implement HTTPS. Authentication is not built into this plugin.
 
 In order to use this, the IndieAuth plugin is required. Other plugins may be written in future as alternatives and will be noted if they exist.
 
-
-## Installation 
+## Installation
 
 Install the IndieAuth plugin from the WordPress plugin directory, then install this plugin. No setup needed.
 
-
-## Configuration Options 
+## Configuration Options
 
 These configuration options can be enabled by adding them to your wp-config.php
 
 * `define('MICROPUB_NAMESPACE', 'micropub/1.0' )` - By default the namespace for micropub is micropub/1.0. This would allow you to change this for your endpoint
-* `define('MICROPUB_DISABLE_NAG', 1 ) - Disable notices for insecure sites
+* `define('MICROPUB_DISABLE_NAG', 1 )` - Disable notices for insecure sites
 
 These configuration options can be enabled by setting them in the WordPress options table.
 
 * `micropub_default_post_status` - if set, Micropub posts will be set to this status by default( publish, draft, or private ). Can also be set on the settings page.
 
+## Frequently Asked Questions
 
-## Frequently Asked Questions 
+### I am experiencing issues in logging in with IndieAuth.
 
+There are a series of troubleshooting steps in the IndieAuth plugin for this. The most common problem involves the token not being passed due the configuration of your hosting provider.
 
-### I am experiencing issues in logging in with IndieAuth. 
+## Upgrade Notice
 
-There are a series of troubleshooting steps in the IndieAuth plugin for this. The most common problem involves the token not being passed due the configuration
-of your hosting provider.
-
-
-## Upgrade Notice 
-
-
-### Version 2.2.0 
+### Version 2.2.0
 
 The Micropub plugin will no longer function without the IndieAuth plugin installed.
 
-
-### Version 2.0.0 
+### Version 2.0.0
 
 This version changes the Micropub endpoint URL as it now uses the REST API. You may have to update any third-parties that have cached this info.
 
-
-## Screenshots 
+## Screenshots
 
 None.
 
-
-## Development 
+## Development
 
 The canonical repo is http://github.com/indieweb/wordpress-micropub . Feedback and pull requests are welcome!
 
@@ -197,6 +182,7 @@ To configure PHPUnit
 1. Open `wordpress-tests-lib/wp-tests-config.php` and add a slash to the end of the ABSPATH value. No clue why it leaves off the slash; it doesn't work without it.
 1. Run `phpunit` in the repo root dir. If you set `WP_CORE_DIR` and `WP_TESTS_DIR` above, you'll need to set them for this too. You should see output like this:
 
+
     Installing...
     ...
     1 / 1 (100%)
@@ -211,28 +197,27 @@ To set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https
 To automatically convert the readme.txt file to readme.md, you may, if you have installed composer as noted in the previous section, enter `composer update-readme` to have the .txt file converted
 into markdown and saved to readme.md.
 
+## Changelog
 
-## Changelog 
+### 2.2.2 (2020-08-23 )
 
-
-### 2.2.2 (2020-08-23 ) 
 * Fixed and updated testing environment
 * Fixed failing tests as a result of update to testing environment
 * Change return response code based on spec update from 401 to 403
 
+### 2.2.1 (2020-07-31 )
 
-### 2.2.1 (2020-07-31 ) 
 * Change category query parameter from search to filter per decision at Micropub Popup Session
 * Fix permissions for Media Endpoint to match Endpoint
 * For source query on both media and micropub endpoint support offset parameter
 
+### 2.2.0 (2020-07-25 )
 
-### 2.2.0 (2020-07-25 ) 
 * Deprecate MICROPUB_LOCAL_AUTH, MICROPUB_AUTHENTICATION_ENDPOINT and MICROPUB_TOKEN_ENDPOINT constants.
 * Remove IndieAuth Client code, will now require the IndieAuth or other plugin that does not yet exist.
 
+### 2.1.0 (2020-02-06 )
 
-### 2.1.0 (2020-02-06 ) 
 * Fix bug where timezone meta key was always set to website timezone instead of provided one
 * Fix issue where title and caption were not being set for images by adopting code from WordPress core
 * Remove post scope
@@ -242,50 +227,50 @@ into markdown and saved to readme.md.
 * return URL in response to creating a post
 * introduce two new filters to filter the post type and the taxonomy input for posts
 
+### 2.0.11 (2019-05-25)
 
-### 2.0.11 (2019-05-25) 
 * Fix issues with empty variables
 * Update last media query to limit itself to last hour
 * Undelete is now part of delete scope as there is no undelete scope
 * Address issue where properties in upload are single property arrays
 
+### 2.0.10 (2019-04-13)
 
-### 2.0.10 (2019-04-13) 
 * Fix issue with media not being attached to post
 
+### 2.0.9 (2019-03-25)
 
-### 2.0.9 (2019-03-25) 
 * Add filter `micropub_suggest_title` and related function to generate slugs
 * Map updated property to WordPress modified property
 * Add meta key to micropub uploaded media so it can be queried
 * Add last and source queries for media endpoint
 * Set up return function for media that returns attachment metadata for now
 
+### 2.0.8 (2019-03-08)
 
-### 2.0.8 (2019-03-08) 
 * Parse geo URI into h-geo or h-card object
 
+### 2.0.7 (2019-02-18)
 
-### 2.0.7 (2019-02-18) 
 * Update geo storage to fix accuracy storage as well as allow for name parameter and future parameters to be passed. Indigenous for Android now supports passing this
 
+### 2.0.6 (2018-12-30)
 
-### 2.0.6 (2018-12-30) 
 * Adjust query filter to allow for new properties to be added by query
 * Add Gutenberg information into README
 
+### 2.0.5 (2018-11-23)
 
-### 2.0.5 (2018-11-23) 
 * Move syndication trigger to after micropub hook in order to ensure final version is rendered before sending syndication
 * Add settings UI for alternate authorization endpoint and token endpoint which will be hidden if Indieauth plugin is enabled
 
+### 2.0.4 (2018-11-17)
 
-### 2.0.4 (2018-11-17) 
 * Issues raised on prior release.
 * Removed generating debug messages when the data is empty
 
+### 2.0.3 (2018-11-17)
 
-### 2.0.3 (2018-11-17) 
 * Fix issue where the after_micropub action could not see form encoded files by adding them as properties on upload
 * Fix issue in previous release where did not account for a null request sent by wpcli
 * Add search parameter to category
@@ -295,17 +280,17 @@ into markdown and saved to readme.md.
 * Micropub config query now returns a list of supported mp parameters and supported q query parameters
 * Micropub media endpoint config query now returns an empty array indicating that it has no configuration parameters yet
 
+### 2.0.2 (2018-11-12)
 
-### 2.0.2 (2018-11-12) 
 * Fix issue with built-in auth and update compatibility testing
 * Add experimental endpoint discovery option(https://indieweb.org/micropub_media_endpoint#Discovery_via_link_rel)
 
+### 2.0.1 (2018-11-04)
 
-### 2.0.1 (2018-11-04) 
 * Move authorization code later in load to resolve conflict
 
+### 2.0.0 (2018-10-22)
 
-### 2.0.0 (2018-10-22) 
 * Split plugin into files by functionality
 * Change authorization to integrate with WordPress mechanisms for login
 * Reject where the URL cannot be matched with a user account
@@ -319,21 +304,21 @@ into markdown and saved to readme.md.
 * Add nag notice for http domains and the option to diable with a setting
 * Load auth later in init sequence to avoid conflict
 
+### 1.4.3 (2018-05-27)
 
-### 1.4.3 (2018-05-27) 
 * Change scopes to filter
 * Get token response when IndieAuth plugin is installed
 
+### 1.4.2 (2018-04-19)
 
-### 1.4.2 (2018-04-19) 
 * Enforce scopes
 
+### 1.4.1 (2018-04-15)
 
-### 1.4.1 (2018-04-15) 
 * Version bump due some individuals not getting template file
 
+### 1.4 (2018-04-08)
 
-### 1.4 (2018-04-08) 
 * Separate functions that generate headers into micropub and IndieAuth
 * Add support for an option now used by the IndieAuth plugin to set alternate token and authorization endpoints
 * MICROPUB_LOCAL_AUTH configuration option adjusted to reflect that this disables the plugin built in authentication. This can hand it back to WordPress or allow another plugin to take over
@@ -342,8 +327,8 @@ into markdown and saved to readme.md.
 * Add configuration option under writing settings to set default post status
 * Add `micropub_syndication` hook that only fires on a request to syndicate to make it easier for third-party plugins to hook in
 
+### 1.3 (2017-12-31)
 
-### 1.3 (2017-12-31) 
 * Saves access token response in a post meta field `micropub_auth_response`.
 * Bug fix for `post_date_gmt`
 * Store timezone from published in arguments passed to micropub filter
@@ -356,22 +341,22 @@ into markdown and saved to readme.md.
 * Remove post content generation override in case of microformats2 capable theme or Post Kinds plugin installed
 * Introduce `micropub_post_content` filter to which post content generation is attached so that a theme or plugin can modify/remove the post generation as needed
 
+### 1.2 (2017-06-25)
 
-### 1.2 (2017-06-25) 
 * Support [OwnYourSwarm](https://ownyourswarm.p3k.io/)'s [custom `checkin` microformats2 property](https://ownyourswarm.p3k.io/docs#checkins), including auto-generating content if necessary.
 * Support `u-bookmark-of`.
 
+### 1.1 (2017-03-30)
 
-### 1.1 (2017-03-30) 
 * Support [`h-adr`](http://microformats.org/wiki/h-adr), [`h-geo`](http://microformats.org/wiki/h-geo), and plain text values for [`p-location`](http://microformats.org/wiki/h-event#p-location).
 * Bug fix for create/update with `content[html]`.
 
+### 1.0.1
 
-### 1.0.1 
 * Remove accidental dependence on PHP 5.3 (#46).
 
+### 1.0
 
-### 1.0 
 Substantial update. Supports [full W3C Micropub spec](https://www.w3.org/TR/micropub/), except for optional
 media endpoint.
 
@@ -381,8 +366,8 @@ media endpoint.
 * Post content will not be automatically marked up if theme supports microformats2 or [Post Kinds plugin](https://wordpress.org/plugins/indieweb-post-kinds/) is enabled.
 * Add PHP Codesniffer File.
 
+### 0.4
 
-### 0.4 
 * Store all properties in post meta except those in a blacklist.
 * Support setting authentication and token endpoint in wp-config by setting `MICROPUB_AUTHENTICATION_ENDPOINT` and `MICROPUB_TOKEN_ENDPOINT`.
 * Support setting all micropub posts to draft in wp-config for testing by setting `MICROPUB_DRAFT_MODE` in wp-config.
@@ -390,18 +375,19 @@ media endpoint.
 * Set content to summary if no content provided.
 * Support querying for syndicate-to and future query options.
 
+### 0.3
 
-### 0.3 
 * Use the specific WordPress user whose URL matches the access token, if possible.
 * Set `post_date_gmt` as well as `post_date`.
 
+### 0.2
 
-### 0.2 
 * Support more Micropub properties: `photo`, `like-of`, `repost-of`, `in-reply-to`, `rsvp`, `location`, `category`, `h=event`.
+
 * Check but don't require access tokens on localhost.
 * Better error handling.
 
+### 0.1
 
-### 0.1 
 Initial release.
 
