@@ -5,11 +5,7 @@ add_action( 'plugins_loaded', array( 'Micropub_Media', 'init' ) );
 /**
  * Micropub Media Class
  */
-class Micropub_Media {
-
-	protected static $scopes                 = array();
-	protected static $micropub_auth_response = array();
-
+class Micropub_Media extends Micropub_Base {
 	/**
 	 * Initialize the plugin.
 	 */
@@ -18,52 +14,21 @@ class Micropub_Media {
 		add_action( 'rest_api_init', array( static::class, 'register_route' ) );
 
 		// endpoint discovery
-		add_action( 'wp_head', array( static::class, 'micropub_media_html_header' ), 99 );
-		add_action( 'send_headers', array( static::class, 'micropub_media_http_header' ) );
-		add_filter( 'host_meta', array( static::class, 'micropub_media_jrd_links' ) );
-		add_filter( 'webfinger_user_data', array( static::class, 'micropub_media_jrd_links' ) );
+		add_action( 'wp_head', array( static::class, 'html_header' ), 99 );
+		add_action( 'send_headers', array( static::class, 'http_header' ) );
+		add_filter( 'host_meta', array( static::class, 'jrd_links' ) );
+		add_filter( 'webfinger_user_data', array( static::class, 'jrd_links' ) );
 
 	}
 
-	public static function get_namespace() {
-		return defined( MICROPUB_NAMESPACE ) ? MICROPUB_NAMESPACE : 'micropub/1.0';
+	public static function get_rel() {
+		return 'micropub_media';
 	}
 
-	public static function get_rest_route( $slash = false ) {
+	public static function get_route( $slash = false ) {
 		$return = static::get_namespace() . '/media';
 		return $slash ? '/' . $return : $return;
 	}
-
-	public static function get_micropub_media_endpoint() {
-		return rest_url( static::get_rest_route() );
-	}
-
-	/**
-	 * The micropub autodicovery meta tags
-	 */
-	public static function micropub_media_html_header() {
-			// phpcs:ignore
-			printf( '<link rel="micropub_media" href="%s" />' . PHP_EOL, static::get_micropub_media_endpoint() );
-	}
-
-		/**
-		 * The micropub autodicovery http-header
-		 */
-	public static function micropub_media_http_header() {
-			Micropub_Endpoint::header( 'Link', '<' . static::get_micropub_media_endpoint() . '>; rel="micropub_media"' );
-	}
-
-		/**
-		 * Generates webfinger/host-meta links
-		 */
-	public static function micropub_media_jrd_links( $array ) {
-			$array['links'][] = array(
-				'rel'  => 'micropub_media',
-				'href' => static::get_micropub_media_endpoint(),
-			);
-			return $array;
-	}
-
 
 	public static function register_route() {
 		register_rest_route(
@@ -71,15 +36,30 @@ class Micropub_Media {
 			'/media',
 			array(
 				array(
-					'methods'  => WP_REST_Server::CREATABLE,
-					'callback' => array( static::class, 'upload_handler' ),
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( static::class, 'upload_handler' ),
+					'permission_callback' => array( static::class, 'check_create_permissions' ),
 				),
 				array(
-					'methods'  => WP_REST_Server::READABLE,
-					'callback' => array( static::class, 'query_handler' ),
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( static::class, 'query_handler' ),
+					'permission_callback' => array( static::class, 'check_query_permissions' ),
 				),
 			)
 		);
+	}
+
+	public static function check_create_permissions( $request ) {
+		$auth = self::load_auth();
+		if ( is_wp_error( $auth ) ) {
+			return $auth;
+		}
+
+		if ( ! current_user_can( 'upload_files' ) ) {
+			$error = new WP_Micropub_Error( 'insufficient_scope', 'You do not have permission to create or upload media', 403 );
+			return $error->to_wp_error();
+		}
+		return true;
 	}
 
 	// Based on WP_REST_Attachments_Controller function of the same name
@@ -189,26 +169,6 @@ class Micropub_Media {
 		return $file;
 	}
 
-	/**
-	 * Checks if a given request has access to create an attachment.
-	 *
-	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_Micropub_Error|true Boolean true if the attachment may be created, or a WP_Micropub_Error if not.
-	 */
-	protected static function permissions_check( $request ) {
-		static::$scopes                 = apply_filters( 'indieauth_scopes', static::$scopes );
-		static::$micropub_auth_response = apply_filters( 'indieauth_response', static::$micropub_auth_response );
-		if ( 'POST' === $request->get_method() ) {
-			if ( ! current_user_can( 'upload_files' ) ) {
-				return new WP_Micropub_Error( 'insufficient_scope', 'You do not have permission to create or upload media', 403 );
-			}
-		} else if ( ! current_user_can( 'read' ) ) {
-				return new WP_Micropub_Error( 'forbidden', 'Unauthorized', 403 );
-		}
-
-		return true;
-	}
-
 	protected static function insert_attachment( $file, $post_id = 0, $title = null ) {
 		$args = array(
 			'post_mime_type' => $file['type'],
@@ -277,12 +237,6 @@ class Micropub_Media {
 
 	// Handles requests to the Media Endpoint
 	public static function upload_handler( $request ) {
-
-		$permission = static::permissions_check( $request );
-		if ( is_micropub_error( $permission ) ) {
-			return $permission;
-		}
-
 		// Get the file via $_FILES
 		$files   = $request->get_file_params();
 		$headers = $request->get_headers();
@@ -315,8 +269,7 @@ class Micropub_Media {
 
 	// Responds to queries to the media endpoint
 	public static function query_handler( $request ) {
-		$permission = static::permissions_check( $request );
-		$params     = $request->get_query_params();
+		$params = $request->get_query_params();
 		if ( array_key_exists( 'q', $params ) ) {
 			switch ( $params['q'] ) {
 				case 'config':

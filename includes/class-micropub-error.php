@@ -11,7 +11,7 @@ class WP_Micropub_Error extends WP_REST_Response {
 		);
 		$data = array_filter( $data );
 		$this->set_data( $data );
-		if ( WP_DEBUG ) {
+		if ( WP_DEBUG && ! defined( 'DIR_TESTDATA' ) ) {
 			error_log( $this->to_log() ); // phpcs:ignore
 		}
 
@@ -30,7 +30,7 @@ class WP_Micropub_Error extends WP_REST_Response {
 			$data['error_description'],
 			array(
 				'status' => $status,
-				'data'   => $data['data'],
+				'data'   => mp_get( $data, 'data' ),
 			)
 		);
 	}

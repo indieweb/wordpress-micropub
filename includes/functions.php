@@ -28,7 +28,7 @@ if ( ! function_exists( 'mp_get' ) ) {
 		if ( is_array( $array ) && isset( $array[ $key ] ) ) {
 			$return = $array[ $key ];
 		}
-		if ( $index && wp_is_numeric_array( $return ) ) {
+		if ( $index && wp_is_numeric_array( $return ) && ! empty( $return ) ) {
 			$return = $return[0];
 		}
 		return $return;
@@ -48,3 +48,16 @@ if ( ! function_exists( 'mp_filter' ) ) {
 		);
 	}
 }
+
+if ( ! function_exists( 'micropub_get_response' ) ) {
+	function micropub_get_response() {
+		return apply_filters( 'indieauth_response', null );
+	}
+}
+
+if ( ! function_exists( 'micropub_get_scopes' ) ) {
+	function micropub_get_scopes() {
+		return apply_filters( 'indieauth_scopes', null );
+	}
+}
+

@@ -7,7 +7,7 @@
  * Author: IndieWeb WordPress Outreach Club
  * Author URI: https://indieweb.org/WordPress_Outreach_Club
  * Text Domain: micropub
- * Version: 2.2.2
+ * Version: 2.2.3
  */
 
 /* See README for supported filters and actions.
@@ -42,6 +42,9 @@ if ( class_exists( 'IndieAuth_Plugin' ) ) {
 
 	// Error Handling Class
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-error.php';
+
+	// Endpoint Base Class.
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-base.php';
 
 	// Media Endpoint and Handling Functions
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-media.php';

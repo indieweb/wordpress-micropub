@@ -5,7 +5,7 @@ add_action( 'plugins_loaded', array( 'Micropub_Endpoint', 'init' ) );
 /**
  * Micropub Endpoint Class
  */
-class Micropub_Endpoint {
+class Micropub_Endpoint extends Micropub_Base {
 	// associative array
 	public static $request_headers;
 
@@ -26,50 +26,15 @@ class Micropub_Endpoint {
 	 */
 	public static function init() {
 		// endpoint discovery
-		add_action( 'wp_head', array( static::class, 'micropub_html_header' ), 99 );
-		add_action( 'send_headers', array( static::class, 'micropub_http_header' ) );
-		add_filter( 'host_meta', array( static::class, 'micropub_jrd_links' ) );
-		add_filter( 'webfinger_user_data', array( static::class, 'micropub_jrd_links' ) );
+		add_action( 'wp_head', array( static::class, 'html_header' ), 99 );
+		add_action( 'send_headers', array( static::class, 'http_header' ) );
+		add_filter( 'host_meta', array( static::class, 'jrd_links' ) );
+		add_filter( 'webfinger_user_data', array( static::class, 'jrd_links' ) );
 
 		// register endpoint
 		add_action( 'rest_api_init', array( static::class, 'register_route' ) );
 
 		add_filter( 'rest_request_after_callbacks', array( static::class, 'return_micropub_error' ), 10, 3 );
-	}
-
-	public static function get_namespace() {
-		return defined( MICROPUB_NAMESPACE ) ? MICROPUB_NAMESPACE : 'micropub/1.0';
-	}
-
-	public static function get_micropub_rest_route( $slash = false ) {
-		$return = static::get_namespace() . '/endpoint';
-		return $slash ? '/' . $return : $return;
-	}
-
-	public static function get_micropub_endpoint() {
-		return rest_url( static::get_micropub_rest_route() );
-	}
-
-
-	public static function return_micropub_error( $response, $handler, $request ) {
-		if ( static::get_namespace() . '/endpoint' !== $request->get_route() ) {
-				return $response;
-		}
-		if ( is_wp_error( $response ) ) {
-			return micropub_wp_error( $response );
-		}
-		return $response;
-	}
-
-	public static function log_error( $message, $name = 'Micropub' ) {
-		if ( empty( $message ) ) {
-			return false;
-		}
-		if ( is_array( $message ) || is_object( $message ) ) {
-			$message = wp_json_encode( $message );
-		}
-
-		return error_log( sprintf( '%1$s: %2$s', $name, $message ) ); // phpcs:ignore
 	}
 
 	public static function get( $array, $key, $default = array() ) {
@@ -87,7 +52,7 @@ class Micropub_Endpoint {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( static::class, 'post_handler' ),
-					'permission_callback' => array( static::class, 'check_post_permissions' ),
+					'permission_callback' => array( static::class, 'check_create_permissions' ),
 
 				),
 				array(
@@ -100,48 +65,20 @@ class Micropub_Endpoint {
 		);
 	}
 
-	public static function load_auth() {
-		static::$micropub_auth_response = apply_filters( 'indieauth_response', static::$micropub_auth_response );
-		static::$scopes                 = apply_filters( 'indieauth_scopes', static::$scopes );
-		// Every user should have this capability which reflects the ability to access your user profile and the admin dashboard
-		if ( ! current_user_can( 'read' ) ) {
-			return new WP_Error( 'forbidden', 'Unauthorized', array( 'status' => 403 ) );
-		}
-
-		// If there is no auth response this is cookie authentication which should be rejected
-		// https://www.w3.org/TR/micropub/#authentication-and-authorization - Requests must be authenticated by token
-		if ( empty( static::$micropub_auth_response ) ) {
-			return new WP_Error( 'unauthorized', 'Cookie Authentication is not permitted', array( 'status' => 401 ) );
-		}
-		return true;
-	}
-
-	public static function check_query_permissions( $request ) {
-		$auth = self::load_auth();
-		if ( is_wp_error( $auth ) ) {
-			return $auth;
-		}
-		$query = $request->get_param( 'q' );
-		if ( ! $query ) {
-			return new WP_Error( 'invalid_request', 'Missing Query Parameter', array( 'status' => 400 ) );
-		}
-
-		return true;
-	}
-
-	public static function check_post_permissions( $request ) {
+	public static function check_create_permissions( $request ) {
 		$auth = self::load_auth();
 		if ( is_wp_error( $auth ) ) {
 			return $auth;
 		}
 
-		$action = $request->get_param( 'action' );
-		$action = $action ? $action : 'create';
-
+		$action     = $request->get_param( 'action' );
+		$action     = $action ? $action : 'create';
 		$permission = self::check_action( $action );
+
 		if ( is_micropub_error( $permission ) ) {
 			return $permission->to_wp_error();
 		}
+
 		return $permission;
 	}
 
@@ -155,7 +92,7 @@ class Micropub_Endpoint {
 	 */
 	protected static function load_input( $request ) {
 		$content_type = $request->get_content_type();
-		$content_type = $content_type['value'];
+		$content_type = mp_get( $content_type, 'value', 'applicatoin/x-www-form-urlencoded' );
 
 		if ( 'GET' === $request->get_method() ) {
 			static::$input = $request->get_query_params();
@@ -778,7 +715,7 @@ class Micropub_Endpoint {
 	 */
 	public static function default_file_handler( $post_id ) {
 		foreach ( array( 'photo', 'video', 'audio' ) as $field ) {
-			$props   = static::$input['properties'];
+			$props   = mp_get( static::$input, 'properties' );
 			$att_ids = array();
 
 			if ( isset( static::$files[ $field ] ) || isset( $props[ $field ] ) ) {
@@ -869,7 +806,7 @@ class Micropub_Endpoint {
 					$args['meta_input']['geo_public'] = 2;
 					break;
 				default:
-					return new WP_Micropub_Error( 'invalid_request', sprintf( 'unsupported location visibility %1$s', $visiblity ), 400 );
+					return new WP_Micropub_Error( 'invalid_request', sprintf( 'unsupported location visibility %1$s', $visibility ), 400 );
 
 			}
 		}
@@ -1001,7 +938,7 @@ class Micropub_Endpoint {
 		$props = mp_get( static::$input, 'properties', false );
 		if ( ! isset( $args['ID'] ) && $props ) {
 			$args['meta_input'] = mp_get( $args, 'meta_input' );
-			$type               = static::$input['type'];
+			$type               = mp_get( static::$input, 'type' );
 			if ( $type ) {
 				$args['meta_input']['mf2_type'] = $type;
 			}
@@ -1023,8 +960,12 @@ class Micropub_Endpoint {
 		if ( $add ) {
 			foreach ( $add as $prop => $val ) {
 				$key = 'mf2_' . $prop;
-				$cur = $meta[ $key ][0] ? unserialize( $meta[ $key ][0] ) : array();
-				update_post_meta( $args['ID'], $key, array_merge( $cur, $val ) );
+				if ( array_key_exists( $key, $meta ) ) {
+					$cur = $meta[ $key ][0] ? unserialize( $meta[ $key ][0] ) : array();
+					update_post_meta( $args['ID'], $key, array_merge( $cur, $val ) );
+				} else {
+					update_post_meta( $args['ID'], $key, $val );
+				}
 			}
 		}
 
@@ -1074,41 +1015,6 @@ class Micropub_Endpoint {
 		return $mf2;
 	}
 
-	private static function check_error( $result ) {
-		if ( ! $result ) {
-			return new WP_Micropub_Error( 'invalid_request', $result, 400 );
-		} elseif ( is_wp_error( $result ) ) {
-			return micropub_wp_error( $result );
-		}
-		return $result;
-	}
-
-	/**
-	 * The micropub autodicovery meta tags
-	 */
-	public static function micropub_html_header() {
-		// phpcs:ignore
-		printf( '<link rel="micropub" href="%s" />' . PHP_EOL, static::get_micropub_endpoint() );
-	}
-
-	/**
-	 * The micropub autodicovery http-header
-	 */
-	public static function micropub_http_header() {
-		static::header( 'Link', '<' . static::get_micropub_endpoint() . '>; rel="micropub"' );
-	}
-
-	/**
-	 * Generates webfinger/host-meta links
-	 */
-	public static function micropub_jrd_links( $array ) {
-		$array['links'][] = array(
-			'rel'  => 'micropub',
-			'href' => static::get_micropub_endpoint(),
-		);
-		return $array;
-	}
-
 	/* Takes form encoded input and converts to json encoded input */
 	public static function form_to_json( $data ) {
 		$input = array();
@@ -1127,21 +1033,6 @@ class Micropub_Endpoint {
 			}
 		}
 		return $input;
-	}
-
-	protected static function get_header( $name ) {
-		if ( ! static::$request_headers ) {
-			$headers                 = getallheaders();
-			static::$request_headers = array();
-			foreach ( $headers as $key => $value ) {
-				static::$request_headers[ strtolower( $key ) ] = $value;
-			}
-		}
-		return static::$request_headers[ strtolower( $name ) ];
-	}
-
-	public static function header( $header, $value ) {
-		header( $header . ': ' . $value, false );
 	}
 }
 
