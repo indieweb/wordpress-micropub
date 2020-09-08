@@ -664,7 +664,7 @@ class Micropub_Endpoint extends Micropub_Base {
 		}
 
 		if ( isset( $props['published'] ) ) {
-			$date = new DateTimeImmutable( $props['published'][0] );
+			$date = new DateTime( $props['published'][0] );
 			// If for whatever reason the date cannot be parsed do not include one which defaults to now
 			if ( $date ) {
 				$wptz = wp_timezone();
@@ -679,7 +679,7 @@ class Micropub_Endpoint extends Micropub_Base {
 		}
 
 		if ( isset( $props['updated'] ) ) {
-			$date = new DateTimeImmutable( $props['updated'][0] );
+			$date = new DateTime( $props['updated'][0] );
 			// If for whatever reason the date cannot be parsed do not include one which defaults to now
 			if ( $date ) {
 				$wptz = wp_timezone();
