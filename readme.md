@@ -5,7 +5,9 @@ Adds [Micropub](http://micropub.net/) server support to WordPress.
 
 Micropub is an open API standard that is used to create posts on your site using third-party clients. Web apps and native apps (e.g. iPhone, Android) can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com. Requires the IndieAuth plugin for authentication.
 
-[![Travis CI](https://travis-ci.org/indieweb/wordpress-micropub.svg?branch=master)](https://travis-ci.org/indieweb/wordpress-micropub)
+[![Travis CI](https://travis-ci.org/indieweb/wordpress-micropub.svg?branch
+
+### master)](https://travis-ci.org/indieweb/wordpress-micropub)
 
 Once you've installed and activated the plugin, try using [Quill](http://quill.p3k.io/) to create a new post on your site. It walks you through the steps and helps you troubleshoot if you run into any problems. A list of known Micropub clients are available [here](https://indieweb.org/Micropub/Clients)
 
@@ -33,7 +35,9 @@ Called before handling a Micropub request. Returns `$input`, possibly modified.
 
 Called during the handling of a Micropub request. The content generation function is attached to this filter by default. Returns `$post_content`, possibly modified.
 
-`micropub_post_type( $post_type = 'post', $input )`
+`micropub_post_type( $post_type 
+
+### 'post', $input )`
 
 Called during the creation of a Micropub post. This defaults to post, but allows for setting Micropub posts to a custom post type.
 
@@ -63,7 +67,9 @@ This returns the token auth response from a plugin implementing IndieAuth. This 
 
 ...and two hooks:
 
-`after_micropub( $input, $wp_args = null)`
+`after_micropub( $input, $wp_args 
+
+### null)`
 
 Called after handling a Micropub request. Not called if the request fails (ie doesn't return HTTP 2xx).
 
@@ -104,7 +110,9 @@ Supports Proposed Extensions to Micropub:
 
 Deprecated Extensions still Supported:
 
-* [Last Media Uploaded](https://github.com/indieweb/micropub-extensions/issues/10) - Supports querying for the last image uploaded ...set to within the last hour. This was superseded by supporting `q=source&limit=1` on the media endpoint.
+* [Last Media Uploaded](https://github.com/indieweb/micropub-extensions/issues/10) - Supports querying for the last image uploaded ...set to within the last hour. This was superseded by supporting `q=source&limit
+
+### 1` on the media endpoint.
 
 Extensions Supported by Other Plugins:
 
@@ -198,6 +206,13 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 ## Changelog
+
+### 2.2.3 (2020-09-08 )
+
+* Deduplicated endpoint test code from endpoint and media endpoint classes.
+* Removed error suppression revealing several notices that had been hidden. Fixed warning notices.
+* Abstract request for scope and response into functions to avoid calling the actual filter as this may be deprecated in future.
+* Switch check in permissions to whether a user was logged in.
 
 ### 2.2.2 (2020-08-23 )
 
@@ -382,7 +397,9 @@ media endpoint.
 
 ### 0.2
 
-* Support more Micropub properties: `photo`, `like-of`, `repost-of`, `in-reply-to`, `rsvp`, `location`, `category`, `h=event`.
+* Support more Micropub properties: `photo`, `like-of`, `repost-of`, `in-reply-to`, `rsvp`, `location`, `category`, `h
+
+### event`.
 
 * Check but don't require access tokens on localhost.
 * Better error handling.

@@ -3,8 +3,8 @@ Contributors: indieweb, snarfed, dshanske
 Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.9.9
 Requires PHP: 5.6
-Tested up to: 5.5
-Stable tag: 2.2.2
+Tested up to: 5.5.1
+Stable tag: 2.2.3
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
@@ -208,6 +208,12 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.2.3 (2020-09-08 ) =
+* Deduplicated endpoint test code from endpoint and media endpoint classes.
+* Removed error suppression revealing several notices that had been hidden. Fixed warning notices.
+* Abstract request for scope and response into functions to avoid calling the actual filter as this may be deprecated in future.
+* Switch check in permissions to whether a user was logged in.
 
 = 2.2.2 (2020-08-23 ) =
 * Fixed and updated testing environment
