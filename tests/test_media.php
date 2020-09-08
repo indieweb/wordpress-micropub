@@ -15,12 +15,12 @@ class Micropub_Media_Test extends Micropub_UnitTestCase {
 
 	public function test_register_routes() {
 		$routes = rest_get_server()->get_routes();
-		$this->assertArrayHasKey( Micropub_Media::get_rest_route( true ), $routes );
-		$this->assertCount( 2, $routes[ Micropub_Media::get_rest_route( true ) ] );
+		$this->assertArrayHasKey( Micropub_Media::get_route( true ), $routes );
+		$this->assertCount( 2, $routes[ Micropub_Media::get_route( true ) ] );
 	}
 
 	public function upload_request() {
-		$request = new WP_REST_Request( 'POST', Micropub_Media::get_rest_route( true ) );
+		$request = new WP_REST_Request( 'POST', Micropub_Media::get_route( true ) );
 		$request->set_header( 'Content-Type', 'image/jpeg' );
 		$request->set_file_params( 
 			array(
@@ -60,7 +60,7 @@ class Micropub_Media_Test extends Micropub_UnitTestCase {
 	}
 
 	public function test_empty_upload() {
-		$request = new WP_REST_Request( 'POST', Micropub_Media::get_rest_route( true ) );
+		$request = new WP_REST_Request( 'POST', Micropub_Media::get_route( true ) );
 		$response = $this->dispatch( $request, self::$author_id );
 		$data     = $response->get_data();
 		$this->assertEquals( 400, $response->get_status(), wp_json_encode( $data ) );

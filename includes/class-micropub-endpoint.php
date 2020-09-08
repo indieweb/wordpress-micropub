@@ -5,7 +5,7 @@ add_action( 'plugins_loaded', array( 'Micropub_Endpoint', 'init' ) );
 /**
  * Micropub Endpoint Class
  */
-class Micropub_Endpoint {
+class Micropub_Endpoint extends Micropub_Base {
 	// associative array
 	public static $request_headers;
 
@@ -26,10 +26,10 @@ class Micropub_Endpoint {
 	 */
 	public static function init() {
 		// endpoint discovery
-		add_action( 'wp_head', array( static::class, 'micropub_html_header' ), 99 );
-		add_action( 'send_headers', array( static::class, 'micropub_http_header' ) );
-		add_filter( 'host_meta', array( static::class, 'micropub_jrd_links' ) );
-		add_filter( 'webfinger_user_data', array( static::class, 'micropub_jrd_links' ) );
+		add_action( 'wp_head', array( static::class, 'html_header' ), 99 );
+		add_action( 'send_headers', array( static::class, 'http_header' ) );
+		add_filter( 'host_meta', array( static::class, 'jrd_links' ) );
+		add_filter( 'webfinger_user_data', array( static::class, 'jrd_links' ) );
 
 		// register endpoint
 		add_action( 'rest_api_init', array( static::class, 'register_route' ) );
@@ -37,39 +37,14 @@ class Micropub_Endpoint {
 		add_filter( 'rest_request_after_callbacks', array( static::class, 'return_micropub_error' ), 10, 3 );
 	}
 
-	public static function get_namespace() {
-		return defined( MICROPUB_NAMESPACE ) ? MICROPUB_NAMESPACE : 'micropub/1.0';
+
+	public static function get_rel() {
+		return 'micropub';
 	}
 
-	public static function get_micropub_rest_route( $slash = false ) {
+	public static function get_route( $slash = false ) {
 		$return = static::get_namespace() . '/endpoint';
 		return $slash ? '/' . $return : $return;
-	}
-
-	public static function get_micropub_endpoint() {
-		return rest_url( static::get_micropub_rest_route() );
-	}
-
-
-	public static function return_micropub_error( $response, $handler, $request ) {
-		if ( static::get_namespace() . '/endpoint' !== $request->get_route() ) {
-				return $response;
-		}
-		if ( is_wp_error( $response ) ) {
-			return micropub_wp_error( $response );
-		}
-		return $response;
-	}
-
-	public static function log_error( $message, $name = 'Micropub' ) {
-		if ( empty( $message ) || defined( 'DIR_TESTDATA' ) ) {
-			return false;
-		}
-		if ( is_array( $message ) || is_object( $message ) ) {
-			$message = wp_json_encode( $message );
-		}
-
-		return error_log( sprintf( '%1$s: %2$s', $name, $message ) ); // phpcs:ignore
 	}
 
 	public static function get( $array, $key, $default = array() ) {
@@ -100,45 +75,14 @@ class Micropub_Endpoint {
 		);
 	}
 
-	public static function load_auth() {
-
-		// Check if logged in
-		if ( ! is_user_logged_in() ) {
-			return new WP_Error( 'forbidden', 'Unauthorized', array( 'status' => 403 ) );
-		}
-
-		static::$micropub_auth_response = micropub_get_response();
-		static::$scopes                 = micropub_get_scopes();
-
-		// If there is no auth response this is cookie authentication which should be rejected
-		// https://www.w3.org/TR/micropub/#authentication-and-authorization - Requests must be authenticated by token
-		if ( empty( static::$micropub_auth_response ) ) {
-			return new WP_Error( 'unauthorized', 'Cookie Authentication is not permitted', array( 'status' => 401 ) );
-		}
-		return true;
-	}
-
-	public static function check_query_permissions( $request ) {
-		$auth = self::load_auth();
-		if ( is_wp_error( $auth ) ) {
-			return $auth;
-		}
-		$query = $request->get_param( 'q' );
-		if ( ! $query ) {
-			return new WP_Error( 'invalid_request', 'Missing Query Parameter', array( 'status' => 400 ) );
-		}
-
-		return true;
-	}
-
 	public static function check_create_permissions( $request ) {
 		$auth = self::load_auth();
 		if ( is_wp_error( $auth ) ) {
 			return $auth;
 		}
 
-		$action = $request->get_param( 'action' );
-		$action = $action ? $action : 'create';
+		$action     = $request->get_param( 'action' );
+		$action     = $action ? $action : 'create';
 		$permission = self::check_action( $action );
 
 		if ( is_micropub_error( $permission ) ) {
@@ -720,7 +664,7 @@ class Micropub_Endpoint {
 		}
 
 		if ( isset( $props['published'] ) ) {
-			$date = new DateTime( $props['published'][0] );
+			$date = new DateTimeImmutable( $props['published'][0] );
 			// If for whatever reason the date cannot be parsed do not include one which defaults to now
 			if ( $date ) {
 				$wptz = wp_timezone();
@@ -735,7 +679,7 @@ class Micropub_Endpoint {
 		}
 
 		if ( isset( $props['updated'] ) ) {
-			$date = new DateTime( $props['updated'][0] );
+			$date = new DateTimeImmutable( $props['updated'][0] );
 			// If for whatever reason the date cannot be parsed do not include one which defaults to now
 			if ( $date ) {
 				$wptz = wp_timezone();
@@ -1081,41 +1025,6 @@ class Micropub_Endpoint {
 		return $mf2;
 	}
 
-	private static function check_error( $result ) {
-		if ( ! $result ) {
-			return new WP_Micropub_Error( 'invalid_request', $result, 400 );
-		} elseif ( is_wp_error( $result ) ) {
-			return micropub_wp_error( $result );
-		}
-		return $result;
-	}
-
-	/**
-	 * The micropub autodicovery meta tags
-	 */
-	public static function micropub_html_header() {
-		// phpcs:ignore
-		printf( '<link rel="micropub" href="%s" />' . PHP_EOL, static::get_micropub_endpoint() );
-	}
-
-	/**
-	 * The micropub autodicovery http-header
-	 */
-	public static function micropub_http_header() {
-		static::header( 'Link', '<' . static::get_micropub_endpoint() . '>; rel="micropub"' );
-	}
-
-	/**
-	 * Generates webfinger/host-meta links
-	 */
-	public static function micropub_jrd_links( $array ) {
-		$array['links'][] = array(
-			'rel'  => 'micropub',
-			'href' => static::get_micropub_endpoint(),
-		);
-		return $array;
-	}
-
 	/* Takes form encoded input and converts to json encoded input */
 	public static function form_to_json( $data ) {
 		$input = array();
@@ -1134,21 +1043,6 @@ class Micropub_Endpoint {
 			}
 		}
 		return $input;
-	}
-
-	protected static function get_header( $name ) {
-		if ( ! static::$request_headers ) {
-			$headers                 = getallheaders();
-			static::$request_headers = array();
-			foreach ( $headers as $key => $value ) {
-				static::$request_headers[ strtolower( $key ) ] = $value;
-			}
-		}
-		return static::$request_headers[ strtolower( $name ) ];
-	}
-
-	public static function header( $header, $value ) {
-		header( $header . ': ' . $value, false );
 	}
 }
 

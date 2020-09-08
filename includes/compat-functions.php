@@ -5,12 +5,12 @@ if ( ! function_exists( 'current_datetime' ) ) {
 	/**
 	 * Retrieves the current time as an object with the timezone from settings.
 	 *
-	 * @since 5.3.0 - Backported to Micropub and DateTime used for pre PHP 5.5 compatibility for new
+	 * @since 5.3.0 - Backported to Micropub
 	 *
-	 * @return DateTime Date and time object.
+	 * @return DateTimeImmutable Date and time object.
 	 */
 	function current_datetime() {
-		return new DateTime( 'now', wp_timezone() );
+		return new DateTimeImmutable( 'now', wp_timezone() );
 	}
 }
 
@@ -20,11 +20,11 @@ if ( ! function_exists( 'get_post_datetime' ) ) {
 	 *
 	 * The object will be set to the timezone from WordPress settings.
 	 *
-	 * @since 5.3.0 - backported to Micropub and returns as a DateTime not DateTimeImmutable object for pre PHP 5.5 compat
+	 * @since 5.3.0 - backported to Micropub
 	 *
 	 * @param int|WP_Post $post  Optional. WP_Post object or ID. Default is global `$post` object.
 	 * @param string      $field Optional. Post field to use. Accepts 'date' or 'modified'.
-	 * @return DateTime|false Time object on success, false on failure.
+	 * @return DateTimeImmutable|false Time object on success, false on failure.
 	 */
 	function get_post_datetime( $post = null, $field = 'date' ) {
 		$post = get_post( $post );

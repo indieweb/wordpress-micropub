@@ -5,11 +5,7 @@ add_action( 'plugins_loaded', array( 'Micropub_Media', 'init' ) );
 /**
  * Micropub Media Class
  */
-class Micropub_Media {
-
-	protected static $scopes                 = array();
-	protected static $micropub_auth_response = array();
-
+class Micropub_Media extends Micropub_Base {
 	/**
 	 * Initialize the plugin.
 	 */
@@ -18,52 +14,21 @@ class Micropub_Media {
 		add_action( 'rest_api_init', array( static::class, 'register_route' ) );
 
 		// endpoint discovery
-		add_action( 'wp_head', array( static::class, 'micropub_media_html_header' ), 99 );
-		add_action( 'send_headers', array( static::class, 'micropub_media_http_header' ) );
-		add_filter( 'host_meta', array( static::class, 'micropub_media_jrd_links' ) );
-		add_filter( 'webfinger_user_data', array( static::class, 'micropub_media_jrd_links' ) );
+		add_action( 'wp_head', array( static::class, 'html_header' ), 99 );
+		add_action( 'send_headers', array( static::class, 'http_header' ) );
+		add_filter( 'host_meta', array( static::class, 'jrd_links' ) );
+		add_filter( 'webfinger_user_data', array( static::class, 'jrd_links' ) );
 
 	}
 
-	public static function get_namespace() {
-		return defined( MICROPUB_NAMESPACE ) ? MICROPUB_NAMESPACE : 'micropub/1.0';
+	public static function get_rel() {
+		return 'micropub_media';
 	}
 
-	public static function get_rest_route( $slash = false ) {
+	public static function get_route( $slash = false ) {
 		$return = static::get_namespace() . '/media';
 		return $slash ? '/' . $return : $return;
 	}
-
-	public static function get_micropub_media_endpoint() {
-		return rest_url( static::get_rest_route() );
-	}
-
-	/**
-	 * The micropub autodicovery meta tags
-	 */
-	public static function micropub_media_html_header() {
-			// phpcs:ignore
-			printf( '<link rel="micropub_media" href="%s" />' . PHP_EOL, static::get_micropub_media_endpoint() );
-	}
-
-		/**
-		 * The micropub autodicovery http-header
-		 */
-	public static function micropub_media_http_header() {
-			Micropub_Endpoint::header( 'Link', '<' . static::get_micropub_media_endpoint() . '>; rel="micropub_media"' );
-	}
-
-		/**
-		 * Generates webfinger/host-meta links
-		 */
-	public static function micropub_media_jrd_links( $array ) {
-			$array['links'][] = array(
-				'rel'  => 'micropub_media',
-				'href' => static::get_micropub_media_endpoint(),
-			);
-			return $array;
-	}
-
 
 	public static function register_route() {
 		register_rest_route(
@@ -82,36 +47,6 @@ class Micropub_Media {
 				),
 			)
 		);
-	}
-
-	public static function load_auth() {
-		// Check if logged in
-		if ( ! is_user_logged_in() ) {
-			return new WP_Error( 'forbidden', 'Unauthorized', array( 'status' => 403 ) );
-		}
-
-		static::$micropub_auth_response = micropub_get_response();
-		static::$scopes                 = micropub_get_scopes();
-
-		// If there is no auth response this is cookie authentication which should be rejected
-		// https://www.w3.org/TR/micropub/#authentication-and-authorization - Requests must be authenticated by token
-		if ( empty( static::$micropub_auth_response ) ) {
-			return new WP_Error( 'unauthorized', 'Cookie Authentication is not permitted', array( 'status' => 401 ) );
-		}
-		return true;
-	}
-
-	public static function check_query_permissions( $request ) {
-		$auth = self::load_auth();
-		if ( is_wp_error( $auth ) ) {
-			return $auth;
-		}
-		$query = $request->get_param( 'q' );
-		if ( ! $query ) {
-			return new WP_Error( 'invalid_request', 'Missing Query Parameter', array( 'status' => 400 ) );
-		}
-
-		return true;
 	}
 
 	public static function check_create_permissions( $request ) {
