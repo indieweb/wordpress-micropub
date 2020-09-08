@@ -71,15 +71,59 @@ class Micropub_Media {
 			'/media',
 			array(
 				array(
-					'methods'  => WP_REST_Server::CREATABLE,
-					'callback' => array( static::class, 'upload_handler' ),
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( static::class, 'upload_handler' ),
+					'permission_callback' => array( static::class, 'check_post_permissions' ),
 				),
 				array(
-					'methods'  => WP_REST_Server::READABLE,
-					'callback' => array( static::class, 'query_handler' ),
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( static::class, 'query_handler' ),
+					'permission_callback' => array( static::class, 'check_query_permissions' ),
 				),
 			)
 		);
+	}
+
+	public static function load_auth() {
+		// Check if logged in
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error( 'forbidden', 'Unauthorized', array( 'status' => 403 ) );
+		}
+
+		static::$micropub_auth_response = micropub_get_response();
+		static::$scopes                 = micropub_get_scopes();
+
+		// If there is no auth response this is cookie authentication which should be rejected
+		// https://www.w3.org/TR/micropub/#authentication-and-authorization - Requests must be authenticated by token
+		if ( empty( static::$micropub_auth_response ) ) {
+			return new WP_Error( 'unauthorized', 'Cookie Authentication is not permitted', array( 'status' => 401 ) );
+		}
+		return true;
+	}
+
+	public static function check_query_permissions( $request ) {
+		$auth = self::load_auth();
+		if ( is_wp_error( $auth ) ) {
+			return $auth;
+		}
+		$query = $request->get_param( 'q' );
+		if ( ! $query ) {
+			return new WP_Error( 'invalid_request', 'Missing Query Parameter', array( 'status' => 400 ) );
+		}
+
+		return true;
+	}
+
+	public static function check_post_permissions( $request ) {
+		$auth = self::load_auth();
+		if ( is_wp_error( $auth ) ) {
+			return $auth;
+		}
+
+		if ( ! current_user_can( 'upload_files' ) ) {
+			$error = new WP_Micropub_Error( 'insufficient_scope', 'You do not have permission to create or upload media', 403 );
+			return $error->to_wp_error();
+		}
 	}
 
 	// Based on WP_REST_Attachments_Controller function of the same name
@@ -189,26 +233,6 @@ class Micropub_Media {
 		return $file;
 	}
 
-	/**
-	 * Checks if a given request has access to create an attachment.
-	 *
-	 * @param WP_REST_Request $request Full details about the request.
-	 * @return WP_Micropub_Error|true Boolean true if the attachment may be created, or a WP_Micropub_Error if not.
-	 */
-	protected static function permissions_check( $request ) {
-		static::$scopes                 = apply_filters( 'indieauth_scopes', static::$scopes );
-		static::$micropub_auth_response = apply_filters( 'indieauth_response', static::$micropub_auth_response );
-		if ( 'POST' === $request->get_method() ) {
-			if ( ! current_user_can( 'upload_files' ) ) {
-				return new WP_Micropub_Error( 'insufficient_scope', 'You do not have permission to create or upload media', 403 );
-			}
-		} else if ( ! current_user_can( 'read' ) ) {
-				return new WP_Micropub_Error( 'forbidden', 'Unauthorized', 403 );
-		}
-
-		return true;
-	}
-
 	protected static function insert_attachment( $file, $post_id = 0, $title = null ) {
 		$args = array(
 			'post_mime_type' => $file['type'],
@@ -277,12 +301,6 @@ class Micropub_Media {
 
 	// Handles requests to the Media Endpoint
 	public static function upload_handler( $request ) {
-
-		$permission = static::permissions_check( $request );
-		if ( is_micropub_error( $permission ) ) {
-			return $permission;
-		}
-
 		// Get the file via $_FILES
 		$files   = $request->get_file_params();
 		$headers = $request->get_headers();
@@ -315,7 +333,6 @@ class Micropub_Media {
 
 	// Responds to queries to the media endpoint
 	public static function query_handler( $request ) {
-		$permission = static::permissions_check( $request );
 		$params     = $request->get_query_params();
 		if ( array_key_exists( 'q', $params ) ) {
 			switch ( $params['q'] ) {

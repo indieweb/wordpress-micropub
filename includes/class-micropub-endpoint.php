@@ -101,12 +101,14 @@ class Micropub_Endpoint {
 	}
 
 	public static function load_auth() {
-		static::$micropub_auth_response = apply_filters( 'indieauth_response', static::$micropub_auth_response );
-		static::$scopes                 = apply_filters( 'indieauth_scopes', static::$scopes );
-		// Every user should have this capability which reflects the ability to access your user profile and the admin dashboard
-		if ( ! current_user_can( 'read' ) ) {
+
+		// Check if logged in
+		if ( ! is_user_logged_in() ) {
 			return new WP_Error( 'forbidden', 'Unauthorized', array( 'status' => 403 ) );
 		}
+
+		static::$micropub_auth_response = micropub_get_response();
+		static::$scopes                 = micropub_get_scopes();
 
 		// If there is no auth response this is cookie authentication which should be rejected
 		// https://www.w3.org/TR/micropub/#authentication-and-authorization - Requests must be authenticated by token
