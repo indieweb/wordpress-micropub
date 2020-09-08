@@ -38,11 +38,11 @@ class Micropub_Endpoint extends Micropub_Base {
 	}
 
 
-	public static function get_rel() {
+	public function get_rel() {
 		return 'micropub';
 	}
 
-	public static function get_route( $slash = false ) {
+	public function get_route( $slash = false ) {
 		$return = static::get_namespace() . '/endpoint';
 		return $slash ? '/' . $return : $return;
 	}

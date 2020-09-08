@@ -14,9 +14,9 @@ abstract class Micropub_Base {
 		return defined( MICROPUB_NAMESPACE ) ? MICROPUB_NAMESPACE : 'micropub/1.0';
 	}
 
-	abstract public static function get_rel();
+	abstract public function get_rel();
 
-	abstract public static function get_route( $slash = false );
+	abstract public function get_route( $slash = false );
 
 	public static function get_endpoint() {
 		return rest_url( static::get_route() );
