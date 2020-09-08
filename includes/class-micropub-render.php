@@ -63,7 +63,7 @@ class Micropub_Render {
 			$name    = $checkin['properties']['name'][0];
 			$urls    = $checkin['properties']['url'];
 			$lines[] = '<p>Checked into <a class="h-card p-location" href="' .
-				( $urls[1] ? $urls[1] : $urls[0] ) . '">' . $name . '</a>.</p>';
+				( isset( $urls[1] ) ? $urls[1] : $urls[0] ) . '">' . $name . '</a>.</p>';
 		}
 
 		if ( isset( $props['rsvp'] ) ) {
@@ -101,7 +101,7 @@ class Micropub_Render {
 	 * Generates and returns a string h-event.
 	 */
 	private static function generate_event( $input ) {
-		$props   = $input['replace'] ? $input['replace'] : $input['properties'];
+		$props   = mp_get( $input, 'replace', mp_get( $input, 'properties' ) );
 		$lines[] = '<div class="h-event">';
 
 		if ( isset( $props['name'] ) ) {

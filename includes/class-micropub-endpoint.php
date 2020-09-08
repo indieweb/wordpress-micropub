@@ -62,7 +62,7 @@ class Micropub_Endpoint {
 	}
 
 	public static function log_error( $message, $name = 'Micropub' ) {
-		if ( empty( $message ) ) {
+		if ( empty( $message ) || defined( 'DIR_TESTDATA' ) ) {
 			return false;
 		}
 		if ( is_array( $message ) || is_object( $message ) ) {
@@ -87,7 +87,7 @@ class Micropub_Endpoint {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( static::class, 'post_handler' ),
-					'permission_callback' => array( static::class, 'check_post_permissions' ),
+					'permission_callback' => array( static::class, 'check_create_permissions' ),
 
 				),
 				array(
@@ -131,7 +131,7 @@ class Micropub_Endpoint {
 		return true;
 	}
 
-	public static function check_post_permissions( $request ) {
+	public static function check_create_permissions( $request ) {
 		$auth = self::load_auth();
 		if ( is_wp_error( $auth ) ) {
 			return $auth;
@@ -139,11 +139,12 @@ class Micropub_Endpoint {
 
 		$action = $request->get_param( 'action' );
 		$action = $action ? $action : 'create';
-
 		$permission = self::check_action( $action );
+
 		if ( is_micropub_error( $permission ) ) {
 			return $permission->to_wp_error();
 		}
+
 		return $permission;
 	}
 
@@ -157,7 +158,7 @@ class Micropub_Endpoint {
 	 */
 	protected static function load_input( $request ) {
 		$content_type = $request->get_content_type();
-		$content_type = $content_type['value'];
+		$content_type = mp_get( $content_type, 'value', 'applicatoin/x-www-form-urlencoded' );
 
 		if ( 'GET' === $request->get_method() ) {
 			static::$input = $request->get_query_params();
@@ -780,7 +781,7 @@ class Micropub_Endpoint {
 	 */
 	public static function default_file_handler( $post_id ) {
 		foreach ( array( 'photo', 'video', 'audio' ) as $field ) {
-			$props   = static::$input['properties'];
+			$props   = mp_get( static::$input, 'properties' );
 			$att_ids = array();
 
 			if ( isset( static::$files[ $field ] ) || isset( $props[ $field ] ) ) {
@@ -871,7 +872,7 @@ class Micropub_Endpoint {
 					$args['meta_input']['geo_public'] = 2;
 					break;
 				default:
-					return new WP_Micropub_Error( 'invalid_request', sprintf( 'unsupported location visibility %1$s', $visiblity ), 400 );
+					return new WP_Micropub_Error( 'invalid_request', sprintf( 'unsupported location visibility %1$s', $visibility ), 400 );
 
 			}
 		}
@@ -1003,7 +1004,7 @@ class Micropub_Endpoint {
 		$props = mp_get( static::$input, 'properties', false );
 		if ( ! isset( $args['ID'] ) && $props ) {
 			$args['meta_input'] = mp_get( $args, 'meta_input' );
-			$type               = static::$input['type'];
+			$type               = mp_get( static::$input, 'type' );
 			if ( $type ) {
 				$args['meta_input']['mf2_type'] = $type;
 			}
@@ -1025,8 +1026,12 @@ class Micropub_Endpoint {
 		if ( $add ) {
 			foreach ( $add as $prop => $val ) {
 				$key = 'mf2_' . $prop;
-				$cur = $meta[ $key ][0] ? unserialize( $meta[ $key ][0] ) : array();
-				update_post_meta( $args['ID'], $key, array_merge( $cur, $val ) );
+				if ( array_key_exists( $key, $meta ) ) {
+					$cur = $meta[ $key ][0] ? unserialize( $meta[ $key ][0] ) : array();
+					update_post_meta( $args['ID'], $key, array_merge( $cur, $val ) );
+				} else {
+					update_post_meta( $args['ID'], $key, $val );
+				}
 			}
 		}
 

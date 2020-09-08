@@ -73,7 +73,7 @@ class Micropub_Media {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( static::class, 'upload_handler' ),
-					'permission_callback' => array( static::class, 'check_post_permissions' ),
+					'permission_callback' => array( static::class, 'check_create_permissions' ),
 				),
 				array(
 					'methods'             => WP_REST_Server::READABLE,
@@ -114,7 +114,7 @@ class Micropub_Media {
 		return true;
 	}
 
-	public static function check_post_permissions( $request ) {
+	public static function check_create_permissions( $request ) {
 		$auth = self::load_auth();
 		if ( is_wp_error( $auth ) ) {
 			return $auth;
@@ -124,6 +124,7 @@ class Micropub_Media {
 			$error = new WP_Micropub_Error( 'insufficient_scope', 'You do not have permission to create or upload media', 403 );
 			return $error->to_wp_error();
 		}
+		return true;
 	}
 
 	// Based on WP_REST_Attachments_Controller function of the same name
@@ -333,7 +334,7 @@ class Micropub_Media {
 
 	// Responds to queries to the media endpoint
 	public static function query_handler( $request ) {
-		$params     = $request->get_query_params();
+		$params = $request->get_query_params();
 		if ( array_key_exists( 'q', $params ) ) {
 			switch ( $params['q'] ) {
 				case 'config':
