@@ -21,11 +21,11 @@ class Micropub_Media extends Micropub_Base {
 
 	}
 
-	public function get_rel() {
+	public static function get_rel() {
 		return 'micropub_media';
 	}
 
-	public function get_route( $slash = false ) {
+	public static function get_route( $slash = false ) {
 		$return = static::get_namespace() . '/media';
 		return $slash ? '/' . $return : $return;
 	}

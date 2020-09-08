@@ -37,16 +37,6 @@ class Micropub_Endpoint extends Micropub_Base {
 		add_filter( 'rest_request_after_callbacks', array( static::class, 'return_micropub_error' ), 10, 3 );
 	}
 
-
-	public function get_rel() {
-		return 'micropub';
-	}
-
-	public function get_route( $slash = false ) {
-		$return = static::get_namespace() . '/endpoint';
-		return $slash ? '/' . $return : $return;
-	}
-
 	public static function get( $array, $key, $default = array() ) {
 		if ( is_array( $array ) ) {
 			return isset( $array[ $key ] ) ? $array[ $key ] : $default;
