@@ -943,7 +943,10 @@ class Micropub_Endpoint extends Micropub_Base {
 				$args['meta_input']['mf2_type'] = $type;
 			}
 			foreach ( $props as $key => $val ) {
-				$args['meta_input'][ 'mf2_' . $key ] = $val;
+				// mp- entries are commands not properties and are therefore not stored.
+				if ( 'mp-' !== substr( $key, 0, 3 ) ) {
+					$args['meta_input'][ 'mf2_' . $key ] = $val;
+				}
 			}
 			return $args;
 		}
