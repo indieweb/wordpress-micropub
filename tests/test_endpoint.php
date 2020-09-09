@@ -242,9 +242,10 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 				),
 			),
 		);
+		$published = current_datetime()->format( DATE_W3C );
 		$post  = self::check_create( self::create_json_request( $input ) );
 		// Add current time as published.
-		$input['properties']['published'] = array( current_datetime()->format( DATE_W3C ) );
+		$input['properties']['published'] = array( $published );
 		$mf2   = $this->query_source( $post->ID );
 		$this->assertEquals( $input, $mf2 );
 	}
@@ -348,6 +349,8 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 			'delete'  => array( 'location', 'summary' ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
+		$updated = current_datetime();
+		$updated = $updated->setTimeZone( new DateTimeZone( '-08:00' ) );
 		$this->check( $response, 200 );
 		$post = get_post( $post_id );
 		// updated
@@ -372,8 +375,6 @@ EOF;
 		// https://github.com/snarfed/wordpress-micropub/issues/16
 		$this->assertEquals( '2016-01-01 12:01:23', $post->post_date );
 		$mf2 = $this->query_source( $post->ID );
-		$updated = current_datetime();
-		$updated = $updated->setTimeZone( new DateTimeZone( '-08:00' ) );
 		$this->assertEquals(
 			array(
 				'type'       => array( 'h-entry' ),
@@ -399,6 +400,7 @@ EOF;
 			'add'    => array( 'category' => array( 'foo', 'bar' ) ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
+		$published =  current_datetime()->format( DATE_W3C );
 		$this->check( $response, 200 );
 		// added
 		$post = get_post( $post_id );
@@ -412,7 +414,7 @@ EOF;
 				'properties' => array(
 					'content'  => array( 'my<br>content' ),
 					'category' => array( 'foo', 'bar' ),
-					'published' => array( current_datetime()->format( DATE_W3C ) )
+					'published' => array( $published )
 				),
 			),
 			$mf2
@@ -633,9 +635,10 @@ EOF;
 				'content' => array( 'Charles ☕ Foo covers 😻 #dougbeal.com' ),
 			),
 		);
+		$published = current_datetime()->format( DATE_W3C );
 		$post  = self::check_create( self::create_json_request( $input ) );
 		$mf2   = $this->query_source( $post->ID );
-		$input['properties']['published'] = array( current_datetime()->format( DATE_W3C ) );
+		$input['properties']['published'] = array( $published );
 
 		$this->assertEquals( $input, $mf2 );
 	}
