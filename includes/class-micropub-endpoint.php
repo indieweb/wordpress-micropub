@@ -371,8 +371,10 @@ class Micropub_Endpoint extends Micropub_Base {
 	 * @return array MF2 Formatted Array
 	 */
 	public static function query( $post_id ) {
-		$resp  = static::get_mf2( $post_id );
+		$resp = static::get_mf2( $post_id );
+
 		$props = mp_get( static::$input, 'properties' );
+
 		if ( $props ) {
 			if ( ! is_array( $props ) ) {
 				$props = array( $props );
@@ -384,6 +386,7 @@ class Micropub_Endpoint extends Micropub_Base {
 				),
 			);
 		}
+
 		return $resp;
 	}
 
@@ -783,6 +786,7 @@ class Micropub_Endpoint extends Micropub_Base {
 		$properties = static::get( static::$input, 'properties' );
 		$location   = static::get( $properties, 'location', static::get( $properties, 'checkin' ) );
 		$location   = static::get( $location, 0, $location );
+
 		// Location-visibility is an experimental property https://indieweb.org/Micropub-extensions#Location_Visibility
 		// It attempts to mimic the geo_public property
 		$visibility = static::get( $properties, 'location-visibility', null );
@@ -935,16 +939,22 @@ class Micropub_Endpoint extends Micropub_Base {
 	 * request is an update, it changes the post meta values in the db directly.
 	 */
 	public static function store_mf2( $args ) {
-		$props = mp_get( static::$input, 'properties', false );
+		// Properties that map to WordPress properties.
+		// TODO: We need to still store content because the plugin adds markup to the content stored.
+		$excludes = array( 'name', 'published', 'updated', 'summary', 'updated' );
+		$props    = mp_get( static::$input, 'properties', false );
 		if ( ! isset( $args['ID'] ) && $props ) {
 			$args['meta_input'] = mp_get( $args, 'meta_input' );
 			$type               = mp_get( static::$input, 'type' );
 			if ( $type ) {
 				$args['meta_input']['mf2_type'] = $type;
 			}
+			if ( isset( $args['timezone'] ) ) {
+				$args['meta_input']['geo_timezone'] = $args['timezone'];
+			}
 			foreach ( $props as $key => $val ) {
 				// mp- entries are commands not properties and are therefore not stored.
-				if ( 'mp-' !== substr( $key, 0, 3 ) ) {
+				if ( 'mp-' !== substr( $key, 0, 3 ) && ! in_array( $key, $excludes ) ) {
 					$args['meta_input'][ 'mf2_' . $key ] = $val;
 				}
 			}
@@ -1004,7 +1014,8 @@ class Micropub_Endpoint extends Micropub_Base {
 	 * Returns the mf2 properties for a post.
 	 */
 	public static function get_mf2( $post_id ) {
-		$mf2 = array();
+		$mf2  = array();
+		$post = get_post( $post_id );
 
 		foreach ( get_post_meta( $post_id ) as $field => $val ) {
 			$val = maybe_unserialize( $val[0] );
@@ -1013,6 +1024,28 @@ class Micropub_Endpoint extends Micropub_Base {
 			} elseif ( 'mf2_' === substr( $field, 0, 4 ) ) {
 				$mf2['properties'][ substr( $field, 4 ) ] = $val;
 			}
+		}
+
+		// Time Information
+		$timezone  = get_post_meta( $post_id, 'geo_timezone', true );
+		$published = get_post_datetime( $post );
+		$updated   = get_post_datetime( $post, 'modified' );
+		if ( $timezone ) {
+			$timezone  = new DateTimeZone( $timezone );
+			$published = $published->setTimezone( $timezone );
+			$updated   = $updated->setTimezone( $timezone );
+		}
+		$mf2['properties']['published'] = array( $published->format( DATE_W3C ) );
+		if ( $published != $updated ) {
+			$mf2['properties']['updated'] = array( $updated->format( DATE_W3C ) );
+		}
+
+		if ( ! empty( $post->post_title ) ) {
+			$mf2['properties']['name'] = array( $post->post_title );
+		}
+
+		if ( ! empty( $post->post_excerpt ) ) {
+			$mf2['properties']['summary'] = array( $post->post_excerpt );
 		}
 
 		return $mf2;

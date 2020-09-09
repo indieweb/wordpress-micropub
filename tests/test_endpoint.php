@@ -243,6 +243,8 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 			),
 		);
 		$post  = self::check_create( self::create_json_request( $input ) );
+		// Add current time as published.
+		$input['properties']['published'] = array( current_datetime()->format( DATE_W3C ) );
 		$mf2   = $this->query_source( $post->ID );
 		$this->assertEquals( $input, $mf2 );
 	}
@@ -369,6 +371,9 @@ EOF;
 		// check that published date is preserved
 		// https://github.com/snarfed/wordpress-micropub/issues/16
 		$this->assertEquals( '2016-01-01 12:01:23', $post->post_date );
+		$mf2 = $this->query_source( $post->ID );
+		$updated = current_datetime();
+		$updated = $updated->setTimeZone( new DateTimeZone( '-08:00' ) );
 		$this->assertEquals(
 			array(
 				'type'       => array( 'h-entry' ),
@@ -378,9 +383,10 @@ EOF;
 					'category'    => array( 'tag1', 'tag4', 'add tag' ),
 					'syndication' => array( 'http://synd/1', 'http://synd/2' ),
 					'published'   => array( '2016-01-01T04:01:23-08:00' ),
+					'updated'     => array( $updated->format( DATE_W3C ) ) // Updated is automatically updated by WordPress if not set explicitly.
 				),
 			),
-			$this->query_source( $post->ID )
+			$mf2
 		);
 	}
 
@@ -400,14 +406,16 @@ EOF;
 		$this->assertEquals( 2, count( $tags ) );
 		$this->assertEquals( 'foo', $tags[1]->name );
 		$this->assertEquals( 'bar', $tags[0]->name );
+		$mf2 = $this->query_source( $post->ID );
 		$this->assertEquals(
 			array(
 				'properties' => array(
 					'content'  => array( 'my<br>content' ),
 					'category' => array( 'foo', 'bar' ),
+					'published' => array( current_datetime()->format( DATE_W3C ) )
 				),
 			),
-			$this->query_source( $post->ID )
+			$mf2
 		);
 	}
 
@@ -627,11 +635,13 @@ EOF;
 		);
 		$post  = self::check_create( self::create_json_request( $input ) );
 		$mf2   = $this->query_source( $post->ID );
+		$input['properties']['published'] = array( current_datetime()->format( DATE_W3C ) );
+
 		$this->assertEquals( $input, $mf2 );
 	}
 	public function test_create_with_no_timezone() {
 		$input                            = static::$mf2;
-		$input['properties']['published'] = array( '2016-01-01T12:01:23Z' );
+		$input['properties']['published'] = array( '2016-01-01T12:01:23+00:00' );
 		self::check_create_basic( self::create_json_request( $input ), $input );
 	}
 
