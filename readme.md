@@ -219,6 +219,7 @@ into markdown and saved to readme.md.
 * Switch check in permissions to whether a user was logged in.
 * Published, updated, name, and summary properties are no longer stored in post meta. When queried, they will be pulled from the equivalent WordPress properties. Content should be as well, however as content in the post includes rendered microformats we need to store the pure version. Might address this in a future version. 
 * As timezone is not stored in the WordPress timestamp, store the timezone offset for the post in meta instead.
+* Sideload and set featured images if featured property is set.
 
 ### 2.2.2 (2020-08-23 )
 

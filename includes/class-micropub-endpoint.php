@@ -717,7 +717,7 @@ class Micropub_Endpoint extends Micropub_Base {
 	 *
 	 */
 	public static function default_file_handler( $post_id ) {
-		foreach ( array( 'photo', 'video', 'audio' ) as $field ) {
+		foreach ( array( 'photo', 'video', 'audio', 'featured' ) as $field ) {
 			$props   = mp_get( static::$input, 'properties' );
 			$att_ids = array();
 
@@ -754,6 +754,10 @@ class Micropub_Endpoint extends Micropub_Base {
 				foreach ( $att_ids as $id ) {
 					if ( is_micropub_error( $id ) ) {
 						return $id;
+					}
+					// There should only be one of these.
+					if ( 'featured' === $field ) {
+						set_post_thumbnail( $post_id, $id );
 					}
 					$att_urls[] = wp_get_attachment_url( $id );
 				}
