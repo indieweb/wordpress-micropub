@@ -51,6 +51,35 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 		'guid'         => 'http://localhost/1/2/my_slug',
 	);
 
+	public function assertDateTimesAreEqual( $expected, $actual ) {
+		if ( is_string( $expected ) ) {
+			$expected = new DateTime( $expected );
+		}
+		if ( is_string( $actual ) ) {
+			$actual = new DateTime( $actual );
+		}
+
+		$this->assertEquals( $expected, $actual );
+	}
+
+	public function assertIsDateTime( $datetime ) {
+		if ( is_string( $datetime ) ) {
+			$datetime = new DateTime( $datetime );
+		}
+		$this->assertTrue( $datetime instanceof DateTime );
+	}
+
+	public function assertDateTimeZonesEqual( $expected, $actual ) {
+		if ( $expected instanceof DateTime || $expected instanceof DateTimeZone ) {
+			$expected = $expected->getOffset();
+		}
+		if ( $actual instanceof DateTime || $actual instanceof DateTimeZone ) {
+			$actual = $actual->getOffset();
+		}
+		$this->assertEquals( $expected, $actual );
+	}
+
+
 	public function test_register_routes() {
 		$routes = rest_get_server()->get_routes();
 		$this->assertArrayHasKey( Micropub_Endpoint::get_route( true ), $routes, wp_json_encode( array_keys( $routes ) ) );
@@ -130,6 +159,16 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 		return $post;
 	}
 
+	// Remove mp properties for comparison.
+	public function remove_mp_properties( $input ) {
+		foreach( $input['properties'] as $key => $value ) {
+			if ( 'mp-' === substr( $key, 0, 3 ) ) {
+				unset( $input['properties'][ $key ] );
+			}
+		}
+		return $input;
+	}
+
 	public function check_create_basic( $request, $input = null ) {
 		if ( ! $input ) {
 			$input = static::$mf2;
@@ -153,6 +192,7 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_address', true ) );
 		$source = $this->query_source( $post->ID );
 		$input['properties']['location'] = static::$geo;
+		$input = $this->remove_mp_properties( $input );
 		$this->assertEquals( $input, $source, wp_json_encode( $source ) );
 		return $post;
 	}
@@ -233,6 +273,11 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 		);
 		$post  = self::check_create( self::create_json_request( $input ) );
 		$mf2   = $this->query_source( $post->ID );
+
+		// Assert that a property exists.
+		$this->assertArrayHasKey( 'published', $mf2['properties'] );
+		// We have confirmed it exists now compare everything but this.
+		unset( $mf2['properties']['published'] );
 		$this->assertEquals( $input, $mf2 );
 	}
 
@@ -358,19 +403,24 @@ EOF;
 		// check that published date is preserved
 		// https://github.com/snarfed/wordpress-micropub/issues/16
 		$this->assertEquals( '2016-01-01 12:01:23', $post->post_date );
+		$mf2 = $this->query_source( $post->ID );
+		// Assert that a property exists.
+		$this->assertArrayHasKey( 'updated', $mf2['properties'] );
+		$this->assertDateTimeZonesEqual( new DateTime( $mf2['properties']['updated'][0] ), new DateTime( 'now', new DateTimeZone( '-08:00' ) ) );
+		// We have confirmed it exists now compare everything but this.
+		unset( $mf2['properties']['updated'] );
 		$this->assertEquals(
 			array(
 				'type'       => array( 'h-entry' ),
 				'properties' => array(
 					'content'     => array( 'new<br>content' ),
-					'mp-slug'     => array( 'my_slug' ),
 					'name'        => array( 'my name' ),
 					'category'    => array( 'tag1', 'tag4', 'add tag' ),
 					'syndication' => array( 'http://synd/1', 'http://synd/2' ),
 					'published'   => array( '2016-01-01T04:01:23-08:00' ),
 				),
 			),
-			$this->query_source( $post->ID )
+			$mf2
 		);
 	}
 
@@ -390,6 +440,10 @@ EOF;
 		$this->assertEquals( 2, count( $tags ) );
 		$this->assertEquals( 'foo', $tags[1]->name );
 		$this->assertEquals( 'bar', $tags[0]->name );
+		$mf2 = $this->query_source( $post->ID );
+		$this->assertArrayHasKey( 'published', $mf2['properties'] );
+		// We have confirmed it exists now compare everything but this.
+		unset( $mf2['properties']['published'] );
 		$this->assertEquals(
 			array(
 				'properties' => array(
@@ -397,7 +451,7 @@ EOF;
 					'category' => array( 'foo', 'bar' ),
 				),
 			),
-			$this->query_source( $post->ID )
+			$mf2
 		);
 	}
 
@@ -617,11 +671,15 @@ EOF;
 		);
 		$post  = self::check_create( self::create_json_request( $input ) );
 		$mf2   = $this->query_source( $post->ID );
+		$this->assertArrayHasKey( 'published', $mf2['properties'] );
+		// We have confirmed it exists now compare everything but this.
+		unset( $mf2['properties']['published'] );
+
 		$this->assertEquals( $input, $mf2 );
 	}
 	public function test_create_with_no_timezone() {
 		$input                            = static::$mf2;
-		$input['properties']['published'] = array( '2016-01-01T12:01:23Z' );
+		$input['properties']['published'] = array( '2016-01-01T12:01:23+00:00' );
 		self::check_create_basic( self::create_json_request( $input ), $input );
 	}
 

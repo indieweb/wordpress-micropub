@@ -160,6 +160,10 @@ There are a series of troubleshooting steps in the IndieAuth plugin for this. Th
 
 ## Upgrade Notice
 
+### Version 2.2.3
+
+The Micropub plugin will no longer store published, updated, summary, or name options. These will be derived from the WordPress post properties they are mapped to and returned on query.
+
 ### Version 2.2.0
 
 The Micropub plugin will no longer function without the IndieAuth plugin installed.
@@ -207,12 +211,14 @@ into markdown and saved to readme.md.
 
 ## Changelog
 
-### 2.2.3 (2020-09-08 )
+### 2.2.3 (2020-09-09 )
 
 * Deduplicated endpoint test code from endpoint and media endpoint classes.
 * Removed error suppression revealing several notices that had been hidden. Fixed warning notices.
 * Abstract request for scope and response into functions to avoid calling the actual filter as this may be deprecated in future.
 * Switch check in permissions to whether a user was logged in.
+* Published, updated, name, and summary properties are no longer stored in post meta. When queried, they will be pulled from the equivalent WordPress properties. Content should be as well, however as content in the post includes rendered microformats we need to store the pure version. Might address this in a future version. 
+* As timezone is not stored in the WordPress timestamp, store the timezone offset for the post in meta instead.
 
 ### 2.2.2 (2020-08-23 )
 
