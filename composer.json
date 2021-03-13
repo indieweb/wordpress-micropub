@@ -13,7 +13,7 @@
 		"phpunit/phpunit": "^7.0",
 		"phpcompatibility/phpcompatibility-wp": "^2.0",
 		"phpcompatibility/php-compatibility": "^9.1",
-		"sebastian/phpcpd": "^5.0 || ^6.0",
+		"sebastian/phpcpd": "^3.0 || ^4.0 || ^6.0",
 		"php-parallel-lint/php-parallel-lint": "^1.2"
 	},
 	"prefer-stable" : true,
