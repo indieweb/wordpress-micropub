@@ -5,12 +5,16 @@
 		"php": ">=5.6.0",
 		"composer/installers": "~1.0"
 	},
+	"type": "wordpress-plugin",
+	"extra": {
+		"installer-name": "micropub"
+	},
 	"require-dev": {
 		"dealerdirect/phpcodesniffer-composer-installer": "^0.7",
 		"squizlabs/php_codesniffer": "*",
 		"wp-coding-standards/wpcs": "*",
 		"wpreadme2markdown/wp2md": "*",
-        	"phpunit/phpunit": "^5.0 || ^6.0 || ^7.5",
+		"phpunit/phpunit": "^5.0 || ^6.0 || ^7.5",
 		"phpcompatibility/phpcompatibility-wp": "^2.0",
 		"phpcompatibility/php-compatibility": "^9.1",
 		"sebastian/phpcpd": "^3.0 || ^4.0 || ^6.0",
