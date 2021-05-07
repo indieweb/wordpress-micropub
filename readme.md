@@ -207,6 +207,14 @@ into markdown and saved to readme.md.
 
 ## Changelog
 
+### 2.2.4 (2021-05-06 )
+
+* Add published date to return from q
+
+### source on media endpoint
+
+
+
 ### 2.2.3 (2020-09-09 )
 
 * Deduplicated endpoint test code from endpoint and media endpoint classes.

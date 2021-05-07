@@ -7,7 +7,7 @@
  * Author: IndieWeb WordPress Outreach Club
  * Author URI: https://indieweb.org/WordPress_Outreach_Club
  * Text Domain: micropub
- * Version: 2.2.3
+ * Version: 2.2.4
  */
 
 /* See README for supported filters and actions.

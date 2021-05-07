@@ -3,8 +3,8 @@ Contributors: indieweb, snarfed, dshanske
 Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.9.9
 Requires PHP: 5.6
-Tested up to: 5.5.1
-Stable tag: 2.2.3
+Tested up to: 5.7
+Stable tag: 2.2.4
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 Donate link: -
@@ -209,6 +209,9 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.2.4 (2021-05-06 ) =
+* Add published date to return from q=source on media endpoint
 
 = 2.2.3 (2020-09-09 ) =
 * Deduplicated endpoint test code from endpoint and media endpoint classes.

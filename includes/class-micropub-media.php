@@ -230,8 +230,12 @@ class Micropub_Media extends Micropub_Base {
 	 * Returns information about an attachment
 	 */
 	private static function return_media_data( $attachment_id ) {
-		$data        = wp_get_attachment_metadata( $attachment_id );
-		$data['url'] = wp_get_attachment_image_url( $attachment_id, 'full' );
+		$data              = wp_get_attachment_metadata( $attachment_id );
+		$data['url']       = wp_get_attachment_image_url( $attachment_id, 'full' );
+		$datetime          = get_post_datetime( $attachment_id );
+		$data['published'] = $datetime->format( DATE_W3C );
+		$datetime          = get_post_datetime( $attachment_id, 'modified' );
+		$data['updated']   = $datetime->format( DATE_W3C );
 		return $data;
 	}
 
@@ -296,10 +300,9 @@ class Micropub_Media extends Micropub_Base {
 					);
 					if ( is_array( $attachments ) ) {
 						foreach ( $attachments as $attachment ) {
+							$datetime = get_post_datetime( $attachment );
 							if ( wp_attachment_is( 'image', $attachment ) ) {
-								return array(
-									'url' => wp_get_attachment_image_url( $attachment, 'full' ),
-								);
+								return self::return_media_data( $attachment );
 							}
 						}
 					}
