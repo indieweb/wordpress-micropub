@@ -1040,7 +1040,7 @@ class Micropub_Endpoint extends Micropub_Base {
 			$updated   = $updated->setTimezone( $timezone );
 		}
 		$mf2['properties']['published'] = array( $published->format( DATE_W3C ) );
-		if ( $published != $updated ) {
+		if ( $published->getTimestamp() !== $updated->getTimestamp() ) {
 			$mf2['properties']['updated'] = array( $updated->format( DATE_W3C ) );
 		}
 
