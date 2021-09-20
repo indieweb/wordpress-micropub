@@ -4,11 +4,25 @@
 
 	<file>./micropub.php</file>
 	<file>./includes/</file>
+	<arg value="sp"/> <!-- Show sniff and progress -->
+	<arg name="parallel" value="8"/><!-- Enables parallel processing when available for faster results. -->
+	<arg name="colors"/>
 	<rule ref="PHPCompatibility"/>
 	<config name="testVersion" value="5.6-"/>
 	<rule ref="WordPress-Core" />	
 	<config name="minimum_supported_wp_version" value="4.9"/>
 	<rule ref="WordPress.Files.FileName">
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<!-- Value: replace the text domain used. -->
+			<property name="text_domain" type="array" value="micropub"/>
+		</properties>
+	</rule>
+	<rule ref="WordPress.WhiteSpace.ControlStructureSpacing">
+		<properties>
+			<property name="blank_line_check" value="true"/>
+		</properties>
+	</rule>
 	<properties>
 	<property name="strict_class_file_names" value="false" />
 	</properties>
