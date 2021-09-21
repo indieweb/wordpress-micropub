@@ -120,7 +120,26 @@ class Micropub_Endpoint extends Micropub_Base {
 			$properties = static::$input['properties'];
 			if ( isset( $properties['location'] ) ) {
 				static::$input['properties']['location'] = self::parse_geo_uri( $properties['location'][0] );
+			} else {
+				// Convert latitude and longitude properties to an h-geo with altitude if present.
+				if ( isset( $properties['latitude'] ) && isset( $properties['longitude'] ) ) {
+					static::$input['properties']['location'] = array(
+						'type'       => array( 'h-geo' ),
+						'properties' => array(
+							'latitude'  => $properties['latitude'],
+							'longitude' => $properties['longitude'],
+						),
+					);
+					if ( isset( $properties['altitude'] ) ) {
+						static::$input['properties']['location']['properties']['altitude'] = $properties['altitude'];
+						unset( static::$input['properties']['altitude'] );
+					}
+					unset( static::$input['properties']['latitude'] );
+					unset( static::$input['properties']['longitude'] );
+
+				}
 			}
+
 			if ( isset( $properties['checkin'] ) ) {
 				static::$input['properties']['checkin'] = self::parse_geo_uri( $properties['checkin'][0] );
 			}
