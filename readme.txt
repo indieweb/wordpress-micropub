@@ -2,12 +2,11 @@
 Contributors: indieweb, snarfed, dshanske
 Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.9.9
-Requires PHP: 5.6
-Tested up to: 5.7
+Tested up to: 5.8.1
 Stable tag: 2.2.4
+Requires PHP: 5.6
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
-Donate link: -
 
 Adds [Micropub](http://micropub.net/) server support to WordPress.
 
@@ -17,7 +16,7 @@ Micropub is an open API standard that is used to create posts on your site using
 
 Once you've installed and activated the plugin, try using [Quill](http://quill.p3k.io/) to create a new post on your site. It walks you through the steps and helps you troubleshoot if you run into any problems. A list of known Micropub clients are available [here](https://indieweb.org/Micropub/Clients)
 
-Supports the [full W3C Micropub CR spec](https://www.w3.org/TR/micropub/) as of version 2.0.0.
+Supports the full [Micropub spec](https://micropub.spec.indieweb.org/)
 
 As this allows the creation of posts without entering the WordPress admin, it is not subject to any Gutenberg compatibility concerns per se. Posts created will not have Gutenberg blocks as they were not created with Gutenberg, but otherwise there should be no issues at this time.
 
@@ -200,7 +199,7 @@ To configure PHPUnit
     Time: 703 ms, Memory: 33.75Mb
     OK (1 test, 3 assertions)
 
-To set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https://make.wordpress.org/core/handbook/coding-standards/php/) and [PHP 5.3 Compatibility](https://github.com/wimg/PHPCompatibility):
+To set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https://make.wordpress.org/core/handbook/coding-standards/php/) and [PHP 5.6 Compatibility](https://github.com/wimg/PHPCompatibility):
 
 1. To list coding standard issues in a file, run `composer phpcs`
 1. If you want to try to automatically fix issues, run `composer phpcbf``.
