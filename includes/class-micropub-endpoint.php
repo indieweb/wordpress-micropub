@@ -390,6 +390,25 @@ class Micropub_Endpoint extends Micropub_Base {
 		return $resp;
 	}
 
+	/*
+	 * Insert Post
+	 *
+	 */
+	private static function insert_post( &$args ) {
+
+		/**
+		 * This filters arguments before inserting into the Post Table.
+		 * If $args['ID'] is set, this will short circuit insertion to allow for custom database insertion.
+		 */
+		$args = apply_filters( 'pre_insert_micropub_post', $args );
+		if ( array_key_exists( 'ID', $args ) ) {
+			return;
+		}
+		kses_remove_filters();  // prevent sanitizing HTML tags in post_content
+		$args['ID']       = static::check_error( wp_insert_post( $args, true ) );
+		$args['post_url'] = get_permalink( $args['ID'] );
+		kses_init_filters();
+	}
 
 	/*
 	 * Handle a create request.
@@ -434,13 +453,21 @@ class Micropub_Endpoint extends Micropub_Base {
 			static::log_error( $args, 'wp_insert_post with args' );
 		}
 
-		kses_remove_filters();  // prevent sanitizing HTML tags in post_content
-		$args['ID']       = static::check_error( wp_insert_post( $args, true ) );
-		$args['post_url'] = get_permalink( $args['ID'] );
-		kses_init_filters();
+		static::insert_post( $args );
 
 		static::default_file_handler( $args['ID'] );
 		return $args;
+	}
+
+	/*
+	 * Update Post
+	 *
+	 */
+	private static function update_post( &$args ) {
+		kses_remove_filters();  // prevent sanitizing HTML tags in post_content
+		$args['ID']       = static::check_error( wp_update_post( $args, true ) );
+		$args['post_url'] = get_permalink( $args['ID'] );
+		kses_init_filters();
 	}
 
 	/*
@@ -554,9 +581,7 @@ class Micropub_Endpoint extends Micropub_Base {
 			static::log_error( $args, 'wp_update_post with args' );
 		}
 
-		kses_remove_filters();
-		static::check_error( wp_update_post( $args, true ) );
-		kses_init_filters();
+		static::update_post( $args );
 
 		static::default_file_handler( $post_id );
 		return $args;
