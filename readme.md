@@ -20,7 +20,7 @@ This project is placed in the public domain. You may also use it under the [CC0 
 
 ### Filters and hooks
 
-Adds nine filters:
+Adds ten filters:
 
 `before_micropub( $input )`
 
@@ -59,6 +59,10 @@ This returns scopes from a plugin implementing IndieAuth. This filter is empty b
 `indieauth_response( $response )`
 
 This returns the token auth response from a plugin implementing IndieAuth. This filter is empty by default.
+
+`pre_insert_micropub_post( $args )`
+
+This filters the arguments sent to wp_insert_post just prior to its insertion. If the ID key is set, then this will short-circuit the insertion to allow for custom database coding.
 
 ...and two hooks:
 
@@ -102,6 +106,9 @@ Supports Proposed Extensions to Micropub:
 * [Query for Supported Properties](https://github.com/indieweb/micropub-extensions/issues/8) - Returns a list of which supported experimental properties the endpoint supports so the client can choose to hide unsupported ones.
 * [Discovery of Media Endpoint using Link Rel](https://github.com/indieweb/micropub-extensions/issues/15) - Adds a link header for the media endpoint
 * [Supports extended GEO URIs](https://github.com/indieweb/micropub-extensions/issues/32) - Supports adding arbitrary parameters to the GEO URI. Micropub converts this into an mf2 object. Supported as built into the Indigenous client.
+* [Supports deleting uploaded media](https://github.com/indieweb/micropub-extensions/issues/30) - Supports action=delete&url
+
+### url on the media endpoint to delete files.
 
 Deprecated Extensions still Supported:
 
@@ -205,6 +212,19 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 ## Changelog
+
+### 2.2.5 (2021-09-22 )
+
+* Update readme links
+* Add filter to allow custom database insert.
+* Latitude and longitude properties are now converted into a location property. 
+* Introduce new function to simplify returning a properly set datetime with timezone
+* Media Endpoint now supports a delete action.
+* New query unit test revealed bug in new q=source&url
+
+### query previously introduced.
+
+* Update media response to now just include published, updated, created, and mime_type for now.
 
 ### 2.2.4 (2021-05-06 )
 
