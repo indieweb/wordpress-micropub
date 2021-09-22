@@ -37,7 +37,7 @@ class Micropub_Media extends Micropub_Base {
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( static::class, 'upload_handler' ),
+					'callback'            => array( static::class, 'post_handler' ),
 					'permission_callback' => array( static::class, 'check_create_permissions' ),
 				),
 				array(
@@ -230,16 +230,73 @@ class Micropub_Media extends Micropub_Base {
 	 * Returns information about an attachment
 	 */
 	private static function return_media_data( $attachment_id ) {
-		$data              = wp_get_attachment_metadata( $attachment_id );
-		$data['url']       = wp_get_attachment_image_url( $attachment_id, 'full' );
-		$datetime          = get_post_datetime( $attachment_id );
-		$data['published'] = $datetime->format( DATE_W3C );
-		$datetime          = get_post_datetime( $attachment_id, 'modified' );
-		$data['updated']   = $datetime->format( DATE_W3C );
-		return $data;
+		$published = micropub_get_post_datetime( $attachment_id );
+		$updated   = micropub_get_post_datetime( $attachment_id, 'modified' );
+		$metadata  = wp_get_attachment_metadata( $attachment_id );
+
+		$data = array(
+			'url'       => wp_get_attachment_image_url( $attachment_id, 'full' ),
+			'published' => $published->format( DATE_W3C ),
+			'updated'   => $updated->format( DATE_W3C ),
+			'mime_type' => get_post_mime_type( $attachment_id ),
+		);
+
+		$created = null;
+		// Created is added by the Simple Location plugin and includes the full timezone if it can find it.
+		if ( array_key_exists( 'created', $metadata ) ) {
+			$created = new DateTime( $metadata['created'] );
+			/** created_timestamp is the default created timestamp in all WordPress installations. It has no timezone offset so it is often output incorrectly.
+			 * See https://core.trac.wordpress.org/ticket/49413
+			 **/
+		} elseif ( array_key_exists( 'created_timestamp', $metadata ) ) {
+			$created = new DateTime();
+			$created->setTimestamp( $metadata['created_timestamp'] );
+			$created->setTimezone( wp_timezone() );
+		}
+		if ( $created ) {
+			$data['created'] = $created->format( DATE_W3C );
+		}
+
+		return array_filter( $data );
 	}
 
 	// Handles requests to the Media Endpoint
+	public static function post_handler( $request ) {
+		$params = $request->get_params();
+		if ( array_key_exists( 'action', $params ) ) {
+			return self::action_handler( $params );
+		}
+
+		return self::upload_handler( $request );
+	}
+
+	public static function action_handler( $params ) {
+		switch ( $params['action'] ) {
+			case 'delete':
+				if ( ! array_key_exists( 'url', $params ) ) {
+					return new WP_Micropub_Error( 'invalid_request', 'Missing Parameter: url', 400 );
+				}
+				$url           = esc_url_raw( $params['url'] );
+				$attachment_id = attachment_url_to_postid( $url );
+				if ( $attachment_id ) {
+					if ( ! current_user_can( 'delete_post', $attachment_id ) ) {
+						$error = new WP_Micropub_Error( 'insufficient_scope', 'You do not have permission to delete media', 403 );
+						return $error->to_wp_error();
+					}
+					$response = wp_delete_attachment( $attachment_id, true );
+					if ( $response ) {
+						return new WP_REST_Response(
+							$response,
+							200
+						);
+					}
+				}
+				return new WP_Micropub_Error( 'invalid_request', 'Unable to Delete File', 400 );
+			default:
+				return new WP_Micropub_Error( 'invalid_request', 'No Action Handler for This Action', 400 );
+		}
+	}
+
 	public static function upload_handler( $request ) {
 		// Get the file via $_FILES
 		$files   = $request->get_file_params();
@@ -300,7 +357,7 @@ class Micropub_Media extends Micropub_Base {
 					);
 					if ( is_array( $attachments ) ) {
 						foreach ( $attachments as $attachment ) {
-							$datetime = get_post_datetime( $attachment );
+							$datetime = micropub_get_post_datetime( $attachment );
 							if ( wp_attachment_is( 'image', $attachment ) ) {
 								return self::return_media_data( $attachment );
 							}
@@ -309,7 +366,7 @@ class Micropub_Media extends Micropub_Base {
 					return array();
 				case 'source':
 					if ( array_key_exists( 'url', $params ) ) {
-						$attachment_id = url_to_postid( $params['url'] );
+						$attachment_id = attachment_url_to_postid( $params['url'] );
 						if ( ! $attachment_id ) {
 							return new WP_Micropub_Error( 'invalid_request', sprintf( 'not found: %1$s', $params['url'] ), 400 );
 						}

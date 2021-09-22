@@ -299,6 +299,22 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_address', true ) );
 	}
 
+	public function test_create_location_properties() {
+		$input                           = static::$mf2;
+		$geo = static::$geo;
+		unset( $geo['properties']['accuracy'] );
+		unset( $input['properties']['location'] );
+		$input['properties']['latitude'] = array( '42.361' );
+		$input['properties']['longitude'] = array( '-71.092' );
+		$input['properties']['altitude']  = array( '25000' );
+		$post                            = self::check_create( self::create_json_request( $input ) );
+		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ) );
+		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ) );
+		$this->assertEquals( '25000', get_post_meta( $post->ID, 'geo_altitude', true ) );
+		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_address', true ) );
+		$this->assertEquals( $geo, get_post_meta( $post->ID, 'mf2_location', true ) );
+	}
+
 	public function test_create_location_h_adr() {
 		$input                           = static::$mf2;
 		$input['properties']['location'] = array(

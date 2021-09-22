@@ -2,12 +2,11 @@
 Contributors: indieweb, snarfed, dshanske
 Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.9.9
+Tested up to: 5.8.1
+Stable tag: 2.2.5
 Requires PHP: 5.6
-Tested up to: 5.7
-Stable tag: 2.2.4
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
-Donate link: -
 
 Adds [Micropub](http://micropub.net/) server support to WordPress.
 
@@ -17,7 +16,7 @@ Micropub is an open API standard that is used to create posts on your site using
 
 Once you've installed and activated the plugin, try using [Quill](http://quill.p3k.io/) to create a new post on your site. It walks you through the steps and helps you troubleshoot if you run into any problems. A list of known Micropub clients are available [here](https://indieweb.org/Micropub/Clients)
 
-Supports the [full W3C Micropub CR spec](https://www.w3.org/TR/micropub/) as of version 2.0.0.
+Supports the full [Micropub spec](https://micropub.spec.indieweb.org/)
 
 As this allows the creation of posts without entering the WordPress admin, it is not subject to any Gutenberg compatibility concerns per se. Posts created will not have Gutenberg blocks as they were not created with Gutenberg, but otherwise there should be no issues at this time.
 
@@ -30,7 +29,7 @@ This project is placed in the public domain. You may also use it under the [CC0 
 == WordPress details ==
 
 = Filters and hooks =
-Adds nine filters:
+Adds ten filters:
 
 `before_micropub( $input )`
 
@@ -67,6 +66,10 @@ This returns scopes from a plugin implementing IndieAuth. This filter is empty b
 `indieauth_response( $response )`
 
 This returns the token auth response from a plugin implementing IndieAuth. This filter is empty by default.
+
+`pre_insert_micropub_post( $args )`
+
+This filters the arguments sent to wp_insert_post just prior to its insertion. If the ID key is set, then this will short-circuit the insertion to allow for custom database coding.
 
 ...and two hooks:
 
@@ -108,6 +111,7 @@ Supports Proposed Extensions to Micropub:
 * [Query for Supported Properties](https://github.com/indieweb/micropub-extensions/issues/8) - Returns a list of which supported experimental properties the endpoint supports so the client can choose to hide unsupported ones.
 * [Discovery of Media Endpoint using Link Rel](https://github.com/indieweb/micropub-extensions/issues/15) - Adds a link header for the media endpoint
 * [Supports extended GEO URIs](https://github.com/indieweb/micropub-extensions/issues/32) - Supports adding arbitrary parameters to the GEO URI. Micropub converts this into an mf2 object. Supported as built into the Indigenous client.
+* [Supports deleting uploaded media](https://github.com/indieweb/micropub-extensions/issues/30) - Supports action=delete&url=url on the media endpoint to delete files.
 
 Deprecated Extensions still Supported:
 
@@ -200,7 +204,7 @@ To configure PHPUnit
     Time: 703 ms, Memory: 33.75Mb
     OK (1 test, 3 assertions)
 
-To set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https://make.wordpress.org/core/handbook/coding-standards/php/) and [PHP 5.3 Compatibility](https://github.com/wimg/PHPCompatibility):
+To set up PHPCodesniffer to test adherence to [WordPress Coding Standards](https://make.wordpress.org/core/handbook/coding-standards/php/) and [PHP 5.6 Compatibility](https://github.com/wimg/PHPCompatibility):
 
 1. To list coding standard issues in a file, run `composer phpcs`
 1. If you want to try to automatically fix issues, run `composer phpcbf``.
@@ -209,6 +213,15 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.2.5 (2021-09-22 ) =
+* Update readme links
+* Add filter to allow custom database insert.
+* Latitude and longitude properties are now converted into a location property. 
+* Introduce new function to simplify returning a properly set datetime with timezone
+* Media Endpoint now supports a delete action.
+* New query unit test revealed bug in new q=source&url= query previously introduced.
+* Update media response to now just include published, updated, created, and mime_type for now.
 
 = 2.2.4 (2021-05-06 ) =
 * Add published date to return from q=source on media endpoint

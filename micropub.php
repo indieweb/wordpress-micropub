@@ -1,13 +1,17 @@
 <?php
 /**
  * Plugin Name: Micropub
- * Plugin URI: https://github.com/snarfed/wordpress-micropub
+ * Plugin URI: https://github.com/indieweb/wordpress-micropub
  * Description: <a href="https://indiewebcamp.com/micropub">Micropub</a> server.
- * Protocol spec: <a href="https://www.w3.org/TR/micropub/">w3.org/TR/micropub</a>
+ * Protocol spec: <a href="https://micropub.spec.indieweb.org/">Micropub Living Standard</a>
  * Author: IndieWeb WordPress Outreach Club
+ * Requires at least: 4.9.9
+ * Requires PHP: 5.6
  * Author URI: https://indieweb.org/WordPress_Outreach_Club
  * Text Domain: micropub
- * Version: 2.2.4
+ * License: CC0
+ * License URI: http://creativecommons.org/publicdomain/zero/1.0/
+ * Version: 2.2.5
  */
 
 /* See README for supported filters and actions.
