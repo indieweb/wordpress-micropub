@@ -37,7 +37,7 @@ class Micropub_Media extends Micropub_Base {
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( static::class, 'upload_handler' ),
+					'callback'            => array( static::class, 'post_handler' ),
 					'permission_callback' => array( static::class, 'check_create_permissions' ),
 				),
 				array(
@@ -240,6 +240,42 @@ class Micropub_Media extends Micropub_Base {
 	}
 
 	// Handles requests to the Media Endpoint
+	public static function post_handler( $request ) {
+		$params = $request->get_params();
+		if ( array_key_exists( 'action', $params ) ) {
+			return self::action_handler( $params );
+		}
+
+		return self::upload_handler( $request );
+	}
+
+	public static function action_handler( $params ) {
+		switch ( $params['action'] ) {
+			case 'delete':
+				if ( ! array_key_exists( 'url', $params ) ) {
+					return new WP_Micropub_Error( 'invalid_request', 'Missing Parameter: url', 400 );
+				}
+				$url           = esc_url_raw( $params['url'] );
+				$attachment_id = attachment_url_to_postid( $url );
+				if ( $attachment_id ) {
+					if ( ! current_user_can( 'delete_post', $attachment_id ) ) {
+						$error = new WP_Micropub_Error( 'insufficient_scope', 'You do not have permission to delete media', 403 );
+						return $error->to_wp_error();
+					}
+					$response = wp_delete_attachment( $attachment_id, true );
+					if ( $response ) {
+						return new WP_REST_Response(
+							$response,
+							200
+						);
+					}
+				}
+				return new WP_Micropub_Error( 'invalid_request', 'Unable to Delete File', 400 );
+			default:
+				return new WP_Micropub_Error( 'invalid_request', 'No Action Handler for This Action', 400 );
+		}
+	}
+
 	public static function upload_handler( $request ) {
 		// Get the file via $_FILES
 		$files   = $request->get_file_params();

@@ -35,6 +35,20 @@ class Micropub_Media_Test extends Micropub_UnitTestCase {
 		return $request;
 	}
 
+	public function create_form_request( $POST ) {
+		$request = new WP_REST_Request( 'POST', Micropub_Media::get_route( true ) );
+		$request->set_header( 'Content-Type', 'application/x-www-form-urlencoded' );
+		$request->set_body_params( $POST );
+		return $request;
+	}
+
+	public function create_json_request( $input ) {
+		$request = new WP_REST_Request( 'POST', Micropub_Media::get_route( true ) );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( $input ) );
+		return $request;
+	}
+
 	public function test_media_handle_upload() {
 		$file_array = array(
 			'file' => file_get_contents( $this->test_file ),
@@ -57,6 +71,48 @@ class Micropub_Media_Test extends Micropub_UnitTestCase {
 		$attachment_id = attachment_url_to_postid( $headers['Location'] );
 		$this->assertNotEquals( 0, $attachment_id, sprintf( '%1$s is not an attachment', $headers['Location'] ) );
 		$this->assertEquals( 'image/jpeg', get_post_mime_type( $attachment_id ) );
+	}
+
+	public function test_delete_file() {
+		$response = $this->dispatch( self::upload_request(), self::$author_id );
+		$data     = $response->get_data();
+		$this->assertEquals( 201, $response->get_status(), wp_json_encode( $data ) );
+		$attachment_id = attachment_url_to_postid( $data['url'] );
+		$post = get_post( $attachment_id );
+		$this->assertNotNull( $post );
+		$input = array(
+			'action' => 'delete',
+			'url' => $data['url']
+		);
+		$response = $this->dispatch( self::create_form_request( $input ), self::$author_id );
+		$this->assertEquals( 200, $response->get_status(), wp_json_encode( $data ) );
+		$post = get_post( $attachment_id );
+		$this->assertNull( $post );
+	}
+
+	public function test_delete_file_without_scope() {
+		$response = $this->dispatch( self::upload_request(), self::$author_id );
+		$data     = $response->get_data();
+		$this->assertEquals( 201, $response->get_status(), wp_json_encode( $data ) );
+		$attachment_id = attachment_url_to_postid( $data['url'] );
+		$post = get_post( $attachment_id );
+		$this->assertNotNull( $post );
+		$input = array(
+			'action' => 'delete',
+			'url' => $data['url']
+		);
+		$response = $this->dispatch( self::create_form_request( $input ), self::$subscriber_id );
+		$this->assertEquals( 403, $response->get_status(), wp_json_encode( $data ) );
+		$post = get_post( $attachment_id );
+		$this->assertEquals( $attachment_id, $post->ID );
+	}
+
+	public function test_unsupported_action() {
+		$input = array(
+			'action' => 'create',
+		);
+		$response = $this->dispatch( self::create_form_request( $input ), self::$author_id );
+		$this->assertEquals( 400, $response->get_status(), wp_json_encode( $response ) );
 	}
 
 	public function test_empty_upload() {
