@@ -64,14 +64,26 @@ if ( ! function_exists( 'micropub_get_scopes' ) ) {
 if ( ! function_exists( 'micropub_get_post_datetime' ) ) {
 	function micropub_get_post_datetime( $post = null, $field = 'date', $timezone = null ) {
 		$post = get_post( $post );
-		$datetime = get_post_datetime( $post, $field, 'gmt' );
+		if ( ! $post ) {
+			return false;
+		}
+
+		$time = ( 'modified' === $field ) ? $post->post_modified_gmt : $post->post_date_gmt;
+		if ( empty( $time ) || '0000-00-00 00:00:00' === $time ) {
+			return false;
+		}
+
+		$datetime = date_create_immutable_from_format( 'Y-m-d H:i:s', $time, new DateTimeZone( 'UTC' ) );
+
 		if ( is_null( $timezone ) ) {
 			$timezone = get_post_meta( $post->ID, 'geo_timezone', true );
 		}
+
 		if ( $timezone ) {
 			$timezone = new DateTimeZone( $timezone );
-			return $datetime->setTimezone( $timezone );
+		} else {
+			$timezone = wp_timezone();
 		}
-		return $datetime;
+		return $datetime->setTimezone( $timezone );
 	}
 }
