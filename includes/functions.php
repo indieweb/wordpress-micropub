@@ -61,3 +61,17 @@ if ( ! function_exists( 'micropub_get_scopes' ) ) {
 	}
 }
 
+if ( ! function_exists( 'micropub_get_post_datetime' ) ) {
+	function micropub_get_post_datetime( $post = null, $field = 'date', $timezone = null ) {
+		$post = get_post( $post );
+		$datetime = get_post_datetime( $post, $field, 'gmt' );
+		if ( is_null( $timezone ) ) {
+			$timezone = get_post_meta( $post->ID, 'geo_timezone', true );
+		}
+		if ( $timezone ) {
+			$timezone = new DateTimeZone( $timezone );
+			return $datetime->setTimezone( $timezone );
+		}
+		return $datetime;
+	}
+}

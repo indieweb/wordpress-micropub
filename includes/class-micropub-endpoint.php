@@ -1075,14 +1075,8 @@ class Micropub_Endpoint extends Micropub_Base {
 		}
 
 		// Time Information
-		$timezone  = get_post_meta( $post_id, 'geo_timezone', true );
-		$published = get_post_datetime( $post );
-		$updated   = get_post_datetime( $post, 'modified' );
-		if ( $timezone ) {
-			$timezone  = new DateTimeZone( $timezone );
-			$published = $published->setTimezone( $timezone );
-			$updated   = $updated->setTimezone( $timezone );
-		}
+		$published = micropub_get_post_datetime( $post );
+		$updated   = micropub_get_post_datetime( $post, 'modified' );
 		$mf2['properties']['published'] = array( $published->format( DATE_W3C ) );
 		if ( $published->getTimestamp() !== $updated->getTimestamp() ) {
 			$mf2['properties']['updated'] = array( $updated->format( DATE_W3C ) );
