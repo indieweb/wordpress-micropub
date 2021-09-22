@@ -230,13 +230,34 @@ class Micropub_Media extends Micropub_Base {
 	 * Returns information about an attachment
 	 */
 	private static function return_media_data( $attachment_id ) {
-		$data              = wp_get_attachment_metadata( $attachment_id );
-		$data['url']       = wp_get_attachment_image_url( $attachment_id, 'full' );
-		$datetime          = micropub_get_post_datetime( $attachment_id );
-		$data['published'] = $datetime->format( DATE_W3C );
-		$datetime          = micropub_get_post_datetime( $attachment_id, 'modified' );
-		$data['updated']   = $datetime->format( DATE_W3C );
-		return $data;
+		$published = micropub_get_post_datetime( $attachment_id );
+		$updated   = micropub_get_post_datetime( $attachment_id, 'modified' );
+		$metadata  = wp_get_attachment_metadata( $attachment_id );
+
+		$data = array(
+			'url'       => wp_get_attachment_image_url( $attachment_id, 'full' ),
+			'published' => $published->format( DATE_W3C ),
+			'updated'   => $updated->format( DATE_W3C ),
+			'mime_type' => get_post_mime_type( $attachment_id ),
+		);
+
+		$created = null;
+		// Created is added by the Simple Location plugin and includes the full timezone if it can find it.
+		if ( array_key_exists( 'created', $metadata ) ) {
+			$created = new DateTime( $metadata['created'] );
+			/** created_timestamp is the default created timestamp in all WordPress installations. It has no timezone offset so it is often output incorrectly.
+			 * See https://core.trac.wordpress.org/ticket/49413
+			 **/
+		} elseif ( array_key_exists( 'created_timestamp', $metadata ) ) {
+			$created = new DateTime();
+			$created->setTimestamp( $metadata['created_timestamp'] );
+			$created->setTimezone( wp_timezone() );
+		}
+		if ( $created ) {
+			$data['created'] = $created->format( DATE_W3C );
+		}
+
+		return array_filter( $data );
 	}
 
 	// Handles requests to the Media Endpoint
@@ -345,7 +366,7 @@ class Micropub_Media extends Micropub_Base {
 					return array();
 				case 'source':
 					if ( array_key_exists( 'url', $params ) ) {
-						$attachment_id = url_to_postid( $params['url'] );
+						$attachment_id = attachment_url_to_postid( $params['url'] );
 						if ( ! $attachment_id ) {
 							return new WP_Micropub_Error( 'invalid_request', sprintf( 'not found: %1$s', $params['url'] ), 400 );
 						}

@@ -35,6 +35,12 @@ class Micropub_Media_Test extends Micropub_UnitTestCase {
 		return $request;
 	}
 
+	public function query_request( $GET ) {
+		$request = new WP_REST_Request( 'GET', Micropub_Media::get_route( true ) );
+		$request->set_query_params( $GET );
+		return $request;
+	}
+
 	public function create_form_request( $POST ) {
 		$request = new WP_REST_Request( 'POST', Micropub_Media::get_route( true ) );
 		$request->set_header( 'Content-Type', 'application/x-www-form-urlencoded' );
@@ -126,6 +132,24 @@ class Micropub_Media_Test extends Micropub_UnitTestCase {
 		$response = $this->dispatch( self::upload_request(), self::$subscriber_id );
 		$data     = $response->get_data();
 		$this->assertEquals( 403, $response->get_status(), wp_json_encode( $data ) );
+	}
+
+	public function test_query_source_url() {
+		$response = $this->dispatch( self::upload_request(), self::$author_id );
+		$data     = $response->get_data();
+		$url = $data['url'];
+		$this->assertEquals( 201, $response->get_status(), wp_json_encode( $data ) );
+		$get = array(
+			'q' => 'source',
+			'url' => $url
+		);
+		$response = $this->dispatch( self::query_request( $get ), self::$author_id );
+		$data = $response->get_data();
+		$this->assertEquals( 200, $response->get_status(), wp_json_encode( $data ) );
+		$this->assertEquals( $url, $data['url'] );
+		$this->assertEquals( 'image/jpeg', $data['mime_type'] );
+		$this->assertArrayHasKey( 'published', $data );
+		$this->assertArrayHasKey( 'updated', $data );
 	}
 
 }
