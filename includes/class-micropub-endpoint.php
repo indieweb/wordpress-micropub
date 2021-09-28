@@ -701,7 +701,7 @@ class Micropub_Endpoint extends Micropub_Base {
 		}
 
 		if ( isset( $props['published'] ) ) {
-			$date = new DateTime( $props['published'][0] );
+			$date = new DateTime( $props['published'] );
 			// If for whatever reason the date cannot be parsed do not include one which defaults to now
 			if ( $date ) {
 				$wptz = wp_timezone();
@@ -716,7 +716,7 @@ class Micropub_Endpoint extends Micropub_Base {
 		}
 
 		if ( isset( $props['updated'] ) ) {
-			$date = new DateTime( $props['updated'][0] );
+			$date = new DateTime( $props['updated'] );
 			// If for whatever reason the date cannot be parsed do not include one which defaults to now
 			if ( $date ) {
 				$wptz = wp_timezone();
