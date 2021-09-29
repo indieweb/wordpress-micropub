@@ -142,7 +142,7 @@ class Micropub_Media extends Micropub_Base {
 			return new WP_Micropub_Error( 'invalid_request', $tmp->get_message(), 400 );
 		}
 		$file_array = array(
-			'name'     => basename( $url ),
+			'name'     => basename( wp_parse_url( $url, PHP_URL_PATH ) ),
 			'tmp_name' => $tmp,
 			'error'    => 0,
 			'size'     => filesize( $tmp ),
