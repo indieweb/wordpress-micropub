@@ -5,6 +5,7 @@
  * @package micropub
  */
 
+define( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH', __DIR__ . '/../vendor/yoast/phpunit-polyfills/phpunitpolyfills-autoload.php' );
 require dirname( __FILE__ ) . '/class-indieauth-plugin.php';
 
 // define( 'WP_DEBUG', false );
