@@ -92,7 +92,7 @@ class Micropub_Endpoint extends Micropub_Base {
 	 */
 	protected static function load_input( $request ) {
 		$content_type = $request->get_content_type();
-		$content_type = mp_get( $content_type, 'value', 'applicatoin/x-www-form-urlencoded' );
+		$content_type = mp_get( $content_type, 'value', 'application/x-www-form-urlencoded' );
 
 		if ( 'GET' === $request->get_method() ) {
 			static::$input = $request->get_query_params();
