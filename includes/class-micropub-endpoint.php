@@ -646,7 +646,10 @@ class Micropub_Endpoint extends Micropub_Base {
 			}
 			return 'draft';
 		}
-		// Execution will never reach here
+
+		// If visibility is public and no post-status is specified,
+		// return the default post status value.
+		return self::default_post_status();
 	}
 
 	/**
