@@ -15,6 +15,24 @@ jobs:
       matrix:
         php-versions: ['5.6', '7.2', '7.3', '7.4', '8.0']
         phpunit: ['auto']
+
+        include:
+          - php: '5.6'
+            phpunit: '5.7.21'
+          - php: '7.0'
+            phpunit: '5.7.27'
+          - php: '7.1'
+            phpunit: '5.7.21'
+          - php: '7.2'
+            phpunit: '6.3.1'
+          - php: '7.3'
+            phpunit: '7.2.7'
+          - php: '7.4'
+            phpunit: '8.1.6'
+          - php: '8.0'
+            phpunit: '8.5.16'
+          - php: '8.0'
+            phpunit: '9.3.0'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -25,6 +43,9 @@ jobs:
           coverage: none
           tools: composer, phpunit-polyfills
           extensions: mysql
+      - name: 'Composer: set PHPUnit version for tests'
+        if: ${{ matrix.phpunit != 'auto' }}
+          run: composer require --no-update phpunit/phpunit:"${{ matrix.phpunit }}"
       # Install dependencies and handle caching in one go.
       # @link https://github.com/marketplace/actions/install-composer-dependencies
       - name: Install Composer dependencies for PHP
