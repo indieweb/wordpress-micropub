@@ -14,12 +14,12 @@
 		"squizlabs/php_codesniffer": "*",
 		"wp-coding-standards/wpcs": "*",
 		"wpreadme2markdown/wp2md": "*",
-		"phpunit/phpunit": "^5.0 || ^6.0 || ^7.5",
-		"yoast/phpunit-polyfills": "^1.0",
+		"yoast/phpunit-polyfills": "^1.0.1",
 		"phpcompatibility/phpcompatibility-wp": "^2.1",
 		"phpcompatibility/php-compatibility": "^9.3",
 		"php-parallel-lint/php-parallel-lint": "^1.2",
-		"sebastian/phpcpd": "*"
+		"sebastian/phpcpd": "*",
+		"phpunit/phpunit": "^5.7.21 || ^6.5 || ^7.5"
 	},
 	"prefer-stable" : true,
 	"scripts": {
@@ -45,7 +45,6 @@
 			"./vendor/bin/wp2md -i readme.txt | tail -n +12 > readme.md"
 		],
 		"post-update-cmd": [
-			"@update-readme"
 		]
 	}
 }
