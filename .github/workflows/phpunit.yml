@@ -22,7 +22,7 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
           coverage: none
-          tools: composer
+          tools: composer, phpunit-polyfills
           extensions: mysql
       - name: Get Composer cache directory
         id: composer-cache
