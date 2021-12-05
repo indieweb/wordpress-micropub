@@ -30,6 +30,6 @@ jobs:
       - name: Setup Test Environment
         run: composer setup-local-tests
       - name: Unit Testing
-        run: phpunit
+        run: composer phpunit
         env:
           PHP_VERSION: ${{ matrix.php-versions }}
