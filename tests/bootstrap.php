@@ -5,7 +5,10 @@
  * @package micropub
  */
 
-require dirname( __FILE__, 2 ) . '/vendor/yoast/phpunit-polyfills/phpunitpolyfills-autoload.php';
+if ( class_exists( '\Yoast\PHPUnitPolyfills\Autoload' ) === false ) {
+     require_once 'vendor/yoast/phpunit-polyfills/phpunitpolyfills-autoload.php';
+}
+
 require dirname( __FILE__ ) . '/class-indieauth-plugin.php';
 
 // define( 'WP_DEBUG', false );
