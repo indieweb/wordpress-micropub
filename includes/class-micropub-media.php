@@ -268,9 +268,9 @@ class Micropub_Media extends Micropub_Base {
 			$data['poster'] = wp_get_attachment_url( get_post_thumbnail_id( $attachment_id ) );
 		}
 
-		if ( wp_attachment_is( 'image', $attachment ) ) {
+		if ( wp_attachment_is( 'image', $attachment_id ) ) {
 			// Return the thumbnail size present as a default.
-			$data['thumbnail'] = wp_get_attachment_image_url( $attachment );
+			$data['thumbnail'] = wp_get_attachment_image_url( $attachment_id );
 		}
 
 		return array_filter( $data );
