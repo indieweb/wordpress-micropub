@@ -231,15 +231,21 @@ class Micropub_Media extends Micropub_Base {
 	 */
 	private static function return_media_data( $attachment_id ) {
 		$published = micropub_get_post_datetime( $attachment_id );
-		$updated   = micropub_get_post_datetime( $attachment_id, 'modified' );
 		$metadata  = wp_get_attachment_metadata( $attachment_id );
 
 		$data = array(
 			'url'       => wp_get_attachment_image_url( $attachment_id, 'full' ),
 			'published' => $published->format( DATE_W3C ),
-			'updated'   => $updated->format( DATE_W3C ),
 			'mime_type' => get_post_mime_type( $attachment_id ),
 		);
+
+		if ( array_key_exists( 'width', $metadata ) ) {
+			$data['width'] = $metadata['width'];
+		}
+
+		if ( array_key_exists( 'height', $metadata ) ) {
+			$data['height'] = $metadata['height'];
+		}
 
 		$created = null;
 		// Created is added by the Simple Location plugin and includes the full timezone if it can find it.
@@ -248,7 +254,7 @@ class Micropub_Media extends Micropub_Base {
 			/** created_timestamp is the default created timestamp in all WordPress installations. It has no timezone offset so it is often output incorrectly.
 			 * See https://core.trac.wordpress.org/ticket/49413
 			 **/
-		} elseif ( array_key_exists( 'created_timestamp', $metadata ) ) {
+		} elseif ( array_key_exists( 'created_timestamp', $metadata ) && 0 !== $metadata['created_timestamp'] ) {
 			$created = new DateTime();
 			$created->setTimestamp( $metadata['created_timestamp'] );
 			$created->setTimezone( wp_timezone() );
