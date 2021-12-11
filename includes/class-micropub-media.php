@@ -76,7 +76,7 @@ class Micropub_Media extends Micropub_Base {
 			'test_form' => false,
 		);
 
-			// Verify hash, if given.
+		// Verify hash, if given.
 		if ( ! empty( $headers['content_md5'] ) ) {
 			$content_md5 = array_shift( $headers['content_md5'] );
 			$expected    = trim( $content_md5 );
@@ -174,6 +174,9 @@ class Micropub_Media extends Micropub_Base {
 			'post_mime_type' => $file['type'],
 			'guid'           => $file['url'],
 			'post_parent'    => $post_id,
+			'meta_input'     => array(
+				'_micropub_upload' => 1,
+			),
 		);
 
 		// Include image functions to get access to wp_read_image_metadata
@@ -212,9 +215,6 @@ class Micropub_Media extends Micropub_Base {
 
 		wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $file['file'] ) );
 
-		// Add metadata tag to micropub uploaded so they can be queried
-		update_post_meta( $id, '_micropub_upload', 1 );
-
 		return $id;
 	}
 
@@ -231,15 +231,21 @@ class Micropub_Media extends Micropub_Base {
 	 */
 	private static function return_media_data( $attachment_id ) {
 		$published = micropub_get_post_datetime( $attachment_id );
-		$updated   = micropub_get_post_datetime( $attachment_id, 'modified' );
 		$metadata  = wp_get_attachment_metadata( $attachment_id );
 
 		$data = array(
 			'url'       => wp_get_attachment_image_url( $attachment_id, 'full' ),
 			'published' => $published->format( DATE_W3C ),
-			'updated'   => $updated->format( DATE_W3C ),
 			'mime_type' => get_post_mime_type( $attachment_id ),
 		);
+
+		if ( array_key_exists( 'width', $metadata ) ) {
+			$data['width'] = $metadata['width'];
+		}
+
+		if ( array_key_exists( 'height', $metadata ) ) {
+			$data['height'] = $metadata['height'];
+		}
 
 		$created = null;
 		// Created is added by the Simple Location plugin and includes the full timezone if it can find it.
@@ -248,13 +254,23 @@ class Micropub_Media extends Micropub_Base {
 			/** created_timestamp is the default created timestamp in all WordPress installations. It has no timezone offset so it is often output incorrectly.
 			 * See https://core.trac.wordpress.org/ticket/49413
 			 **/
-		} elseif ( array_key_exists( 'created_timestamp', $metadata ) ) {
+		} elseif ( array_key_exists( 'created_timestamp', $metadata ) && 0 !== $metadata['created_timestamp'] ) {
 			$created = new DateTime();
 			$created->setTimestamp( $metadata['created_timestamp'] );
 			$created->setTimezone( wp_timezone() );
 		}
 		if ( $created ) {
 			$data['created'] = $created->format( DATE_W3C );
+		}
+
+		// Only video or audio would have album art. Video uses the term poster, audio has no term, but using for both in the interest of simplicity.
+		if ( has_post_thumbnail( $attachment_id ) ) {
+			$data['poster'] = wp_get_attachment_url( get_post_thumbnail_id( $attachment_id ) );
+		}
+
+		if ( wp_attachment_is( 'image', $attachment_id ) ) {
+			// Return the thumbnail size present as a default.
+			$data['thumbnail'] = wp_get_attachment_image_url( $attachment_id );
 		}
 
 		return array_filter( $data );
@@ -332,13 +348,19 @@ class Micropub_Media extends Micropub_Base {
 	public static function query_handler( $request ) {
 		$params = $request->get_query_params();
 		if ( array_key_exists( 'q', $params ) ) {
-			switch ( $params['q'] ) {
+			switch ( sanitize_key( $params['q'] ) ) {
 				case 'config':
 					return new WP_REST_Response(
 						array(
-							'q' => array(
+							'q'          => array(
 								'last',
 								'source',
+							),
+							'properties' => array(
+								'url',
+								'limit',
+								'offset',
+								'mime_type',
 							),
 						),
 						200
@@ -349,6 +371,7 @@ class Micropub_Media extends Micropub_Base {
 							'post_type'      => 'attachment',
 							'fields'         => 'ids',
 							'posts_per_page' => 10,
+							'post_parent'    => 0,
 							'order'          => 'DESC',
 							'date_query'     => array(
 								'after' => '1 hour ago',
@@ -366,21 +389,26 @@ class Micropub_Media extends Micropub_Base {
 					return array();
 				case 'source':
 					if ( array_key_exists( 'url', $params ) ) {
-						$attachment_id = attachment_url_to_postid( $params['url'] );
+						$attachment_id = attachment_url_to_postid( esc_url( $params['url'] ) );
 						if ( ! $attachment_id ) {
 							return new WP_Micropub_Error( 'invalid_request', sprintf( 'not found: %1$s', $params['url'] ), 400 );
 						}
 						$resp = self::return_media_data( $attachment_id );
 					} else {
-						$numberposts = mp_get( $params, 'limit', 10 );
+						$numberposts = (int) mp_get( $params, 'limit', 10 );
 						$args        = array(
 							'posts_per_page' => $numberposts,
 							'post_type'      => 'attachment',
+							'post_parent'    => 0,
 							'fields'         => 'ids',
 							'order'          => 'DESC',
 						);
 						if ( array_key_exists( 'offset', $params ) ) {
-							$args['offset'] = mp_get( $params, 'offset' );
+							$args['offset'] = (int) mp_get( $params, 'offset' );
+						}
+
+						if ( array_key_exists( 'mime_type', $params ) ) {
+							$args['post_mime_type'] = sanitize_mime_type( $params['mime_type'] );
 						}
 						$attachments = get_posts( $args );
 						$resp        = array();

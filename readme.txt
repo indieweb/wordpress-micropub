@@ -2,8 +2,8 @@
 Contributors: indieweb, snarfed, dshanske
 Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.9.9
-Tested up to: 5.8.1
-Stable tag: 2.2.5
+Tested up to: 5.8.2
+Stable tag: 2.3.0
 Requires PHP: 5.6
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
@@ -112,6 +112,8 @@ Supports Proposed Extensions to Micropub:
 * [Discovery of Media Endpoint using Link Rel](https://github.com/indieweb/micropub-extensions/issues/15) - Adds a link header for the media endpoint
 * [Supports extended GEO URIs](https://github.com/indieweb/micropub-extensions/issues/32) - Supports adding arbitrary parameters to the GEO URI. Micropub converts this into an mf2 object. Supported as built into the Indigenous client.
 * [Supports deleting uploaded media](https://github.com/indieweb/micropub-extensions/issues/30) - Supports action=delete&url=url on the media endpoint to delete files.
+* [Supports querying for media on the media endpoint](https://github.com/indieweb/micropub-extensions/issues/14) and [optional URL parameter for same]((https://github.com/indieweb/micropub-extensions/issues/37))
+* [Supports filtering media queries by mime-type](https://github.com/indieweb/micropub-extensions/issues/45)
 
 Deprecated Extensions still Supported:
 
@@ -213,6 +215,11 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.3.0 (xxxx-xx-xx ) =
+* Sanitize media endpoint queries
+* Add mime_type filter for media queries
+* Update media endpoint query response
 
 = 2.2.5 (2021-09-22 ) =
 * Update readme links

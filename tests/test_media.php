@@ -149,7 +149,8 @@ class Micropub_Media_Test extends Micropub_UnitTestCase {
 		$this->assertEquals( $url, $data['url'] );
 		$this->assertEquals( 'image/jpeg', $data['mime_type'] );
 		$this->assertArrayHasKey( 'published', $data );
-		$this->assertArrayHasKey( 'updated', $data );
+		$this->assertArrayHasKey( 'height', $data );
+		$this->assertArrayHasKey( 'width', $data );
 	}
 
 }
