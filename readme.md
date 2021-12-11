@@ -110,6 +110,9 @@ Supports Proposed Extensions to Micropub:
 
 ### url on the media endpoint to delete files.
 
+* [Supports querying for media on the media endpoint](https://github.com/indieweb/micropub-extensions/issues/14) and [optional URL parameter for same]((https://github.com/indieweb/micropub-extensions/issues/37))
+* [Supports filtering media queries by mime-type](https://github.com/indieweb/micropub-extensions/issues/45)
+
 Deprecated Extensions still Supported:
 
 * [Last Media Uploaded](https://github.com/indieweb/micropub-extensions/issues/10) - Supports querying for the last image uploaded ...set to within the last hour. This was superseded by supporting `q=source&limit
@@ -212,6 +215,12 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 ## Changelog
+
+### 2.3.0 (xxxx-xx-xx )
+
+* Sanitize media endpoint queries
+* Add mime_type filter for media queries
+* Update media endpoint query response
 
 ### 2.2.5 (2021-09-22 )
 
