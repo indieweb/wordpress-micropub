@@ -263,6 +263,11 @@ class Micropub_Media extends Micropub_Base {
 			$data['created'] = $created->format( DATE_W3C );
 		}
 
+		// Only video or audio would have album art. Video uses the term poster, audio has no term, but using for both in the interest of simplicity.
+		if ( has_post_thumbnail( $attachment_id ) ) {
+			$data['poster'] = wp_get_attachment_url( get_post_thumbnail_id( $attachment_id ) );
+		}
+
 		return array_filter( $data );
 	}
 
