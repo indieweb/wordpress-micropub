@@ -76,7 +76,7 @@ class Micropub_Media extends Micropub_Base {
 			'test_form' => false,
 		);
 
-			// Verify hash, if given.
+		// Verify hash, if given.
 		if ( ! empty( $headers['content_md5'] ) ) {
 			$content_md5 = array_shift( $headers['content_md5'] );
 			$expected    = trim( $content_md5 );
@@ -174,6 +174,9 @@ class Micropub_Media extends Micropub_Base {
 			'post_mime_type' => $file['type'],
 			'guid'           => $file['url'],
 			'post_parent'    => $post_id,
+			'meta_input'     => array(
+				'_micropub_upload' => 1,
+			),
 		);
 
 		// Include image functions to get access to wp_read_image_metadata
@@ -211,9 +214,6 @@ class Micropub_Media extends Micropub_Base {
 		require_once ABSPATH . 'wp-admin/includes/admin.php';
 
 		wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $file['file'] ) );
-
-		// Add metadata tag to micropub uploaded so they can be queried
-		update_post_meta( $id, '_micropub_upload', 1 );
 
 		return $id;
 	}
