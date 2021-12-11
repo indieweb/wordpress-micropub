@@ -343,13 +343,19 @@ class Micropub_Media extends Micropub_Base {
 	public static function query_handler( $request ) {
 		$params = $request->get_query_params();
 		if ( array_key_exists( 'q', $params ) ) {
-			switch ( $params['q'] ) {
+			switch ( sanitize_key( $params['q'] ) ) {
 				case 'config':
 					return new WP_REST_Response(
 						array(
-							'q' => array(
+							'q'          => array(
 								'last',
 								'source',
+							),
+							'properties' => array(
+								'url',
+								'limit',
+								'offset',
+								'mime_type',
 							),
 						),
 						200
@@ -378,13 +384,13 @@ class Micropub_Media extends Micropub_Base {
 					return array();
 				case 'source':
 					if ( array_key_exists( 'url', $params ) ) {
-						$attachment_id = attachment_url_to_postid( $params['url'] );
+						$attachment_id = attachment_url_to_postid( esc_url( $params['url'] ) );
 						if ( ! $attachment_id ) {
 							return new WP_Micropub_Error( 'invalid_request', sprintf( 'not found: %1$s', $params['url'] ), 400 );
 						}
 						$resp = self::return_media_data( $attachment_id );
 					} else {
-						$numberposts = mp_get( $params, 'limit', 10 );
+						$numberposts = (int) mp_get( $params, 'limit', 10 );
 						$args        = array(
 							'posts_per_page' => $numberposts,
 							'post_type'      => 'attachment',
@@ -393,7 +399,11 @@ class Micropub_Media extends Micropub_Base {
 							'order'          => 'DESC',
 						);
 						if ( array_key_exists( 'offset', $params ) ) {
-							$args['offset'] = mp_get( $params, 'offset' );
+							$args['offset'] = (int) mp_get( $params, 'offset' );
+						}
+
+						if ( array_key_exists( 'mime_type', $params ) ) {
+							$args['post_mime_type'] = sanitize_mime_type( $params['mime_type'] );
 						}
 						$attachments = get_posts( $args );
 						$resp        = array();
