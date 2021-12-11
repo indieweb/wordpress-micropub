@@ -355,6 +355,7 @@ class Micropub_Media extends Micropub_Base {
 							'post_type'      => 'attachment',
 							'fields'         => 'ids',
 							'posts_per_page' => 10,
+							'post_parent'    => 0,
 							'order'          => 'DESC',
 							'date_query'     => array(
 								'after' => '1 hour ago',
@@ -382,6 +383,7 @@ class Micropub_Media extends Micropub_Base {
 						$args        = array(
 							'posts_per_page' => $numberposts,
 							'post_type'      => 'attachment',
+							'post_parent'    => 0,
 							'fields'         => 'ids',
 							'order'          => 'DESC',
 						);
