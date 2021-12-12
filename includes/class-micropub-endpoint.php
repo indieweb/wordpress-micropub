@@ -972,7 +972,7 @@ class Micropub_Endpoint extends Micropub_Base {
 		$micropub_auth_response = static::$micropub_auth_response;
 		if ( $micropub_auth_response || ( is_assoc_array( $micropub_auth_response ) ) ) {
 			$args['meta_input']                           = mp_get( $args, 'meta_input' );
-			$args['meta_input']['micropub_auth_response'] = $micropub_auth_response;
+			$args['meta_input']['micropub_auth_response'] = wp_array_slice_assoc( $micropub_auth_response, array( 'client_id', 'client_name', 'client_icon', 'uuid' ) );
 		}
 		return $args;
 	}
