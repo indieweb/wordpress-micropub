@@ -288,7 +288,7 @@ class Micropub_Endpoint extends Micropub_Base {
 					'syndicate-to'   => static::get_syndicate_targets( $user_id, static::$input ),
 					'media-endpoint' => rest_url( static::get_namespace() . '/media' ),
 					// Support returning visibility properties in q=config https://github.com/indieweb/micropub-extensions/issues/8#issuecomment-536301952
-					'visibility' => array( 'public', 'private' ),
+					'visibility'     => array( 'public', 'private' ),
 					'mp'             => array(
 						'slug',
 						'syndicate-to',
@@ -603,6 +603,14 @@ class Micropub_Endpoint extends Micropub_Base {
 		// Store metadata from Microformats Properties
 		$args = static::store_mf2( $args );
 		$args = static::store_geodata( $args );
+
+		if ( 0 !== get_current_user_id() ) {
+			if ( ! array_key_exists( 'meta_input', $args ) ) {
+				$args['meta_input'] = array();
+			}
+
+			$args['meta_input']['_edit_last'] = get_current_user_id();
+		}
 
 		if ( WP_DEBUG ) {
 			static::log_error( $args, 'wp_update_post with args' );

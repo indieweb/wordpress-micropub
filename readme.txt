@@ -225,6 +225,7 @@ into markdown and saved to readme.md.
 * Add display functions for showing the client or returning the client data which will work with or without the client application taxonomy added in Indieauth
 * Normalize JSON inputs to ensure no errors
 * Add support for Visibility config return https://github.com/indieweb/micropub-extensions/issues/8#issuecomment-536301952
+* Sets `_edit_last` property when a post is updated.
 
 = 2.2.5 (2021-09-22 ) =
 * Update readme links
