@@ -219,6 +219,10 @@ into markdown and saved to readme.md.
 
 ## Changelog
 
+### 2.3.1 (2021-12-25 )
+
+* Made one little mistake.
+
 ### 2.3.0 (2021-12-25 )
 
 * Sanitize media endpoint queries
