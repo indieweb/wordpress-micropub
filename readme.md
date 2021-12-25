@@ -221,6 +221,8 @@ into markdown and saved to readme.md.
 * Sanitize media endpoint queries
 * Add mime_type filter for media queries
 * Update media endpoint query response
+* Set client application taxonomy id if present
+* Add display functions for showing the client or returning the client data which will work with or without the client application taxonomy added in Indieauth
 
 ### 2.2.5 (2021-09-22 )
 
