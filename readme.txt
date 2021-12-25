@@ -217,7 +217,7 @@ into markdown and saved to readme.md.
 
 == Changelog ==
 
-= 2.3.0 (xxxx-xx-xx ) =
+= 2.3.0 (2021-12-25 ) =
 * Sanitize media endpoint queries
 * Add mime_type filter for media queries
 * Update media endpoint query response
