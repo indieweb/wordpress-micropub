@@ -114,7 +114,7 @@ if ( ! function_exists( 'micropub_client_info' ) ) {
 			}
 			$text .= ' />';
 		} elseif ( array_key_exists( 'name', $client ) ) {
-			$text = sanitize_text( $name );
+			$text = esc_html( $name );
 		} else {
 			$text = 'Unknown Client';
 		}
