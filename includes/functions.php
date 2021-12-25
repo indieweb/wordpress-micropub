@@ -91,9 +91,9 @@ if ( ! function_exists( 'micropub_client_info' ) ) {
 	function micropub_client_info( $post = null, $args = null ) {
 		$client   = micropub_get_client_info( $post );
 		$defaults = array(
-			'size' => 15,
-			'class' => 'micropub-client',
-			'container' => 'div'
+			'size'      => 15,
+			'class'     => 'micropub-client',
+			'container' => 'div',
 		);
 
 		$args = wp_parse_args( $args, $defaults );
@@ -110,19 +110,19 @@ if ( ! function_exists( 'micropub_client_info' ) ) {
 
 			$text = '<img';
 			foreach ( $props as $key => $value ) {
-				$text .= ' ' . $key . '="' . $value . '"';
+				$text .= ' ' . esc_attr( $key ) . '="' . esc_attr( $value ) . '"';
 			}
 			$text .= ' />';
 		} elseif ( array_key_exists( 'name', $client ) ) {
 			$text = sanitize_text( $name );
 		} else {
-			$text = __( 'Unknown Client' );
+			$text = 'Unknown Client';
 		}
 
 		if ( array_key_exists( 'id', $client ) ) {
-			printf( '<%1$s class="%2$s><a href="%3$s">%4$s</a></%1$s>', $args['container'], $args['class'], get_term_link( $client['id'], 'indieauth_client' ), $text );
+			printf( '<%1$s class="%2$s"><a href="%3$s">%4$s</a></%1$s>', esc_attr( $args['container'] ), esc_attr( $args['class'] ), esc_url( get_term_link( $client['id'] ), 'indieauth_client' ), wp_kses_post( $text ) );
 		} else {
-			printf( '<%1$s class="%1$s">%2$S</%1$s>', $args['container'], $args['class'], $text );
+			printf( '<%1$s class="%1$s">%2$S</%1$s>', esc_attr( $args['container'] ), esc_attr( $args['class'] ), wp_kses_post( $text ) );
 		}
 
 	}
