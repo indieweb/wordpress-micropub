@@ -287,6 +287,8 @@ class Micropub_Endpoint extends Micropub_Base {
 				$resp = array(
 					'syndicate-to'   => static::get_syndicate_targets( $user_id, static::$input ),
 					'media-endpoint' => rest_url( static::get_namespace() . '/media' ),
+					// Support returning visibility properties in q=config https://github.com/indieweb/micropub-extensions/issues/8#issuecomment-536301952
+					'visibility' => array( 'public', 'private' ),
 					'mp'             => array(
 						'slug',
 						'syndicate-to',

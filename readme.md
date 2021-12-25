@@ -112,6 +112,9 @@ Supports Proposed Extensions to Micropub:
 
 * [Supports querying for media on the media endpoint](https://github.com/indieweb/micropub-extensions/issues/14) and [optional URL parameter for same]((https://github.com/indieweb/micropub-extensions/issues/37))
 * [Supports filtering media queries by mime-type](https://github.com/indieweb/micropub-extensions/issues/45)
+* [Return Visibility in q
+
+### config](https://github.com/indieweb/micropub-extensions/issues/8#issuecomment-536301952)
 
 Deprecated Extensions still Supported:
 
@@ -223,6 +226,8 @@ into markdown and saved to readme.md.
 * Update media endpoint query response
 * Set client application taxonomy id if present
 * Add display functions for showing the client or returning the client data which will work with or without the client application taxonomy added in Indieauth
+* Normalize JSON inputs to ensure no errors
+* Add support for Visibility config return https://github.com/indieweb/micropub-extensions/issues/8#issuecomment-536301952
 
 ### 2.2.5 (2021-09-22 )
 
