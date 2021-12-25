@@ -205,6 +205,16 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 		self::check_create_basic( self::create_json_request( static::$mf2 ) );
 	}
 
+	public function test_create_basic_json_with_single_property() {
+		$mf2 = static::$mf2;
+		$mf2['name'] = 'my name';
+		$mf2['summary'] = 'my summary';
+
+		self::check_create_basic( self::create_json_request( $mf2 ) );
+	}
+
+
+
 	public function test_create_post_subscriber_id() {
 		$response       = $this->dispatch( self::create_form_request( static::$post ), static::$subscriber_id );
 		self::check( $response, 403, 'insufficient_scope' );

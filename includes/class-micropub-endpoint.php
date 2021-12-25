@@ -97,7 +97,7 @@ class Micropub_Endpoint extends Micropub_Base {
 		if ( 'GET' === $request->get_method() ) {
 			static::$input = $request->get_query_params();
 		} elseif ( 'application/json' === $content_type ) {
-			static::$input = $request->get_json_params();
+			static::$input = self::normalize_json( $request->get_json_params() );
 		} elseif ( ! $content_type ||
 			'application/x-www-form-urlencoded' === $content_type ||
 			'multipart/form-data' === $content_type ) {
@@ -1120,6 +1120,19 @@ class Micropub_Endpoint extends Micropub_Base {
 			}
 		}
 		return $input;
+	}
+
+	/* Ensures JSON is compliant with the Micropub JSON Syntax */
+	public static function normalize_json( $data ) {
+		if ( ! array_key_exists( 'properties', $data ) ) {
+			return $data;
+		}
+		foreach ( $data['properties'] as $key => $value ) {
+			if ( ! is_array( $value ) ) {
+				$data['properties'][ $key ] = array( $value );
+			}
+		}
+		return $data;
 	}
 }
 
