@@ -55,6 +55,79 @@ if ( ! function_exists( 'micropub_get_response' ) ) {
 	}
 }
 
+if ( ! function_exists( 'micropub_get_client_info' ) ) {
+	function micropub_get_client_info( $post = null ) {
+		$post = get_post( $post );
+		if ( ! $post ) {
+			return false;
+		}
+		$response = get_post_meta( $post->ID, 'micropub_auth_response', true );
+		if ( empty( $response ) ) {
+			return '';
+		}
+		if ( class_exists( 'IndieAuth_Client_Taxonomy' ) ) {
+			if ( array_key_exists( 'client_uid', $response ) ) {
+				return IndieAuth_Client_Taxonomy::get_client( $response['client_uid'] );
+			}
+			if ( array_key_exists( 'client_id', $response ) ) {
+				$return = IndieAuth_Client_Taxonomy::get_client( $response['client_id'] );
+				if ( ! is_wp_error( $return ) ) {
+					return $return;
+				}
+			}
+		}
+
+		return array_filter(
+			array(
+				'client_id' => $response['client_id'],
+				'name'      => mp_get( $response, 'client_name', null ),
+				'icon'      => mp_get( $response, 'client_icon', null ),
+			)
+		);
+	}
+}
+
+if ( ! function_exists( 'micropub_client_info' ) ) {
+	function micropub_client_info( $post = null, $args = null ) {
+		$client   = micropub_get_client_info( $post );
+		$defaults = array(
+			'size' => 15,
+			'class' => 'micropub-client',
+			'container' => 'div'
+		);
+
+		$args = wp_parse_args( $args, $defaults );
+		if ( is_wp_error( $client ) || empty( $client ) ) {
+			return '';
+		}
+		if ( array_key_exists( 'icon', $client ) ) {
+			$props = array(
+				'src'    => $client['icon'],
+				'height' => $args['size'],
+				'width'  => $args['size'],
+				'title'  => $client['name'],
+			);
+
+			$text = '<img';
+			foreach ( $props as $key => $value ) {
+				$text .= ' ' . $key . '="' . $value . '"';
+			}
+			$text .= ' />';
+		} elseif ( array_key_exists( 'name', $client ) ) {
+			$text = sanitize_text( $name );
+		} else {
+			$text = __( 'Unknown Client' );
+		}
+
+		if ( array_key_exists( 'id', $client ) ) {
+			printf( '<%1$s class="%2$s><a href="%3$s">%4$s</a></%1$s>', $args['container'], $args['class'], get_term_link( $client['id'], 'indieauth_client' ), $text );
+		} else {
+			printf( '<%1$s class="%1$s">%2$S</%1$s>', $args['container'], $args['class'], $text );
+		}
+
+	}
+}
+
 if ( ! function_exists( 'micropub_get_scopes' ) ) {
 	function micropub_get_scopes() {
 		return apply_filters( 'indieauth_scopes', null );
