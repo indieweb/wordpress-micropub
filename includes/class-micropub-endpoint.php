@@ -424,11 +424,11 @@ class Micropub_Endpoint extends Micropub_Base {
 			return;
 		}
 		kses_remove_filters();  // prevent sanitizing HTML tags in post_content
-		$args['ID']       = static::check_error( wp_insert_post( $args, true ) );
+		$args['ID'] = static::check_error( wp_insert_post( $args, true ) );
 
 		// Set Client Application Taxonomy if available.
 		if ( $args['ID'] && array_key_exists( 'client_uid', static::$micropub_auth_response ) ) {
-			wp_set_object_terms( $args['ID'],  array( static::$micropub_auth_response['client_uid'] ), 'indieauth_client' );
+			wp_set_object_terms( $args['ID'], array( static::$micropub_auth_response['client_uid'] ), 'indieauth_client' );
 		}
 
 		$args['post_url'] = get_permalink( $args['ID'] );

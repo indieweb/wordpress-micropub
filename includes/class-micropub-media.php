@@ -211,7 +211,7 @@ class Micropub_Media extends Micropub_Base {
 
 		// Set Client Application Taxonomy if available.
 		if ( $id && array_key_exists( 'client_uid', static::$micropub_auth_response ) ) {
-			wp_set_object_terms( $id,  array( static::$micropub_auth_response['client_uid'] ), 'indieauth_client' );
+			wp_set_object_terms( $id, array( static::$micropub_auth_response['client_uid'] ), 'indieauth_client' );
 		}
 
 		// Include admin functions to get access to wp_generate_attachment_metadata(). These functions are included here
