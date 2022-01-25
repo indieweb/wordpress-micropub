@@ -19,7 +19,7 @@
 		"phpcompatibility/php-compatibility": "^9.3",
 		"php-parallel-lint/php-parallel-lint": "^1.2",
 		"sebastian/phpcpd": "*",
-		"phpunit/phpunit": "^5.7.21 || ^6.5 || ^7.5"
+		"phpunit/phpunit": "^9.5.13"
 	},
 	"prefer-stable" : true,
 	"scripts": {
