@@ -30,9 +30,7 @@ Called before handling a Micropub request. Returns `$input`, possibly modified.
 
 Called during the handling of a Micropub request. The content generation function is attached to this filter by default. Returns `$post_content`, possibly modified.
 
-`micropub_post_type( $post_type 
-
-### 'post', $input )`
+`micropub_post_type( $post_type = 'post', $input )`
 
 Called during the creation of a Micropub post. This defaults to post, but allows for setting Micropub posts to a custom post type.
 
@@ -66,14 +64,11 @@ This filters the arguments sent to wp_insert_post just prior to its insertion. I
 
 ...and two hooks:
 
-`after_micropub( $input, $wp_args 
-
-### null)`
+`after_micropub( $input, $wp_args = null)`
 
 Called after handling a Micropub request. Not called if the request fails (ie doesn't return HTTP 2xx).
 
 `micropub_syndication( $ID, $syndicate_to )`
-
 
 Called only if there are syndication targets $syndicate_to for post $ID. $syndicate_to will be an array of UIDs that are verified as one or more of the UIDs added using the `micropub_syndicate-to` filter.
 
@@ -106,21 +101,14 @@ Supports Proposed Extensions to Micropub:
 * [Query for Supported Properties](https://github.com/indieweb/micropub-extensions/issues/8) - Returns a list of which supported experimental properties the endpoint supports so the client can choose to hide unsupported ones.
 * [Discovery of Media Endpoint using Link Rel](https://github.com/indieweb/micropub-extensions/issues/15) - Adds a link header for the media endpoint
 * [Supports extended GEO URIs](https://github.com/indieweb/micropub-extensions/issues/32) - Supports adding arbitrary parameters to the GEO URI. Micropub converts this into an mf2 object. Supported as built into the Indigenous client.
-* [Supports deleting uploaded media](https://github.com/indieweb/micropub-extensions/issues/30) - Supports action=delete&url
-
-### url on the media endpoint to delete files.
-
+* [Supports deleting uploaded media](https://github.com/indieweb/micropub-extensions/issues/30) - Supports action=delete&url=url on the media endpoint to delete files.
 * [Supports querying for media on the media endpoint](https://github.com/indieweb/micropub-extensions/issues/14) and [optional URL parameter for same]((https://github.com/indieweb/micropub-extensions/issues/37))
 * [Supports filtering media queries by mime-type](https://github.com/indieweb/micropub-extensions/issues/45)
-* [Return Visibility in q
-
-### config](https://github.com/indieweb/micropub-extensions/issues/8#issuecomment-536301952)
+* [Return Visibility in q=config](https://github.com/indieweb/micropub-extensions/issues/8#issuecomment-536301952)
 
 Deprecated Extensions still Supported:
 
-* [Last Media Uploaded](https://github.com/indieweb/micropub-extensions/issues/10) - Supports querying for the last image uploaded ...set to within the last hour. This was superseded by supporting `q=source&limit
-
-### 1` on the media endpoint.
+* [Last Media Uploaded](https://github.com/indieweb/micropub-extensions/issues/10) - Supports querying for the last image uploaded ...set to within the last hour. This was superseded by supporting `q=source&limit=1` on the media endpoint.
 
 Extensions Supported by Other Plugins:
 
