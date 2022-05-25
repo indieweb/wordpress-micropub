@@ -2,7 +2,7 @@
 Contributors: indieweb, snarfed, dshanske
 Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.9.9
-Tested up to: 5.8.2
+Tested up to: 6.0
 Stable tag: 2.3.1
 Requires PHP: 5.6
 License: CC0
@@ -233,7 +233,7 @@ into markdown and saved to readme.md.
 = 2.2.5 (2021-09-22 ) =
 * Update readme links
 * Add filter to allow custom database insert.
-* Latitude and longitude properties are now converted into a location property. 
+* Latitude and longitude properties are now converted into a location property.
 * Introduce new function to simplify returning a properly set datetime with timezone
 * Media Endpoint now supports a delete action.
 * New query unit test revealed bug in new q=source&url= query previously introduced.
@@ -247,7 +247,7 @@ into markdown and saved to readme.md.
 * Removed error suppression revealing several notices that had been hidden. Fixed warning notices.
 * Abstract request for scope and response into functions to avoid calling the actual filter as this may be deprecated in future.
 * Switch check in permissions to whether a user was logged in.
-* Published, updated, name, and summary properties are no longer stored in post meta. When queried, they will be pulled from the equivalent WordPress properties. Content should be as well, however as content in the post includes rendered microformats we need to store the pure version. Might address this in a future version. 
+* Published, updated, name, and summary properties are no longer stored in post meta. When queried, they will be pulled from the equivalent WordPress properties. Content should be as well, however as content in the post includes rendered microformats we need to store the pure version. Might address this in a future version.
 * As timezone is not stored in the WordPress timestamp, store the timezone offset for the post in meta instead.
 * Sideload and set featured images if featured property is set.
 
