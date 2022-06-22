@@ -1,10 +1,10 @@
-Adds [Micropub](http://micropub.net/) server support to WordPress.
+Allows you to publish to your site using [Micropub](http://micropub.net/) clients.
 
 ## Description
 
 Micropub is an open API standard that is used to create posts on your site using third-party clients. Web apps and native apps (e.g. iPhone, Android) can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com. Requires the IndieAuth plugin for authentication.
 
-Once you've installed and activated the plugin, try using [Quill](http://quill.p3k.io/) to create a new post on your site. It walks you through the steps and helps you troubleshoot if you run into any problems. A list of known Micropub clients are available [here](https://indieweb.org/Micropub/Clients)
+Once you've installed and activated the plugin, try a client such as [Quill](http://quill.p3k.io/) to create a new post on your site. It walks you through the steps and helps you troubleshoot if you run into any problems. A list of known Micropub clients are available [here](https://indieweb.org/Micropub/Clients)
 
 Supports the full [Micropub spec](https://micropub.spec.indieweb.org/)
 
@@ -30,9 +30,7 @@ Called before handling a Micropub request. Returns `$input`, possibly modified.
 
 Called during the handling of a Micropub request. The content generation function is attached to this filter by default. Returns `$post_content`, possibly modified.
 
-`micropub_post_type( $post_type 
-
-### 'post', $input )`
+`micropub_post_type( $post_type = 'post', $input )`
 
 Called during the creation of a Micropub post. This defaults to post, but allows for setting Micropub posts to a custom post type.
 
@@ -66,9 +64,7 @@ This filters the arguments sent to wp_insert_post just prior to its insertion. I
 
 ...and two hooks:
 
-`after_micropub( $input, $wp_args 
-
-### null)`
+`after_micropub( $input, $wp_args = null)`
 
 Called after handling a Micropub request. Not called if the request fails (ie doesn't return HTTP 2xx).
 
@@ -106,21 +102,14 @@ Supports Proposed Extensions to Micropub:
 * [Query for Supported Properties](https://github.com/indieweb/micropub-extensions/issues/8) - Returns a list of which supported experimental properties the endpoint supports so the client can choose to hide unsupported ones.
 * [Discovery of Media Endpoint using Link Rel](https://github.com/indieweb/micropub-extensions/issues/15) - Adds a link header for the media endpoint
 * [Supports extended GEO URIs](https://github.com/indieweb/micropub-extensions/issues/32) - Supports adding arbitrary parameters to the GEO URI. Micropub converts this into an mf2 object. Supported as built into the Indigenous client.
-* [Supports deleting uploaded media](https://github.com/indieweb/micropub-extensions/issues/30) - Supports action=delete&url
-
-### url on the media endpoint to delete files.
-
+* [Supports deleting uploaded media](https://github.com/indieweb/micropub-extensions/issues/30) - Supports action=delete&url=url on the media endpoint to delete files.
 * [Supports querying for media on the media endpoint](https://github.com/indieweb/micropub-extensions/issues/14) and [optional URL parameter for same]((https://github.com/indieweb/micropub-extensions/issues/37))
 * [Supports filtering media queries by mime-type](https://github.com/indieweb/micropub-extensions/issues/45)
-* [Return Visibility in q
-
-### config](https://github.com/indieweb/micropub-extensions/issues/8#issuecomment-536301952)
+* [Return Visibility in q=config](https://github.com/indieweb/micropub-extensions/issues/8#issuecomment-536301952)
 
 Deprecated Extensions still Supported:
 
-* [Last Media Uploaded](https://github.com/indieweb/micropub-extensions/issues/10) - Supports querying for the last image uploaded ...set to within the last hour. This was superseded by supporting `q=source&limit
-
-### 1` on the media endpoint.
+* [Last Media Uploaded](https://github.com/indieweb/micropub-extensions/issues/10) - Supports querying for the last image uploaded ...set to within the last hour. This was superseded by supporting `q=source&limit=1` on the media endpoint.
 
 Extensions Supported by Other Plugins:
 
@@ -138,6 +127,7 @@ WordPress has a [whitelist of file extensions that it allows in uploads](https:/
       "error": "invalid_request",
       "error_description": "Sorry, this file is not permitted for security reasons."
     }
+
 
 ## Authentication and authorization
 
@@ -219,6 +209,11 @@ into markdown and saved to readme.md.
 
 ## Changelog
 
+### 2.3.2 (2022-06-22 )
+
+* Update readme
+* Fix client name bug
+
 ### 2.3.1 (2021-12-25 )
 
 * Made one little mistake.
@@ -238,22 +233,15 @@ into markdown and saved to readme.md.
 
 * Update readme links
 * Add filter to allow custom database insert.
-* Latitude and longitude properties are now converted into a location property. 
+* Latitude and longitude properties are now converted into a location property.
 * Introduce new function to simplify returning a properly set datetime with timezone
 * Media Endpoint now supports a delete action.
-* New query unit test revealed bug in new q=source&url
-
-### query previously introduced.
-
+* New query unit test revealed bug in new q=source&url= query previously introduced.
 * Update media response to now just include published, updated, created, and mime_type for now.
 
 ### 2.2.4 (2021-05-06 )
 
-* Add published date to return from q
-
-### source on media endpoint
-
-
+* Add published date to return from q=source on media endpoint
 
 ### 2.2.3 (2020-09-09 )
 
@@ -261,7 +249,7 @@ into markdown and saved to readme.md.
 * Removed error suppression revealing several notices that had been hidden. Fixed warning notices.
 * Abstract request for scope and response into functions to avoid calling the actual filter as this may be deprecated in future.
 * Switch check in permissions to whether a user was logged in.
-* Published, updated, name, and summary properties are no longer stored in post meta. When queried, they will be pulled from the equivalent WordPress properties. Content should be as well, however as content in the post includes rendered microformats we need to store the pure version. Might address this in a future version. 
+* Published, updated, name, and summary properties are no longer stored in post meta. When queried, they will be pulled from the equivalent WordPress properties. Content should be as well, however as content in the post includes rendered microformats we need to store the pure version. Might address this in a future version.
 * As timezone is not stored in the WordPress timestamp, store the timezone offset for the post in meta instead.
 * Sideload and set featured images if featured property is set.
 
@@ -448,10 +436,7 @@ media endpoint.
 
 ### 0.2
 
-* Support more Micropub properties: `photo`, `like-of`, `repost-of`, `in-reply-to`, `rsvp`, `location`, `category`, `h
-
-### event`.
-
+* Support more Micropub properties: `photo`, `like-of`, `repost-of`, `in-reply-to`, `rsvp`, `location`, `category`, `h=event`.
 * Check but don't require access tokens on localhost.
 * Better error handling.
 
