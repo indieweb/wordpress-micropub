@@ -3,18 +3,18 @@ Contributors: indieweb, snarfed, dshanske
 Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.9.9
 Tested up to: 6.0
-Stable tag: 2.3.1
+Stable tag: 2.3.2
 Requires PHP: 5.6
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
 
-Adds [Micropub](http://micropub.net/) server support to WordPress.
+Allows you to publish to your site using [Micropub](http://micropub.net/) clients.
 
 == Description ==
 
 Micropub is an open API standard that is used to create posts on your site using third-party clients. Web apps and native apps (e.g. iPhone, Android) can use Micropub to post short notes, photos, events or other posts to your own site, similar to a Twitter client posting to Twitter.com. Requires the IndieAuth plugin for authentication.
 
-Once you've installed and activated the plugin, try using [Quill](http://quill.p3k.io/) to create a new post on your site. It walks you through the steps and helps you troubleshoot if you run into any problems. A list of known Micropub clients are available [here](https://indieweb.org/Micropub/Clients)
+Once you've installed and activated the plugin, try a client such as [Quill](http://quill.p3k.io/) to create a new post on your site. It walks you through the steps and helps you troubleshoot if you run into any problems. A list of known Micropub clients are available [here](https://indieweb.org/Micropub/Clients)
 
 Supports the full [Micropub spec](https://micropub.spec.indieweb.org/)
 
@@ -216,6 +216,10 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.3.2 (2022-06-22 ) =
+* Update readme
+* Fix client name bug
 
 = 2.3.1 (2021-12-25 ) =
 * Made one little mistake.
