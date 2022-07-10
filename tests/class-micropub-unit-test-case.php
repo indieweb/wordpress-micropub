@@ -48,11 +48,11 @@ class Micropub_UnitTestCase extends WP_UnitTestCase {
 		$wp_rest_server = null;
 	}
 
-	public function setUp() {
+	public function set_up() {
 		global $wp_rest_server;
 		$wp_rest_server = new Spy_REST_Server;
 		do_action( 'rest_api_init', $wp_rest_server );
-		parent::setUp();
+		parent::set_up();
 	}
 
 	public function dispatch( $request, $user_id ) {

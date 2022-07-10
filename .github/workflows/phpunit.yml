@@ -13,11 +13,11 @@ jobs:
        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=10s --health-retries=10
     strategy:
       matrix:
-        php-versions: ['5.6', '7.2', '7.3', '7.4']
+        php-versions: ['5.6', '7.2', '7.3', '7.4','8.0']
         phpunit: ['auto']
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -26,7 +26,7 @@ jobs:
           tools: composer, phpunit-polyfills
           extensions: mysql
       - name: Install Composer dependencies for PHP
-        uses: "ramsey/composer-install@v1"
+        uses: "ramsey/composer-install@v2"
       - name: Setup Test Environment
         run: composer setup-local-tests
       - name: Unit Testing

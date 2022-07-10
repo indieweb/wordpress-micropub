@@ -5,21 +5,26 @@
     		"composer/installers": "~1.0 || ~2.0"
 	},
 	"type": "wordpress-plugin",
+        "config": {
+          "allow-plugins": {
+            "composer/installers": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+          }
+        },
 	"extra": {
 		"installer-name": "micropub"
 	},
 	"license": "CC0-1.0",
 	"require-dev": {
-		"dealerdirect/phpcodesniffer-composer-installer": "^0.7.1",
+		"dealerdirect/phpcodesniffer-composer-installer": "^0.7.2",
 		"squizlabs/php_codesniffer": "*",
 		"wp-coding-standards/wpcs": "*",
 		"wpreadme2markdown/wp2md": "*",
-		"yoast/phpunit-polyfills": "^1.0.1",
+		"yoast/phpunit-polyfills": "^1.0",
 		"phpcompatibility/phpcompatibility-wp": "^2.1",
 		"phpcompatibility/php-compatibility": "^9.3",
-		"php-parallel-lint/php-parallel-lint": "^1.2",
-		"sebastian/phpcpd": "*",
-		"phpunit/phpunit": "^5.7.21 || ^6.5 || ^7.5"
+		"php-parallel-lint/php-parallel-lint": "^1.3",
+		"sebastian/phpcpd": "*"
 	},
 	"prefer-stable" : true,
 	"scripts": {
