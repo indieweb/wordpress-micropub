@@ -63,7 +63,8 @@ class Micropub_Media_Test extends Micropub_UnitTestCase {
 			'tmp_name' => $this->test_file
 		);
 		$id = Micropub_Media::media_handle_upload( $file_array );
-		$this->assertInternalType( "int", $id );
+		$this->assertIsInt( $id );
+		$this->assertGreaterThanorEqual( 1, $id );
 	}
 
 	public function test_upload_file() {

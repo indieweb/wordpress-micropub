@@ -138,7 +138,7 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 			} else {
 				$code = '';
 			}
-			$this->assertContains( $expected, $code, 'String Contains: ' . $code, wp_json_encode( $encoded ) );
+			$this->assertContainsString( $expected, $code, 'String Contains: ' . $code, wp_json_encode( $encoded ) );
 		} else {
 			$this->assertSame( null, $expected, 'Same:  ' );
 		}
