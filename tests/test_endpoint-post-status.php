@@ -14,7 +14,7 @@ class Micropub_Endpoint_Post_Status_Test extends Micropub_UnitTestCase {
 	 */
 	private $method;
 
-	public function setUp() {
+	public function set_up() {
 		$this->endpoint = new Micropub_Endpoint();
 
 		// Perform magic to access the private method for testing.

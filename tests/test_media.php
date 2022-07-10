@@ -3,14 +3,14 @@
 
 class Micropub_Media_Test extends Micropub_UnitTestCase {
 	
-	public function setUp() {
+	public function set_up() {
 		$orig_file       = DIR_MEDIATESTDATA . '/canola.jpg';
 		$this->test_file = '/tmp/canola.jpg';
 	        copy( $orig_file, $this->test_file );
 	        $orig_file2       = DIR_MEDIATESTDATA . '/codeispoetry.png';
 	        $this->test_file2 = '/tmp/codeispoetry.png';
 	        copy( $orig_file2, $this->test_file2 );
-		parent::setUp();
+		parent::set_up();
 	}
 
 	public function test_register_routes() {
