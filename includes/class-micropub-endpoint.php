@@ -716,7 +716,7 @@ class Micropub_Endpoint extends Micropub_Base {
 			}
 		}
 		if ( isset( $args['post_name'] ) ) {
-			$args['post_name'] = sanitize_title( $args['post_name'] );
+			$args['post_name'] = sanitize_title( ( (array) $args['post_name'] )[0] );
 		}
 
 		if ( isset( $props['published'] ) ) {
