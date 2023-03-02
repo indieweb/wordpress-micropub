@@ -47,13 +47,24 @@ class Micropub_Render {
 					$val['name'] = $val['url'];
 				}
 				if ( isset( $val['url'] ) ) {
-					$lines[] = sprintf(
-						'<p>%1s <a class="u-%2s" href="%3s">%4s</a>.</p>',
-						$verbs[ $prop ],
-						$prop,
-						$val['url'],
-						$val['name']
-					);
+					if ( $prop == 'in-reply-to' && ! isset( $props['rsvp']) ) {
+						// Special case replies. Don't include any visible text,
+						// since it goes inside e-content, which webmention
+						// recipients use as the reply text.
+						$lines[] = sprintf(
+							'<a class="u-%1s" href="%2s"></a>',
+							$prop,
+							$val['url']
+						);
+					} else {
+						$lines[] = sprintf(
+							'<p>%1s <a class="u-%2s" href="%3s">%4s</a>.</p>',
+							$verbs[ $prop ],
+							$prop,
+							$val['url'],
+							$val['name']
+						);
+					}
 				}
 			}
 		}
