@@ -55,9 +55,9 @@ class MicropubRenderTest extends WP_UnitTestCase {
 	}
 
 	function test_create_reply() {
-		$input = $this->create_interaction( 'in-reply-to' ); 
+		$input = $this->create_interaction( 'in-reply-to' );
 		$post_content = Micropub_Render::generate_post_content( '', $input );
-		$this->assertEquals( '<p>In reply to <a class="u-in-reply-to" href="http://target">http://target</a>.</p>', $post_content );
+		$this->assertEquals( '<a class="u-in-reply-to" href="http://target"></a>', $post_content );
 
 	}
 
@@ -170,14 +170,14 @@ EOF
 	function test_merges_auto_generated_content() {
 		$input = array(
 			'type' => array( 'h-entry' ),
-			'properties' => array( 
+			'properties' => array(
 				'content' => array( 'foo bar' ),
-				'in-reply-to' => array( 'http://target' )
+				'repost-of' => array( 'http://target' )
 			)
 		);
 		$post_content = Micropub_Render::generate_post_content( 'foo bar', $input );
 		$this->assertEquals( <<<EOF
-<p>In reply to <a class="u-in-reply-to" href="http://target">http://target</a>.</p>
+<p>Reposted <a class="u-repost-of" href="http://target">http://target</a>.</p>
 <div class="e-content">
 foo bar
 </div>
