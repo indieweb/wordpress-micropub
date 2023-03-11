@@ -3,6 +3,9 @@
 
 class Micropub_Media_Test extends Micropub_UnitTestCase {
 	
+	protected $test_file;
+	protected $test_file2;
+
 	public function set_up() {
 		$orig_file       = DIR_MEDIATESTDATA . '/canola.jpg';
 		$this->test_file = '/tmp/canola.jpg';

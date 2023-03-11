@@ -7,7 +7,10 @@
 	<arg value="sp"/> <!-- Show sniff and progress -->
 	<arg name="parallel" value="8"/><!-- Enables parallel processing when available for faster results. -->
 	<arg name="colors"/>
-	<rule ref="PHPCompatibility"/>
+	<rule ref="PHPCompatibility">
+		<exclude name="PHPCompatibility.FunctionUse.NewFunctions.array_key_firstFound" /><!-- Exclude because added compat function -->
+		<exclude name="PHPCompatibility.FunctionUse.NewFunctions.array_key_lastFound" /><!-- Exclude because added compat function -->
+	</rule>
 	<config name="testVersion" value="5.6-"/>
 	<rule ref="WordPress-Core" />	
 	<config name="minimum_supported_wp_version" value="4.9"/>
