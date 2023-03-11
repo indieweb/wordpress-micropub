@@ -209,20 +209,21 @@ into markdown and saved to readme.md.
 
 ## Changelog
 
-### 2.3.3 (unreleased)
+### 2.3.3 (2023-03-10)
 
 * Stop including visible text in reply contexts since they go inside since they go inside e-content, which webmention recipients use as the reply text.
+* Fix undeclared variables
 
-### 2.3.2 (2022-06-22)
+### 2.3.2 (2022-06-22 )
 
 * Update readme
 * Fix client name bug
 
-### 2.3.1 (2021-12-25)
+### 2.3.1 (2021-12-25 )
 
 * Made one little mistake.
 
-### 2.3.0 (2021-12-25)
+### 2.3.0 (2021-12-25 )
 
 * Sanitize media endpoint queries
 * Add mime_type filter for media queries
@@ -233,7 +234,7 @@ into markdown and saved to readme.md.
 * Add support for Visibility config return https://github.com/indieweb/micropub-extensions/issues/8#issuecomment-536301952
 * Sets `_edit_last` property when a post is updated.
 
-### 2.2.5 (2021-09-22)
+### 2.2.5 (2021-09-22 )
 
 * Update readme links
 * Add filter to allow custom database insert.
@@ -243,11 +244,11 @@ into markdown and saved to readme.md.
 * New query unit test revealed bug in new q=source&url= query previously introduced.
 * Update media response to now just include published, updated, created, and mime_type for now.
 
-### 2.2.4 (2021-05-06)
+### 2.2.4 (2021-05-06 )
 
 * Add published date to return from q=source on media endpoint
 
-### 2.2.3 (2020-09-09)
+### 2.2.3 (2020-09-09 )
 
 * Deduplicated endpoint test code from endpoint and media endpoint classes.
 * Removed error suppression revealing several notices that had been hidden. Fixed warning notices.
@@ -257,24 +258,24 @@ into markdown and saved to readme.md.
 * As timezone is not stored in the WordPress timestamp, store the timezone offset for the post in meta instead.
 * Sideload and set featured images if featured property is set.
 
-### 2.2.2 (2020-08-23)
+### 2.2.2 (2020-08-23 )
 
 * Fixed and updated testing environment
 * Fixed failing tests as a result of update to testing environment
 * Change return response code based on spec update from 401 to 403
 
-### 2.2.1 (2020-07-31)
+### 2.2.1 (2020-07-31 )
 
 * Change category query parameter from search to filter per decision at Micropub Popup Session
 * Fix permissions for Media Endpoint to match Endpoint
 * For source query on both media and micropub endpoint support offset parameter
 
-### 2.2.0 (2020-07-25)
+### 2.2.0 (2020-07-25 )
 
 * Deprecate MICROPUB_LOCAL_AUTH, MICROPUB_AUTHENTICATION_ENDPOINT and MICROPUB_TOKEN_ENDPOINT constants.
 * Remove IndieAuth Client code, will now require the IndieAuth or other plugin that does not yet exist.
 
-### 2.1.0 (2020-02-06)
+### 2.1.0 (2020-02-06 )
 
 * Fix bug where timezone meta key was always set to website timezone instead of provided one
 * Fix issue where title and caption were not being set for images by adopting code from WordPress core

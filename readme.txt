@@ -2,8 +2,8 @@
 Contributors: indieweb, snarfed, dshanske
 Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.9.9
-Tested up to: 6.0
-Stable tag: 2.3.2
+Tested up to: 6.1
+Stable tag: 2.3.3
 Requires PHP: 5.6
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
@@ -216,6 +216,11 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.3.3 (2023-03-10) =
+
+* Stop including visible text in reply contexts since they go inside since they go inside e-content, which webmention recipients use as the reply text.
+* Fix undeclared variables
 
 = 2.3.2 (2022-06-22 ) =
 * Update readme
