@@ -47,7 +47,7 @@ class Micropub_Render {
 					$val['name'] = $val['url'];
 				}
 				if ( isset( $val['url'] ) ) {
-					if ( 'in-reply-to' === $prop && ! isset( $props['rsvp']) ) {
+					if ( 'in-reply-to' === $prop && ! isset( $props['rsvp'] ) ) {
 						// Special case replies. Don't include any visible text,
 						// since it goes inside e-content, which webmention
 						// recipients use as the reply text.
