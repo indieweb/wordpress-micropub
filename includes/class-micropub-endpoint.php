@@ -343,11 +343,11 @@ class Micropub_Endpoint extends Micropub_Base {
 
 					if ( array_key_exists( 'visibility', static::$input ) ) {
 						$visibilitylist = array( array( 'private' ), array( 'public' ) );
-						if ( ! in_array( $props['visibility'], $visibilitylist, true ) ) {
+						if ( ! in_array( static::$input['visibility'], $visibilitylist, true ) ) {
 							// Returning null will cause the server to return a 400 error
 							return null;
 						}
-						if ( array( 'private' ) === $props['visibility'] ) {
+						if ( array( 'private' ) === static::$input['visibility'] ) {
 							if ( user_can( $user_id, 'read_private_posts' ) ) {
 								$args['post-status'] = 'private';
 							}
