@@ -122,7 +122,7 @@ if ( ! function_exists( 'micropub_client_info' ) ) {
 		if ( array_key_exists( 'id', $client ) ) {
 			printf( '<%1$s class="%2$s"><a href="%3$s">%4$s</a></%1$s>', esc_attr( $args['container'] ), esc_attr( $args['class'] ), esc_url( get_term_link( $client['id'] ), 'indieauth_client' ), wp_kses_post( $text ) );
 		} else {
-			printf( '<%1$s class="%1$s">%2$S</%1$s>', esc_attr( $args['container'] ), esc_attr( $args['class'] ), wp_kses_post( $text ) );
+			printf( '<%1$s class="%1$s">%2$s</%1$s>', esc_attr( $args['container'] ), esc_attr( $args['class'] ), wp_kses_post( $text ) );
 		}
 
 	}
