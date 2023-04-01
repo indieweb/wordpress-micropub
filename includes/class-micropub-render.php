@@ -22,6 +22,7 @@ class Micropub_Render {
 			'repost-of'   => 'Reposted',
 			'in-reply-to' => 'In reply to',
 			'bookmark-of' => 'Bookmarked',
+			'follow-of'   => 'Follows',
 		);
 
 		// interactions
