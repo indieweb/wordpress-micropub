@@ -73,6 +73,12 @@ class MicropubRenderTest extends WP_UnitTestCase {
 		$this->assertEquals( '<p>Reposted <a class="u-repost-of" href="http://target">http://target</a>.</p>', $post_content );
 	}
 
+	function test_create_follow() {
+		$input = $this->create_interaction( 'follow-of' );
+		$post_content = Micropub_Render::generate_post_content( '', $input );
+		$this->assertEquals( '<p>Follows <a class="u-follow-of" href="http://target">http://target</a>.</p>', $post_content );
+	}
+
 	function test_create_event() {
 		$input = array(
 			'type' => array( 'h-event' ),
