@@ -120,9 +120,8 @@ class Micropub_Endpoint extends Micropub_Base {
 			$properties = static::$input['properties'];
 			if ( isset( $properties['location'] ) ) {
 				static::$input['properties']['location'] = self::parse_geo_uri( $properties['location'][0] );
-			} else {
-				// Convert latitude and longitude properties to an h-geo with altitude if present.
-				if ( isset( $properties['latitude'] ) && isset( $properties['longitude'] ) ) {
+			} elseif ( isset( $properties['latitude'] ) && isset( $properties['longitude'] ) ) {
+					// Convert latitude and longitude properties to an h-geo with altitude if present.
 					static::$input['properties']['location'] = array(
 						'type'       => array( 'h-geo' ),
 						'properties' => array(
@@ -136,8 +135,6 @@ class Micropub_Endpoint extends Micropub_Base {
 					}
 					unset( static::$input['properties']['latitude'] );
 					unset( static::$input['properties']['longitude'] );
-
-				}
 			}
 
 			if ( isset( $properties['checkin'] ) ) {
@@ -910,7 +907,7 @@ class Micropub_Endpoint extends Micropub_Base {
 							', ',
 							array_filter(
 								$parts,
-								function( $v ) {
+								function ( $v ) {
 									return $v;
 								}
 							)
@@ -1024,7 +1021,7 @@ class Micropub_Endpoint extends Micropub_Base {
 			}
 			foreach ( $props as $key => $val ) {
 				// mp- entries are commands not properties and are therefore not stored.
-				if ( 'mp-' !== substr( $key, 0, 3 ) && ! in_array( $key, $excludes ) ) {
+				if ( 'mp-' !== substr( $key, 0, 3 ) && ! in_array( $key, $excludes, true ) ) {
 					$args['meta_input'][ 'mf2_' . $key ] = $val;
 				}
 			}
@@ -1148,4 +1145,3 @@ class Micropub_Endpoint extends Micropub_Base {
 		return $data;
 	}
 }
-
