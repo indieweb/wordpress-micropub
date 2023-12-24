@@ -73,7 +73,6 @@ class Micropub_Admin {
 				array( static::class, 'settings_page' )
 			);
 		}
-
 	}
 
 	public static function settings_page() {

@@ -80,7 +80,7 @@ class Micropub_Render {
 
 		if ( isset( $props['rsvp'] ) ) {
 			$lines[] = '<p>RSVPs <data class="p-rsvp" value="' . $props['rsvp'][0] .
-			  '">' . $props['rsvp'][0] . '</data>.</p>';
+				'">' . $props['rsvp'][0] . '</data>.</p>';
 		}
 
 		// event
@@ -101,7 +101,7 @@ class Micropub_Render {
 
 		// TODO: generate my own markup so i can include u-photo
 		foreach ( array( 'photo', 'video', 'audio' ) as $field ) {
-			if ( isset( $_FILES[ $field ] ) || isset( $props[ $field ] ) ) {
+			if ( isset( $_FILES[ $field ] ) || isset( $props[ $field ] ) ) { // phpcs:ignore
 				$lines[] = '[gallery size=full columns=1]';
 				break;
 			}
@@ -151,5 +151,4 @@ class Micropub_Render {
 		$lines[] = '</div>';
 		return implode( "\n", $lines );
 	}
-
 }

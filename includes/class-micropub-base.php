@@ -125,4 +125,3 @@ abstract class Micropub_Base {
 		return $result;
 	}
 }
-

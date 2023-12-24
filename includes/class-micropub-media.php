@@ -18,7 +18,6 @@ class Micropub_Media extends Micropub_Base {
 		add_action( 'send_headers', array( static::class, 'http_header' ) );
 		add_filter( 'host_meta', array( static::class, 'jrd_links' ) );
 		add_filter( 'webfinger_user_data', array( static::class, 'jrd_links' ) );
-
 	}
 
 	public static function get_rel() {
@@ -462,8 +461,4 @@ class Micropub_Media extends Micropub_Base {
 
 		return self::insert_attachment( $file, $post_id );
 	}
-
-
-
-
 }

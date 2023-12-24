@@ -41,7 +41,7 @@ if ( ! function_exists( 'mp_filter' ) ) {
 		return array_values(
 			array_filter(
 				$array,
-				function( $value ) use ( $filter ) {
+				function ( $value ) use ( $filter ) {
 					return ( false !== stripos( $value, $filter ) );
 				}
 			)
@@ -124,7 +124,6 @@ if ( ! function_exists( 'micropub_client_info' ) ) {
 		} else {
 			printf( '<%1$s class="%1$s">%2$s</%1$s>', esc_attr( $args['container'] ), esc_attr( $args['class'] ), wp_kses_post( $text ) );
 		}
-
 	}
 }
 
@@ -159,4 +158,43 @@ if ( ! function_exists( 'micropub_get_post_datetime' ) ) {
 		}
 		return $datetime->setTimezone( $timezone );
 	}
+}
+
+function get_micropub_error( $obj ) {
+	if ( is_array( $obj ) ) {
+		// When checking the result of wp_remote_post
+		if ( isset( $obj['body'] ) ) {
+			$body = json_decode( $obj['body'], true );
+			if ( isset( $body['error'] ) ) {
+				return new WP_Micropub_Error(
+					$body['error'],
+					isset( $body['error_description'] ) ? $body['error_description'] : null,
+					$obj['response']['code']
+				);
+			}
+		}
+	} elseif ( is_object( $obj ) && 'WP_Micropub_Error' === get_class( $obj ) ) {
+		$data = $obj->get_data();
+		if ( isset( $data['error'] ) ) {
+			return $obj;
+		}
+	}
+	return false;
+}
+
+function is_micropub_error( $obj ) {
+	return ( $obj instanceof WP_Micropub_Error );
+}
+
+// Converts WP_Error into Micropub Error
+function micropub_wp_error( $error ) {
+	if ( is_wp_error( $error ) ) {
+		$data   = $error->get_error_data();
+		$status = isset( $data['status'] ) ? $data['status'] : 200;
+		if ( is_array( $data ) ) {
+			unset( $data['status'] );
+		}
+		return new WP_Micropub_Error( $error->get_error_code(), $error->get_error_message(), $status, $data );
+	}
+	return null;
 }
