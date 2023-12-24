@@ -12,7 +12,9 @@
 		<exclude name="PHPCompatibility.FunctionUse.NewFunctions.array_key_lastFound" /><!-- Exclude because added compat function -->
 	</rule>
 	<config name="testVersion" value="5.6-"/>
-	<rule ref="WordPress-Core" />	
+	<rule ref="WordPress-Core">
+		<exclude name="WordPress.Security.NonceVerification.Missing" /> <!-- Exclude because the form submission is part of the API -->
+	</rule>
 	<config name="minimum_supported_wp_version" value="4.9"/>
 	<rule ref="WordPress.Files.FileName">
 	<rule ref="WordPress.WP.I18n">

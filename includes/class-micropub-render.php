@@ -101,7 +101,7 @@ class Micropub_Render {
 
 		// TODO: generate my own markup so i can include u-photo
 		foreach ( array( 'photo', 'video', 'audio' ) as $field ) {
-			if ( isset( $_FILES[ $field ] ) || isset( $props[ $field ] ) ) { // phpcs:ignore
+			if ( isset( $_FILES[ $field ] ) || isset( $props[ $field ] ) ) {
 				$lines[] = '[gallery size=full columns=1]';
 				break;
 			}
