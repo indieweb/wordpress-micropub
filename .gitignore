@@ -4,3 +4,9 @@ vendor/*
 wordpress
 wordpress-tests-lib
 composer.lock
+node_modules
+vendor
+npm-debug.log
+package-lock.json
+/.data
+.DS_Store

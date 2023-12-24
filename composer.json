@@ -19,7 +19,6 @@
 		"dealerdirect/phpcodesniffer-composer-installer": "^1.0.0",
 		"squizlabs/php_codesniffer": "*",
 		"wp-coding-standards/wpcs": "*",
-		"wpreadme2markdown/wp2md": "*",
 		"yoast/phpunit-polyfills": "^1.0",
 		"phpcompatibility/phpcompatibility-wp": "^2.1",
 		"phpcompatibility/php-compatibility": "^9.3",
@@ -45,11 +44,6 @@
 		"lint:php": "@php ./vendor/bin/parallel-lint --exclude .git --exclude vendor .",
 		"install-codestandards": [
 			"Dealerdirect\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\Plugin::run"
-		],
-		"update-readme": [
-			"./vendor/bin/wp2md -i readme.txt | tail -n +12 > readme.md"
-		],
-		"post-update-cmd": [
 		]
 	}
 }

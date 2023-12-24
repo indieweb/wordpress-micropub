@@ -1,0 +1,22 @@
+{
+  "name": "wordpress-micropub",
+  "description": "Micropub for WordPress!",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/indieweb/wordpress-micropub.git"
+  },
+  "devDependencies": {
+    "grunt": "^1.6.1",
+    "grunt-wp-readme-to-markdown": "^2.1.0"
+  },
+  "license": "CC0",
+  "bugs": {
+    "url": "https://github.com/indieweb/wordpress-micropub/issues"
+  },
+  "homepage": "https://github.com/indieweb/wordpress-micropub",
+  "keywords": [
+    "indieweb",
+    "wordpress",
+    "micropub"
+  ]
+}
