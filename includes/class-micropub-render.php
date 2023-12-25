@@ -30,11 +30,21 @@ class Micropub_Render {
 	}
 
 	public static function should_dynamic_render( $post = null ) {
-		$post    = get_post();
-		$content = get_post_meta( $post->ID, 'mf2_content', true );
-		$should  = $content ? false : true;
+		$post = get_post();
 		if ( class_exists( 'Post_Kinds_Plugin' ) ) {
 			$should = false;
+		} else {
+			$response = get_post_meta( $post->ID, 'micropub_auth_response', true );
+			if ( ! $response ) {
+				$should = false;
+			}
+			if ( is_array( $response ) && array_key_exists( 'version', $response ) ) {
+				$should = true;
+			} elseif ( get_post_meta( $post->ID, 'mf2_content', true ) ) {
+				$should = false;
+			} else {
+				$should = true;
+			}
 		}
 		return apply_filters( 'micropub_dynamic_render', $should, $post );
 	}
