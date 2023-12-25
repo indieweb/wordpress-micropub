@@ -154,10 +154,7 @@ These configuration options can be enabled by adding them to your wp-config.php
 
 * `define('MICROPUB_NAMESPACE', 'micropub/1.0' )` - By default the namespace for micropub is micropub/1.0. This would allow you to change this for your endpoint
 * `define('MICROPUB_DISABLE_NAG', 1 )` - Disable notices for insecure sites
-
-These configuration options can be enabled by setting them in the WordPress options table.
-
-* `micropub_default_post_status` - if set, Micropub posts will be set to this status by default( publish, draft, or private ). Can also be set on the settings page.
+* `define('MICROPUB_DRAFT_MODE', 1 )` - Override default post status and set to draft for debugging purposes.
 
 == Frequently Asked Questions ==
 
@@ -166,6 +163,16 @@ These configuration options can be enabled by setting them in the WordPress opti
 There are a series of troubleshooting steps in the IndieAuth plugin for this. The most common problem involves the token not being passed due the configuration of your hosting provider.
 
 == Upgrade Notice ==
+
+
+= Version 2.4.0 =
+
+The following option and setting was removed from the plugin as the IndieAuth plugin now allows the creation of a draft token to satisfy this need. Being as this was the only setting 
+the entire settings page was removed.
+
+* `micropub_default_post_status` - if set, Micropub posts will be set to this status by default( publish, draft, or private ). 
+
+The older MICROPUB_DRAFT_MODE config override remains in place for now.
 
 = Version 2.2.3 =
 The Micropub plugin will no longer store published, updated, summary, or name options. These will be derived from the WordPress post properties they are mapped to and returned on query.
@@ -216,6 +223,11 @@ To automatically convert the readme.txt file to readme.md, you may, if you have 
 into markdown and saved to readme.md.
 
 == Changelog ==
+
+= 2.4.0 (202x-xx-xx) =
+* Remove sole setting as no longer needed(see upgrade notice)
+* Remove settings page as no more settings.
+* Bump minimum PHP version to PHP7.2
 
 = 2.3.3 (2023-03-10) =
 

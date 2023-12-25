@@ -32,6 +32,10 @@ if ( ! defined( 'MICROPUB_DISABLE_NAG' ) ) {
 	define( 'MICROPUB_DISABLE_NAG', 0 );
 }
 
+// For debugging purposes this will set all Micropub posts to Draft
+if ( ! defined( 'MICROPUB_DRAFT_MODE' ) ) {
+	define( 'MICROPUB_DRAFT_MODE', '0' );
+}
 
 if ( class_exists( 'IndieAuth_Plugin' ) ) {
 
@@ -40,9 +44,6 @@ if ( class_exists( 'IndieAuth_Plugin' ) ) {
 
 	// Compatibility Functions with Newer WordPress Versions
 	require_once plugin_dir_path( __FILE__ ) . 'includes/compat-functions.php';
-
-	// Admin Menu Functions
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-admin.php';
 
 	// Error Handling Class
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-micropub-error.php';
