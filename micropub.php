@@ -76,6 +76,9 @@ function micropub_not_ssl_notice() {
 }
 add_action( 'admin_notices', 'micropub_not_ssl_notice' );
 
+function micropub_get_plugin_version() {
+	return get_file_data( __FILE__, array( 'Version' => 'Version' ) )['Version'];
+}
 
 function micropub_indieauth_not_installed_notice() {
 	?>

@@ -128,7 +128,7 @@ abstract class Micropub_Base {
 	/**
 	 * Returns the mf2 properties for a post.
 	 */
-	public static function get_mf2( $post_id ) {
+	public static function get_mf2( $post_id = null ) {
 		$mf2  = array();
 		$post = get_post( $post_id );
 
