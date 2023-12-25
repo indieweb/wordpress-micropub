@@ -1,13 +1,43 @@
 <?php
 
-// Post Content Filter
-add_filter( 'micropub_post_content', array( 'Micropub_Render', 'generate_post_content' ), 1, 2 );
 
+/*  Generate Post Content and Save it for Pre 2.4.0 versions
+ * add_filter( 'micropub_post_content', array( 'Micropub_Render', 'generate_post_content' ), 1, 2 );
+ */
+
+add_filter( 'the_content', array( 'Micropub_Render', 'render_content' ), 1 );
 
 /**
  * Micropub Render Class
  */
 class Micropub_Render {
+	/**
+	 * Dynamically Renders Microformats 2
+	 *
+	 */
+	public static function render_content( $content ) {
+		// If this is not a micropub post return without any further work.
+		if ( ! is_micropub_post() ) {
+			return $content;
+		}
+
+		if ( self::should_dynamic_render() ) {
+			$input = Micropub_Base::get_mf2( get_the_ID() );
+			return self::generate_post_content( $content, $input );
+		}
+
+		return $content;
+	}
+
+	public static function should_dynamic_render( $post = null ) {
+		$post    = get_post();
+		$content = get_post_meta( $post->ID, 'mf2_content', true );
+		$should  = $content ? false : true;
+		if ( class_exists( 'Post_Kinds_Plugin' ) ) {
+			$should = false;
+		}
+		return apply_filters( 'micropub_dynamic_render', $should, $post );
+	}
 
 	/**
 	 * Generates and returns a post_content string suitable for wp_insert_post()
@@ -70,8 +100,9 @@ class Micropub_Render {
 			}
 		}
 
-		$checkin = isset( $props['checkin'] ) ? $props['checkin'][0] : null;
+		$checkin = isset( $props['checkin'] );
 		if ( $checkin ) {
+			$checkin = wp_is_numeric_array( $props['checkin'] ) ? $props['checkin'][0] : $props['checkin'];
 			$name    = $checkin['properties']['name'][0];
 			$urls    = $checkin['properties']['url'];
 			$lines[] = '<p>Checked into <a class="h-card p-location" href="' .
