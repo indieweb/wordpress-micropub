@@ -1073,41 +1073,6 @@ class Micropub_Endpoint extends Micropub_Base {
 		return $args;
 	}
 
-	/**
-	 * Returns the mf2 properties for a post.
-	 */
-	public static function get_mf2( $post_id ) {
-		$mf2  = array();
-		$post = get_post( $post_id );
-
-		foreach ( get_post_meta( $post_id ) as $field => $val ) {
-			$val = maybe_unserialize( $val[0] );
-			if ( 'mf2_type' === $field ) {
-				$mf2['type'] = $val;
-			} elseif ( 'mf2_' === substr( $field, 0, 4 ) ) {
-				$mf2['properties'][ substr( $field, 4 ) ] = $val;
-			}
-		}
-
-		// Time Information
-		$published                      = micropub_get_post_datetime( $post );
-		$updated                        = micropub_get_post_datetime( $post, 'modified' );
-		$mf2['properties']['published'] = array( $published->format( DATE_W3C ) );
-		if ( $published->getTimestamp() !== $updated->getTimestamp() ) {
-			$mf2['properties']['updated'] = array( $updated->format( DATE_W3C ) );
-		}
-
-		if ( ! empty( $post->post_title ) ) {
-			$mf2['properties']['name'] = array( $post->post_title );
-		}
-
-		if ( ! empty( $post->post_excerpt ) ) {
-			$mf2['properties']['summary'] = array( $post->post_excerpt );
-		}
-
-		return $mf2;
-	}
-
 	/* Takes form encoded input and converts to json encoded input */
 	public static function form_to_json( $data ) {
 		$input = array();
