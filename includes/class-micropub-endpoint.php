@@ -620,11 +620,7 @@ class Micropub_Endpoint extends Micropub_Base {
 	}
 
 	private static function default_post_status() {
-		$option = get_option( 'micropub_default_post_status', '' );
-		if ( ! in_array( $option, array( 'publish', 'draft', 'private' ), true ) ) {
-			return MICROPUB_DRAFT_MODE ? 'draft' : 'publish';
-		}
-		return $option;
+		return MICROPUB_DRAFT_MODE ? 'draft' : 'publish';
 	}
 
 	private static function post_status( $mf2 ) {
