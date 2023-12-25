@@ -174,6 +174,9 @@ the entire settings page was removed.
 
 The older MICROPUB_DRAFT_MODE config override remains in place for now.
 
+Static rendering for newer posts has been replaced by dynamic render. This means that if you disable this plugin, it will not render the microformats. For version 2.4.1 this is using the same code used for static 
+rendering but future enhancements are planned.
+
 ### Version 2.2.3 ###
 The Micropub plugin will no longer store published, updated, summary, or name options. These will be derived from the WordPress post properties they are mapped to and returned on query.
 
@@ -229,6 +232,7 @@ into markdown and saved to readme.md.
 * Remove settings page as no more settings.
 * Bump minimum PHP version to PHP7.2
 * Require IndieAuth plugin
+* Switch to dynamic from static rendering on posts...markup will no longer be placed inside the content block but dynamically added.
 
 ### 2.3.3 (2023-03-10) ###
 * Stop including visible text in reply contexts since they go inside since they go inside e-content, which webmention recipients use as the reply text.
