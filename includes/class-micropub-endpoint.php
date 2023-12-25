@@ -988,6 +988,7 @@ class Micropub_Endpoint extends Micropub_Base {
 		if ( $micropub_auth_response || ( is_assoc_array( $micropub_auth_response ) ) ) {
 			$args['meta_input']                           = mp_get( $args, 'meta_input' );
 			$args['meta_input']['micropub_auth_response'] = wp_array_slice_assoc( $micropub_auth_response, array( 'client_id', 'client_name', 'client_icon', 'uuid' ) );
+			$args['meta_input']['micropub_auth_response']['version'] = micropub_get_plugin_version();
 		}
 		return $args;
 	}
@@ -1003,8 +1004,7 @@ class Micropub_Endpoint extends Micropub_Base {
 	 */
 	public static function store_mf2( $args ) {
 		// Properties that map to WordPress properties.
-		// TODO: We need to still store content because the plugin adds markup to the content stored.
-		$excludes = array( 'name', 'published', 'updated', 'summary', 'updated' );
+		$excludes = array( 'name', 'published', 'updated', 'summary', 'updated', 'content', 'visibility' );
 		$props    = mp_get( static::$input, 'properties', false );
 		if ( ! isset( $args['ID'] ) && $props ) {
 			$args['meta_input'] = mp_get( $args, 'meta_input' );
@@ -1071,41 +1071,6 @@ class Micropub_Endpoint extends Micropub_Base {
 		}
 
 		return $args;
-	}
-
-	/**
-	 * Returns the mf2 properties for a post.
-	 */
-	public static function get_mf2( $post_id ) {
-		$mf2  = array();
-		$post = get_post( $post_id );
-
-		foreach ( get_post_meta( $post_id ) as $field => $val ) {
-			$val = maybe_unserialize( $val[0] );
-			if ( 'mf2_type' === $field ) {
-				$mf2['type'] = $val;
-			} elseif ( 'mf2_' === substr( $field, 0, 4 ) ) {
-				$mf2['properties'][ substr( $field, 4 ) ] = $val;
-			}
-		}
-
-		// Time Information
-		$published                      = micropub_get_post_datetime( $post );
-		$updated                        = micropub_get_post_datetime( $post, 'modified' );
-		$mf2['properties']['published'] = array( $published->format( DATE_W3C ) );
-		if ( $published->getTimestamp() !== $updated->getTimestamp() ) {
-			$mf2['properties']['updated'] = array( $updated->format( DATE_W3C ) );
-		}
-
-		if ( ! empty( $post->post_title ) ) {
-			$mf2['properties']['name'] = array( $post->post_title );
-		}
-
-		if ( ! empty( $post->post_excerpt ) ) {
-			$mf2['properties']['summary'] = array( $post->post_excerpt );
-		}
-
-		return $mf2;
 	}
 
 	/* Takes form encoded input and converts to json encoded input */
