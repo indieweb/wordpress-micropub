@@ -2,7 +2,7 @@
 **Contributors:** [indieweb](https://profiles.wordpress.org/indieweb/), [snarfed](https://profiles.wordpress.org/snarfed/), [dshanske](https://profiles.wordpress.org/dshanske/)  
 **Tags:** micropub, publish, indieweb, microformats  
 **Requires at least:** 4.9.9  
-**Tested up to:** 6.4  
+**Tested up to:** 6.5  
 **Stable tag:** 2.3.3  
 **Requires PHP:** 7.2  
 **License:** CC0  
@@ -167,10 +167,10 @@ There are a series of troubleshooting steps in the IndieAuth plugin for this. Th
 
 ### Version 2.4.0 ###
 
-The following option and setting was removed from the plugin as the IndieAuth plugin now allows the creation of a draft token to satisfy this need. Being as this was the only setting 
+The following option and setting was removed from the plugin as the IndieAuth plugin now allows the creation of a draft token to satisfy this need. Being as this was the only setting
 the entire settings page was removed.
 
-* `micropub_default_post_status` - if set, Micropub posts will be set to this status by default( publish, draft, or private ). 
+* `micropub_default_post_status` - if set, Micropub posts will be set to this status by default( publish, draft, or private ).
 
 The older MICROPUB_DRAFT_MODE config override remains in place for now.
 
@@ -228,9 +228,9 @@ into markdown and saved to readme.md.
 * Remove sole setting as no longer needed(see upgrade notice)
 * Remove settings page as no more settings.
 * Bump minimum PHP version to PHP7.2
+* Require IndieAuth plugin
 
 ### 2.3.3 (2023-03-10) ###
-
 * Stop including visible text in reply contexts since they go inside since they go inside e-content, which webmention recipients use as the reply text.
 * Fix undeclared variables
 
