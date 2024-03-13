@@ -7,6 +7,7 @@
  * Author: IndieWeb WordPress Outreach Club
  * Requires at least: 4.9.9
  * Requires PHP: 5.6
+ * Requires Plugins: indieauth
  * Author URI: https://indieweb.org/WordPress_Outreach_Club
  * Text Domain: micropub
  * License: CC0
