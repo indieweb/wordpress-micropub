@@ -12,7 +12,7 @@
  * Text Domain: micropub
  * License: CC0
  * License URI: http://creativecommons.org/publicdomain/zero/1.0/
- * Version: 2.3.3
+ * Version: 2.4.0
  */
 
 /* See README for supported filters and actions.
