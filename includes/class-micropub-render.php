@@ -34,12 +34,9 @@ class Micropub_Render {
 		if ( class_exists( 'Post_Kinds_Plugin' ) ) {
 			$should = false;
 		} else {
-			$response = get_post_meta( $post->ID, 'micropub_auth_response', true );
-			if ( ! $response ) {
+			$version = get_post_meta( $post->ID, 'micropub_version', true );
+			if ( ! $version ) {
 				$should = false;
-			}
-			if ( is_array( $response ) && array_key_exists( 'version', $response ) ) {
-				$should = true;
 			} elseif ( get_post_meta( $post->ID, 'mf2_content', true ) ) {
 				$should = false;
 			} else {
