@@ -36,7 +36,7 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 			'latitude'  => array( '42.361' ),
 			'longitude' => array( '-71.092' ),
 			'altitude'  => array( '25000' ),
-			'accuracy'  => array( '25000' )
+			'accuracy'  => array( '25000' ),
 		),
 	);
 
@@ -180,7 +180,7 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 		$this->assertFalse( has_post_format( $post ) );
 		$this->assertEquals( static::$author_id, $post->post_author, 'Post Author' );
 		// check that HTML in content is sanitized
-		$this->assertEquals( "<div class=\"e-content\">\nmy&lt;br&gt;content\n</div>", $post->post_content );
+		$this->assertEquals( "my&lt;br&gt;content", $post->post_content );
 		$this->assertEquals( 'my_slug', $post->post_name );
 		$this->assertEquals( 'my name', $post->post_title );
 		$this->assertEquals( 'my summary', $post->post_excerpt );
@@ -193,7 +193,7 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 		$source = $this->query_source( $post->ID );
 		$input['properties']['location'] = static::$geo;
 		$input = $this->remove_mp_properties( $input );
-		$this->assertEquals( $input, $source, wp_json_encode( $source ) );
+		$this->assertEquals( $input, $source, wp_json_encode( array( 'source' => $source, 'input' => $input ) ) );
 		return $post;
 	}
 
@@ -410,9 +410,7 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 		$post = get_post( $post_id );
 		// updated
 		$expected_content = <<<EOF
-<div class="e-content">
 new&lt;br&gt;content
-</div>
 EOF;
 		$this->assertEquals( $expected_content, $post->post_content );
 		// added

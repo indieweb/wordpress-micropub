@@ -37,9 +37,9 @@ class Micropub_Endpoint extends Micropub_Base {
 		add_filter( 'rest_request_after_callbacks', array( static::class, 'return_micropub_error' ), 10, 3 );
 	}
 
-	public static function get( $array, $key, $default = array() ) {
-		if ( is_array( $array ) ) {
-			return isset( $array[ $key ] ) ? $array[ $key ] : $default;
+	public static function get( $a, $key, $d = array() ) {
+		if ( is_array( $a ) ) {
+			return isset( $a[ $key ] ) ? $a[ $key ] : $d;
 		}
 		return $default;
 	}
@@ -986,8 +986,8 @@ class Micropub_Endpoint extends Micropub_Base {
 	public static function store_micropub_auth_response( $args ) {
 		$micropub_auth_response = static::$micropub_auth_response;
 		if ( $micropub_auth_response || ( is_assoc_array( $micropub_auth_response ) ) ) {
-			$args['meta_input']                           = mp_get( $args, 'meta_input' );
-			$args['meta_input']['micropub_auth_response'] = wp_array_slice_assoc( $micropub_auth_response, array( 'client_id', 'client_name', 'client_icon', 'uuid' ) );
+			$args['meta_input']                                = mp_get( $args, 'meta_input' );
+			$args['meta_input']['micropub_auth_response']      = wp_array_slice_assoc( $micropub_auth_response, array( 'client_id', 'client_name', 'client_icon', 'uuid' ) );
 			$args['meta_input']['micropub_version']['version'] = micropub_get_plugin_version();
 		}
 		return $args;

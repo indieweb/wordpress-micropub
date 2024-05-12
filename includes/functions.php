@@ -1,7 +1,7 @@
 <?php
 
-function is_assoc_array( $array ) {
-	return is_array( $array ) && array_values( $array ) !== $array;
+function is_assoc_array( $assoc ) {
+	return is_array( $assoc ) && array_values( $assoc ) !== $assoc;
 }
 
 
@@ -23,10 +23,10 @@ if ( ! function_exists( 'getallheaders' ) ) {
 }
 
 if ( ! function_exists( 'mp_get' ) ) {
-	function mp_get( $array, $key, $default = array(), $index = false ) {
-		$return = $default;
-		if ( is_array( $array ) && isset( $array[ $key ] ) ) {
-			$return = $array[ $key ];
+	function mp_get( $data, $key, $def = array(), $index = false ) {
+		$return = $def;
+		if ( is_array( $data ) && isset( $data[ $key ] ) ) {
+			$return = $data[ $key ];
 		}
 		if ( $index && wp_is_numeric_array( $return ) && ! empty( $return ) ) {
 			$return = $return[0];
@@ -37,10 +37,10 @@ if ( ! function_exists( 'mp_get' ) ) {
 
 if ( ! function_exists( 'mp_filter' ) ) {
 	// Searches for partial matches in an array of strings
-	function mp_filter( $array, $filter ) {
+	function mp_filter( $a, $filter ) {
 		return array_values(
 			array_filter(
-				$array,
+				$a,
 				function ( $value ) use ( $filter ) {
 					return ( false !== stripos( $value, $filter ) );
 				}
@@ -60,6 +60,10 @@ if ( ! function_exists( 'is_micropub_post' ) ) {
 		$post = get_post( $post );
 		if ( ! $post ) {
 			return false;
+		}
+		$response = get_post_meta( $post->ID, 'micropub_version', true );
+		if ( $response ) {
+			return true;
 		}
 		$response = get_post_meta( $post->ID, 'micropub_auth_response', true );
 		if ( ! $response ) {

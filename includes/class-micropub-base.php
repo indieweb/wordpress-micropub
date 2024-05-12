@@ -49,12 +49,12 @@ abstract class Micropub_Base {
 	/**
 	 * Generates webfinger/host-meta links
 	 */
-	public static function jrd_links( $array ) {
-		$array['links'][] = array(
+	public static function jrd_links( $links ) {
+		$links['links'][] = array(
 			'rel'  => static::get_rel(),
 			'href' => static::get_endpoint(),
 		);
-		return $array;
+		return $links;
 	}
 
 
@@ -79,11 +79,11 @@ abstract class Micropub_Base {
 		return error_log( sprintf( '%1$s: %2$s', $name, $message ) ); // phpcs:ignore
 	}
 
-	public static function get( $array, $key, $default = array() ) {
-		if ( is_array( $array ) ) {
-			return isset( $array[ $key ] ) ? $array[ $key ] : $default;
+	public static function get( $a, $key, $args = array() ) {
+		if ( is_array( $a ) ) {
+			return isset( $a[ $key ] ) ? $a[ $key ] : $args;
 		}
-		return $default;
+		return $args;
 	}
 
 	public static function load_auth() {
@@ -154,7 +154,10 @@ abstract class Micropub_Base {
 		}
 
 		if ( ! empty( $post->post_excerpt ) ) {
-			$mf2['properties']['summary'] = array( $post->post_excerpt );
+			$mf2['properties']['summary'] = array( htmlspecialchars_decode( $post->post_excerpt ) );
+		}
+		if ( ! array_key_exists( 'content', $mf2['properties'] ) && ! empty( $post->post_content ) ) {
+			$mf2['properties']['content'] = array( htmlspecialchars_decode( $post->post_content ) );
 		}
 
 		return $mf2;
