@@ -1004,7 +1004,7 @@ class Micropub_Endpoint extends Micropub_Base {
 	 */
 	public static function store_mf2( $args ) {
 		// Properties that map to WordPress properties.
-		$excludes = array( 'name', 'published', 'updated', 'summary', 'updated', 'content', 'visibility' );
+		$excludes = array( 'name', 'published', 'updated', 'summary', 'content', 'visibility' );
 		$props    = mp_get( static::$input, 'properties', false );
 		if ( ! isset( $args['ID'] ) && $props ) {
 			$args['meta_input'] = mp_get( $args, 'meta_input' );
