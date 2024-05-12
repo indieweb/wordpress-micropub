@@ -41,7 +41,7 @@ class Micropub_Endpoint extends Micropub_Base {
 		if ( is_array( $a ) ) {
 			return isset( $a[ $key ] ) ? $a[ $key ] : $d;
 		}
-		return $default;
+		return $d;
 	}
 
 	public static function register_route() {
