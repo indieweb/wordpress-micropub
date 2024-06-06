@@ -12,7 +12,7 @@
  * Text Domain: micropub
  * License: CC0
  * License URI: http://creativecommons.org/publicdomain/zero/1.0/
- * Version: 2.3.3
+ * Version: 2.4.0
  */
 
 /* See README for supported filters and actions.
@@ -77,6 +77,9 @@ function micropub_not_ssl_notice() {
 }
 add_action( 'admin_notices', 'micropub_not_ssl_notice' );
 
+function micropub_get_plugin_version() {
+	return get_file_data( __FILE__, array( 'Version' => 'Version' ) )['Version'];
+}
 
 function micropub_indieauth_not_installed_notice() {
 	?>

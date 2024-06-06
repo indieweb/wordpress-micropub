@@ -93,10 +93,10 @@ if ( ! function_exists( 'array_key_first' ) ) {
 
 // Polyfill for pre-PHP 7.3.
 if ( ! function_exists( 'array_key_last' ) ) {
-	function array_key_last( $array ) {
-		if ( ! is_array( $array ) || empty( $array ) ) {
+	function array_key_last( $a ) {
+		if ( ! is_array( $a ) || empty( $a ) ) {
 			return null;
 		}
-		return array_keys( $array )[ count( $array ) - 1 ];
+		return array_keys( $a )[ count( $a ) - 1 ];
 	}
 }

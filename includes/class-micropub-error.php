@@ -16,9 +16,9 @@ class WP_Micropub_Error extends WP_REST_Response {
 		}
 	}
 
-	public function set_debug( $array ) {
+	public function set_debug( $a ) {
 		$data = $this->get_data();
-		$this->set_data( array_merge( $data, $array ) );
+		$this->set_data( array_merge( $data, $a ) );
 	}
 
 	public function to_wp_error() {

@@ -2,8 +2,8 @@
 Contributors: indieweb, snarfed, dshanske
 Tags: micropub, publish, indieweb, microformats
 Requires at least: 4.9.9
-Tested up to: 6.5
-Stable tag: 2.3.3
+Tested up to: 6.5.2
+Stable tag: 2.4.0
 Requires PHP: 7.2
 License: CC0
 License URI: http://creativecommons.org/publicdomain/zero/1.0/
@@ -174,6 +174,9 @@ the entire settings page was removed.
 
 The older MICROPUB_DRAFT_MODE config override remains in place for now.
 
+Static rendering for newer posts has been replaced by dynamic render. This means that if you disable this plugin, it will not render the microformats on newer posts. This is using the same code used for static 
+rendering but future enhancements are planned.
+
 = Version 2.2.3 =
 The Micropub plugin will no longer store published, updated, summary, or name options. These will be derived from the WordPress post properties they are mapped to and returned on query.
 
@@ -224,11 +227,12 @@ into markdown and saved to readme.md.
 
 == Changelog ==
 
-= 2.4.0 (202x-xx-xx) =
+= 2.4.0 (2024-xx-xx) =
 * Remove sole setting as no longer needed(see upgrade notice)
 * Remove settings page as no more settings.
 * Bump minimum PHP version to PHP7.2
-* Require IndieAuth plugin
+* Require IndieAuth plugin as a dependency
+* Switch to dynamic from static rendering on posts...markup will no longer be placed inside the content block but dynamically added.
 
 = 2.3.3 (2023-03-10) =
 * Stop including visible text in reply contexts since they go inside since they go inside e-content, which webmention recipients use as the reply text.
