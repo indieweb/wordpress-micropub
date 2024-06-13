@@ -227,7 +227,7 @@ into markdown and saved to readme.md.
 
 == Changelog ==
 
-= 2.4.0 (2024-xx-xx) =
+= 2.4.0 (2024-06-13) =
 * Remove sole setting as no longer needed(see upgrade notice)
 * Remove settings page as no more settings.
 * Bump minimum PHP version to PHP7.2
