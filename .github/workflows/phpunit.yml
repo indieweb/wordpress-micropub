@@ -39,7 +39,7 @@ jobs:
         php-versions: ['8.5', '8.4', '8.3', '8.2', '8.0', '7.4', '7.2']
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install SVN
         run: sudo apt-get update && sudo apt-get install -y subversion
       - name: Setup PHP
@@ -50,7 +50,9 @@ jobs:
           tools: composer, phpunit-polyfills
           extensions: mysql
       - name: Install Composer dependencies for PHP
-        uses: "ramsey/composer-install@v2"
+        uses: "ramsey/composer-install@v3"
+      - name: Install SVN
+        run: sudo apt-get update && sudo apt-get install -y subversion
       - name: Setup Test Environment
         run: composer setup-local-tests
       - name: Unit Testing
