@@ -83,10 +83,10 @@ class Micropub {
 	 */
 	public function register_hooks() {
 		// Initialize Micropub Endpoint.
-		\add_action( 'plugins_loaded', array( Endpoint::class, 'init' ) );
+		Endpoint::init();
 
 		// Initialize Micropub Media Endpoint.
-		\add_action( 'plugins_loaded', array( Media::class, 'init' ) );
+		Media::init();
 
 		// Initialize Micropub Render.
 		\add_filter( 'the_content', array( Render::class, 'render_content' ), 1 );
