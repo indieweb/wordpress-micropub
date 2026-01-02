@@ -1,19 +1,23 @@
 <?php
-
-
-/*  Generate Post Content and Save it for Pre 2.4.0 versions
- * add_filter( 'micropub_post_content', array( 'Micropub_Render', 'generate_post_content' ), 1, 2 );
+/**
+ * Micropub Render Class.
+ *
+ * @package Micropub
  */
 
-add_filter( 'the_content', array( 'Micropub_Render', 'render_content' ), 1 );
+namespace Micropub;
 
 /**
- * Micropub Render Class
+ * Micropub Render Class.
+ *
+ * Dynamically renders Microformats2 structures as HTML.
  */
-class Micropub_Render {
+class Render {
 	/**
-	 * Dynamically Renders Microformats 2
+	 * Dynamically Renders Microformats 2.
 	 *
+	 * @param string $content Post content.
+	 * @return string
 	 */
 	public static function render_content( $content ) {
 		// If this is not a micropub post return without any further work.
@@ -22,33 +26,43 @@ class Micropub_Render {
 		}
 
 		if ( self::should_dynamic_render() ) {
-			$input = Micropub_Base::get_mf2( get_the_ID() );
+			$input = Base::get_mf2( \get_the_ID() );
 			return self::generate_post_content( $content, $input );
 		}
 
 		return $content;
 	}
 
+	/**
+	 * Determine if post should be dynamically rendered.
+	 *
+	 * @param \WP_Post|null $post Post object.
+	 * @return bool
+	 */
 	public static function should_dynamic_render( $post = null ) {
-		$post = get_post();
-		if ( class_exists( 'Post_Kinds_Plugin' ) ) {
+		$post = \get_post();
+		if ( \class_exists( 'Post_Kinds_Plugin' ) ) {
 			$should = false;
 		} else {
-			$version = get_post_meta( $post->ID, 'micropub_version', true );
+			$version = \get_post_meta( $post->ID, 'micropub_version', true );
 			if ( ! $version ) {
 				$should = false;
-			} elseif ( get_post_meta( $post->ID, 'mf2_content', true ) ) {
+			} elseif ( \get_post_meta( $post->ID, 'mf2_content', true ) ) {
 				$should = false;
 			} else {
 				$should = true;
 			}
 		}
-		return apply_filters( 'micropub_dynamic_render', $should, $post );
+		return \apply_filters( 'micropub_dynamic_render', $should, $post );
 	}
 
 	/**
 	 * Generates and returns a post_content string suitable for wp_insert_post()
 	 * and friends.
+	 *
+	 * @param string $post_content Post content.
+	 * @param array  $input        MF2 input.
+	 * @return string
 	 */
 	public static function generate_post_content( $post_content, $input ) {
 		$props = mp_get( $input, 'properties' );
@@ -62,20 +76,20 @@ class Micropub_Render {
 			'follow-of'   => 'Follows',
 		);
 
-		// interactions
+		// Interactions.
 		foreach ( array_keys( $verbs ) as $prop ) {
 			if ( ! isset( $props[ $prop ] ) ) {
 				continue;
 			}
 
-			if ( wp_is_numeric_array( $props[ $prop ] ) ) {
+			if ( \wp_is_numeric_array( $props[ $prop ] ) ) {
 				$val = $props[ $prop ][0];
 			} else {
 				$val = $props[ $prop ];
 			}
 			if ( $val ) {
-				// Supports nested properties by turning single value properties into nested
-				// https://micropub.net/draft/#nested-microformats-objects
+				// Supports nested properties by turning single value properties into nested.
+				// See: https://micropub.net/draft/#nested-microformats-objects.
 				if ( is_string( $val ) ) {
 					$val = array(
 						'url' => $val,
@@ -109,7 +123,7 @@ class Micropub_Render {
 
 		$checkin = isset( $props['checkin'] );
 		if ( $checkin ) {
-			$checkin = wp_is_numeric_array( $props['checkin'] ) ? $props['checkin'][0] : $props['checkin'];
+			$checkin = \wp_is_numeric_array( $props['checkin'] ) ? $props['checkin'][0] : $props['checkin'];
 			$name    = $checkin['properties']['name'][0];
 			$urls    = $checkin['properties']['url'];
 			$lines[] = '<p>Checked into <a class="h-card p-location" href="' .
@@ -121,12 +135,12 @@ class Micropub_Render {
 				'">' . $props['rsvp'][0] . '</data>.</p>';
 		}
 
-		// event
+		// Event.
 		if ( array( 'h-event' ) === mp_get( $input, 'type' ) ) {
 			$lines[] = static::generate_event( $input );
 		}
 
-		// If there is no content use the summary property as content
+		// If there is no content use the summary property as content.
 		if ( empty( $post_content ) && isset( $props['summary'] ) ) {
 			$post_content = $props['summary'][0];
 		}
@@ -137,8 +151,9 @@ class Micropub_Render {
 			$lines[] = '</div>';
 		}
 
-		// TODO: generate my own markup so i can include u-photo
+		// Generate gallery markup for media fields.
 		foreach ( array( 'photo', 'video', 'audio' ) as $field ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in endpoint.
 			if ( isset( $_FILES[ $field ] ) || isset( $props[ $field ] ) ) {
 				$lines[] = '[gallery size=full columns=1]';
 				break;
@@ -149,6 +164,9 @@ class Micropub_Render {
 
 	/**
 	 * Generates and returns a string h-event.
+	 *
+	 * @param array $input MF2 input.
+	 * @return string
 	 */
 	private static function generate_event( $input ) {
 		$props   = mp_get( $input, 'replace', mp_get( $input, 'properties' ) );
@@ -162,7 +180,7 @@ class Micropub_Render {
 		$times   = array();
 		foreach ( array( 'start', 'end' ) as $cls ) {
 			if ( isset( $props[ $cls ][0] ) ) {
-				$datetime = new DateTimeImmutable( $props[ $cls ][0] );
+				$datetime = new \DateTimeImmutable( $props[ $cls ][0] );
 				$times[]  = '<time class="dt-' . $cls . '" datetime="' .
 					$datetime->format( DATE_W3C ) . '">' . $datetime->format( DATE_W3C ) . '</time>';
 			}

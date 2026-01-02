@@ -50,7 +50,7 @@ class Micropub_UnitTestCase extends WP_UnitTestCase {
 
 	public function set_up() {
 		global $wp_rest_server;
-		$wp_rest_server = new Spy_REST_Server;
+		$wp_rest_server = new Spy_REST_Server();
 		do_action( 'rest_api_init', $wp_rest_server );
 		parent::set_up();
 	}
@@ -63,14 +63,14 @@ class Micropub_UnitTestCase extends WP_UnitTestCase {
 	}
 
 	public function create_form_request( $POST ) {
-		$request = new WP_REST_Request( 'POST', Micropub_Endpoint::get_micropub_rest_route( true ) );
+		$request = new WP_REST_Request( 'POST', \Micropub\Endpoint::get_route( true ) );
 		$request->set_header( 'Content-Type', 'application/x-www-form-urlencoded' );
 		$request->set_body_params( $POST );
 		return $request;
 	}
 
 	public function create_json_request( $input ) {
-		$request = new WP_REST_Request( 'POST', Micropub_Endpoint::get_micropub_rest_route( true ) );
+		$request = new WP_REST_Request( 'POST', \Micropub\Endpoint::get_route( true ) );
 		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( wp_json_encode( $input ) );
 		return $request;
@@ -81,7 +81,7 @@ class Micropub_UnitTestCase extends WP_UnitTestCase {
 	}
 
 	public function query_request( $GET ) {
-		$request = new WP_REST_Request( 'GET', Micropub_Endpoint::get_micropub_rest_route( true ) );
+		$request = new WP_REST_Request( 'GET', \Micropub\Endpoint::get_route( true ) );
 		$request->set_query_params( $GET );
 		return $request;
 	}
@@ -92,8 +92,7 @@ class Micropub_UnitTestCase extends WP_UnitTestCase {
 			'url' => 'http://example.org/?p=' . $post_id,
 		);
 		$request  = self::query_request( $GET );
-		$response = Micropub_Endpoint::query_handler( $request );
+		$response = \Micropub\Endpoint::query_handler( $request );
 		return $response->get_data();
 	}
-
 }

@@ -82,24 +82,24 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 
 	public function test_register_routes() {
 		$routes = rest_get_server()->get_routes();
-		$this->assertArrayHasKey( Micropub_Endpoint::get_route( true ), $routes, wp_json_encode( array_keys( $routes ) ) );
-		$this->assertCount( 2, $routes[ Micropub_Endpoint::get_route(true) ] );
+		$this->assertArrayHasKey( \Micropub\Endpoint::get_route( true ), $routes, wp_json_encode( array_keys( $routes ) ) );
+		$this->assertCount( 2, $routes[ \Micropub\Endpoint::get_route( true ) ] );
 	}
 
 	public function test_parse_geo_uri() {
-		$geo = Micropub_Endpoint::parse_geo_uri( 'geo:42.361,-71.092,25000;u=25000' );
+		$geo = \Micropub\Endpoint::parse_geo_uri( 'geo:42.361,-71.092,25000;u=25000' );
 		$this->assertEquals( $geo, static::$geo );
-		}
+	}
 
 	public function create_form_request( $POST ) {
-		$request = new WP_REST_Request( 'POST', Micropub_Endpoint::get_route( true ) );
+		$request = new WP_REST_Request( 'POST', \Micropub\Endpoint::get_route( true ) );
 		$request->set_header( 'Content-Type', 'application/x-www-form-urlencoded' );
 		$request->set_body_params( $POST );
 		return $request;
 	}
 
 	public function create_json_request( $input ) {
-		$request = new WP_REST_Request( 'POST', Micropub_Endpoint::get_route( true ) );
+		$request = new WP_REST_Request( 'POST', \Micropub\Endpoint::get_route( true ) );
 		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( wp_json_encode( $input ) );
 		return $request;
@@ -110,7 +110,7 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 	}
 
 	public function query_request( $GET ) {
-		$request = new WP_REST_Request( 'GET', Micropub_Endpoint::get_route( true ) );
+		$request = new WP_REST_Request( 'GET', \Micropub\Endpoint::get_route( true ) );
 		$request->set_query_params( $GET );
 		return $request;
 	}
@@ -121,7 +121,7 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 			'url' => 'http://example.org/?p=' . $post_id,
 		);
 		$request  = self::query_request( $GET );
-		$response = Micropub_Endpoint::query_handler( $request );
+		$response = \Micropub\Endpoint::query_handler( $request );
 		return $response->get_data();
 	}
 
@@ -161,7 +161,7 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 
 	// Remove mp properties for comparison.
 	public function remove_mp_properties( $input ) {
-		foreach( $input['properties'] as $key => $value ) {
+		foreach ( $input['properties'] as $key => $value ) {
 			if ( 'mp-' === substr( $key, 0, 3 ) ) {
 				unset( $input['properties'][ $key ] );
 			}
@@ -180,7 +180,7 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 		$this->assertFalse( has_post_format( $post ) );
 		$this->assertEquals( static::$author_id, $post->post_author, 'Post Author' );
 		// check that HTML in content is sanitized
-		$this->assertEquals( "my&lt;br&gt;content", $post->post_content );
+		$this->assertEquals( 'my&lt;br&gt;content', $post->post_content );
 		$this->assertEquals( 'my_slug', $post->post_name );
 		$this->assertEquals( 'my name', $post->post_title );
 		$this->assertEquals( 'my summary', $post->post_excerpt );
@@ -190,10 +190,19 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ) );
 		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ) );
 		$this->assertEquals( '', get_post_meta( $post->ID, 'geo_address', true ) );
-		$source = $this->query_source( $post->ID );
+		$source                          = $this->query_source( $post->ID );
 		$input['properties']['location'] = static::$geo;
-		$input = $this->remove_mp_properties( $input );
-		$this->assertEquals( $input, $source, wp_json_encode( array( 'source' => $source, 'input' => $input ) ) );
+		$input                           = $this->remove_mp_properties( $input );
+		$this->assertEquals(
+			$input,
+			$source,
+			wp_json_encode(
+				array(
+					'source' => $source,
+					'input'  => $input,
+				)
+			)
+		);
 		return $post;
 	}
 
@@ -206,8 +215,8 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 	}
 
 	public function test_create_basic_json_with_single_property() {
-		$mf2 = static::$mf2;
-		$mf2['name'] = 'my name';
+		$mf2            = static::$mf2;
+		$mf2['name']    = 'my name';
 		$mf2['summary'] = 'my summary';
 
 		self::check_create_basic( self::create_json_request( $mf2 ) );
@@ -216,12 +225,12 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 
 
 	public function test_create_post_subscriber_id() {
-		$response       = $this->dispatch( self::create_form_request( static::$post ), static::$subscriber_id );
+		$response = $this->dispatch( self::create_form_request( static::$post ), static::$subscriber_id );
 		self::check( $response, 403, 'insufficient_scope' );
 	}
 
 	public function test_form_to_json_encode() {
-		$output = Micropub_Endpoint::form_to_json( static::$post );
+		$output = \Micropub\Endpoint::form_to_json( static::$post );
 		$this->assertEquals( $output, static::$mf2 );
 	}
 
@@ -310,14 +319,14 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 	}
 
 	public function test_create_location_properties() {
-		$input                           = static::$mf2;
-		$geo = static::$geo;
+		$input = static::$mf2;
+		$geo   = static::$geo;
 		unset( $geo['properties']['accuracy'] );
 		unset( $input['properties']['location'] );
-		$input['properties']['latitude'] = array( '42.361' );
+		$input['properties']['latitude']  = array( '42.361' );
 		$input['properties']['longitude'] = array( '-71.092' );
 		$input['properties']['altitude']  = array( '25000' );
-		$post                            = self::check_create( self::create_json_request( $input ) );
+		$post                             = self::check_create( self::create_json_request( $input ) );
 		$this->assertEquals( '42.361', get_post_meta( $post->ID, 'geo_latitude', true ) );
 		$this->assertEquals( '-71.092', get_post_meta( $post->ID, 'geo_longitude', true ) );
 		$this->assertEquals( '25000', get_post_meta( $post->ID, 'geo_altitude', true ) );
@@ -350,7 +359,7 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 		$this->assertEquals( '25000', get_post_meta( $post->ID, 'geo_accuracy', true ) );
 	}
 
-	
+
 	public function test_create_location_geo_with_name() {
 		$input                           = static::$mf2;
 		$input['properties']['location'] = array( 'geo:42.361,-71.092,1500;u=25000;name=New York, New York' );
@@ -409,7 +418,7 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 		$this->check( $response, 200 );
 		$post = get_post( $post_id );
 		// updated
-		$expected_content = <<<EOF
+		$expected_content = <<<'EOF'
 new&lt;br&gt;content
 EOF;
 		$this->assertEquals( $expected_content, $post->post_content );
@@ -486,7 +495,7 @@ EOF;
 		$input    = array(
 			'action' => 'update',
 			'url'    => 'http://example.org/?p=' . $post_id,
-			'delete'    => array( 'location' ),
+			'delete' => array( 'location' ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
 		$this->check( $response, 200 );
@@ -619,8 +628,8 @@ EOF;
 	}
 
 	public function test_delete_subscriber() {
-		$post_id = self::insert_post();
-		$POST = array(
+		$post_id  = self::insert_post();
+		$POST     = array(
 			'action' => 'delete',
 			'url'    => 'http://example.org/?p=' . $post_id,
 		);
@@ -635,7 +644,9 @@ EOF;
 		);
 		$response = $this->dispatch( self::create_form_request( $POST ), static::$author_id );
 		$this->check(
-			$response, 400, array(
+			$response,
+			400,
+			array(
 				'error'             => 'invalid_request',
 				'error_description' => 'http://example.org/?p=999 not found',
 			)
@@ -667,7 +678,9 @@ EOF;
 		);
 		$response = $this->dispatch( self::create_form_request( $POST ), static::$author_id );
 		$this->check(
-			$response, 400, array(
+			$response,
+			400,
+			array(
 				'error'             => 'invalid_request',
 				'error_description' => 'deleted post http://example.org/?p=999 not found',
 			)
@@ -708,93 +721,95 @@ EOF;
 	}
 
 	public function test_create_draft_status() {
-		  $input = array(
-			  'type'       => array( 'h-entry' ),
-			  'properties' => array(
-				  'post-status' => array( 'draft' ),
-				  'content'     => array( 'This is a test' ),
-			  ),
-		  );
-		$post    = self::check_create( self::create_json_request( $input ) );
-		$this->assertEquals( 'draft', $post->post_status );
+			$input = array(
+				'type'       => array( 'h-entry' ),
+				'properties' => array(
+					'post-status' => array( 'draft' ),
+					'content'     => array( 'This is a test' ),
+				),
+			);
+			$post  = self::check_create( self::create_json_request( $input ) );
+			$this->assertEquals( 'draft', $post->post_status );
 	}
 
 	public function test_create_publish_status() {
-		  $input = array(
-			  'type'       => array( 'h-entry' ),
-			  'properties' => array(
-				  'post-status' => array( 'published' ),
-				  'content'     => array( 'This is a test' ),
-			  ),
-		  );
-		$post    = self::check_create( self::create_json_request( $input ) );
-		$this->assertEquals( 'publish', $post->post_status );
+			$input = array(
+				'type'       => array( 'h-entry' ),
+				'properties' => array(
+					'post-status' => array( 'published' ),
+					'content'     => array( 'This is a test' ),
+				),
+			);
+			$post  = self::check_create( self::create_json_request( $input ) );
+			$this->assertEquals( 'publish', $post->post_status );
 	}
 	function test_create_private_status() {
-		  $input = array(
-			  'type'       => array( 'h-entry' ),
-			  'properties' => array(
-				  'visibility' => array( 'private' ),
-				  'content'    => array( 'This is a test' ),
-			  ),
-		  );
-		$post    = self::check_create( self::create_json_request( $input ) );
-		$this->assertEquals( 'private', $post->post_status );
+			$input = array(
+				'type'       => array( 'h-entry' ),
+				'properties' => array(
+					'visibility' => array( 'private' ),
+					'content'    => array( 'This is a test' ),
+				),
+			);
+			$post  = self::check_create( self::create_json_request( $input ) );
+			$this->assertEquals( 'private', $post->post_status );
 	}
 	function test_create_custom_visibility() {
-		  $input  = array(
-			  'type'       => array( 'h-entry' ),
-			  'properties' => array(
-				  'visibility' => array( 'limited' ),
-				  'content'    => array( 'This is a test' ),
-			  ),
-		  );
-		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
-		$this->check(
-			$response, 400, array(
-				'error'             => 'invalid_request',
-				'error_description' => 'Invalid Post Status',
-			)
-		);
+			$input    = array(
+				'type'       => array( 'h-entry' ),
+				'properties' => array(
+					'visibility' => array( 'limited' ),
+					'content'    => array( 'This is a test' ),
+				),
+			);
+			$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
+			$this->check(
+				$response,
+				400,
+				array(
+					'error'             => 'invalid_request',
+					'error_description' => 'Invalid Post Status',
+				)
+			);
 	}
 	function test_create_custom_status() {
-		  $input  = array(
-			  'type'       => array( 'h-entry' ),
-			  'properties' => array(
-				  'post-status' => array( 'fakestatus' ),
-				  'content'     => array( 'This is a test' ),
-			  ),
-		  );
-		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
-		$this->check(
-			$response, 400, array(
-				'error'             => 'invalid_request',
-				'error_description' => 'Invalid Post Status',
-			)
-		);
+			$input    = array(
+				'type'       => array( 'h-entry' ),
+				'properties' => array(
+					'post-status' => array( 'fakestatus' ),
+					'content'     => array( 'This is a test' ),
+				),
+			);
+			$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
+			$this->check(
+				$response,
+				400,
+				array(
+					'error'             => 'invalid_request',
+					'error_description' => 'Invalid Post Status',
+				)
+			);
 	}
 	function test_create_empty_default_status() {
 		add_option( 'micropub_default_post_status', '' );
-		  $input = array(
-			  'type'       => array( 'h-entry' ),
-			  'properties' => array(
-				  'content' => array( 'This is a test' ),
-			  ),
-		  );
-		$post    = self::check_create( self::create_json_request( $input ) );
-		$this->assertEquals( 'publish', $post->post_status );
+			$input = array(
+				'type'       => array( 'h-entry' ),
+				'properties' => array(
+					'content' => array( 'This is a test' ),
+				),
+			);
+			$post  = self::check_create( self::create_json_request( $input ) );
+			$this->assertEquals( 'publish', $post->post_status );
 	}
 	function test_create_publish_default_status() {
 		add_option( 'micropub_default_post_status', 'publish' );
-		  $input = array(
-			  'type'       => array( 'h-entry' ),
-			  'properties' => array(
-				  'content' => array( 'This is a test' ),
-			  ),
-		  );
-		$post    = self::check_create( self::create_json_request( $input ) );
-		$this->assertEquals( 'publish', $post->post_status );
+			$input = array(
+				'type'       => array( 'h-entry' ),
+				'properties' => array(
+					'content' => array( 'This is a test' ),
+				),
+			);
+			$post  = self::check_create( self::create_json_request( $input ) );
+			$this->assertEquals( 'publish', $post->post_status );
 	}
-
-
 }

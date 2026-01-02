@@ -15,3 +15,4 @@ readme.md
 .distignore
 .gitignore
 .svnignore
+phpunit.xml.dist

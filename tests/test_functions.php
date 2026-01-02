@@ -5,7 +5,7 @@
 
 class MicropubFunctionsTest extends WP_UnitTestCase {
 	function test_mp_filter() {
-		$input = array(
+		$input  = array(
 			'webmention',
 			'jsonfeed',
 			'micropub',
@@ -13,18 +13,17 @@ class MicropubFunctionsTest extends WP_UnitTestCase {
 			'foo',
 			'bar',
 			'indieweb',
-	   		'indieweb-goals',
-			'indienews'
+			'indieweb-goals',
+			'indienews',
 		);
 		$return = mp_filter( $input, 'indie' );
-		$this->assertEquals( 
+		$this->assertEquals(
 			$return,
 			array(
 				'indieweb',
 				'indieweb-goals',
-				'indienews'
+				'indienews',
 			)
 		);
 	}
-
 }
