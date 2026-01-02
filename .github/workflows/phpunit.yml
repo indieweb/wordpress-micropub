@@ -1,20 +1,42 @@
 name: Unit Testing
-on: [push,pull_request]
+on:
+  push:
+    branches:
+      - trunk
+    paths:
+      - '**.php'
+      - 'composer.json'
+      - 'composer.lock'
+      - 'phpunit.xml'
+      - 'tests/**'
+      - '.github/workflows/phpunit.yml'
+  pull_request:
+    paths:
+      - '**.php'
+      - 'composer.json'
+      - 'composer.lock'
+      - 'phpunit.xml'
+      - 'tests/**'
+      - '.github/workflows/phpunit.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  phpcs:
+  phpunit:
     runs-on: ubuntu-latest
     services:
-     mysql:
-       image: mariadb:10.4
-       env:
-         MYSQL_ROOT_PASSWORD: root
-       ports:
-         - 3306:3306
-       options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=10s --health-retries=10
+      mysql:
+        image: mariadb:10.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=10s --health-retries=10
     strategy:
       matrix:
         php-versions: ['8.5', '8.4', '8.3', '8.2', '8.0', '7.4', '7.2']
-        phpunit: ['auto']
     steps:
       - name: Checkout
         uses: actions/checkout@v4
