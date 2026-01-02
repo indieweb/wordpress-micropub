@@ -142,6 +142,15 @@ class Micropub_Endpoint extends Micropub_Base {
 			}
 		}
 
+		/**
+		 * Filters the Micropub request before processing.
+		 *
+		 * Called before handling a Micropub request. Returns `$input`, possibly modified.
+		 *
+		 * @param array $input Associative array, the Micropub request in JSON format.
+		 *                     If the request was form-encoded or a multipart file upload,
+		 *                     it's converted to JSON format.
+		 */
 		static::$input = apply_filters( 'before_micropub', static::$input );
 	}
 
@@ -256,9 +265,29 @@ class Micropub_Endpoint extends Micropub_Base {
 		if ( is_micropub_error( $args ) ) {
 			return $args;
 		}
+		/**
+		 * Fires after a Micropub request has been processed.
+		 *
+		 * Called after handling a Micropub request. Not called if the request fails
+		 * (ie doesn't return HTTP 2xx).
+		 *
+		 * @param array $input   Associative array, the Micropub request in JSON format.
+		 * @param array $wp_args For creates and updates, the arguments passed to wp_insert_post
+		 *                       or wp_update_post. For deletes and undeletes, contains 'ID' key
+		 *                       with the post ID. Null for queries.
+		 */
 		do_action( 'after_micropub', static::$input, $args );
 
 		if ( ! empty( $synd_requested ) ) {
+			/**
+			 * Fires when syndication targets are requested for a post.
+			 *
+			 * Called only if there are syndication targets for the post.
+			 *
+			 * @param int   $post_id      The post ID.
+			 * @param array $syndicate_to Array of UIDs that are verified as one or more of the UIDs
+			 *                            added using the `micropub_syndicate-to` filter.
+			 */
 			do_action( 'micropub_syndication', $args['ID'], $synd_requested );
 		}
 
@@ -266,7 +295,23 @@ class Micropub_Endpoint extends Micropub_Base {
 		return $response;
 	}
 
+	/**
+	 * Get syndication targets.
+	 *
+	 * @param int   $user_id The user ID.
+	 * @param array $input   The Micropub input.
+	 * @return array Syndication targets.
+	 */
 	private static function get_syndicate_targets( $user_id, $input = null ) {
+		/**
+		 * Filters the list of syndication targets.
+		 *
+		 * Called to generate the list of `syndicate-to` targets to return in response to a query.
+		 *
+		 * @param array $synd_urls Array of syndication target URLs. Empty by default.
+		 * @param int   $user_id   The user ID.
+		 * @param array $input     The Micropub request input.
+		 */
 		return apply_filters( 'micropub_syndicate-to', array(), $user_id, $input );
 	}
 
@@ -374,10 +419,22 @@ class Micropub_Endpoint extends Micropub_Base {
 			default:
 				$resp = new WP_Micropub_Error( 'invalid_request', 'unknown query', 400, static::$input );
 		}
+
+		/**
+		 * Filters the Micropub query response.
+		 *
+		 * Allows you to replace a query response with your own customized version
+		 * to add additional information.
+		 *
+		 * @param array|WP_Micropub_Error $resp  The query response.
+		 * @param array                   $input The Micropub request input.
+		 */
 		$resp = apply_filters( 'micropub_query', $resp, static::$input );
 		if ( is_wp_error( $resp ) ) {
 			return $resp;
 		}
+
+		/** This action is documented in includes/class-micropub-endpoint.php */
 		do_action( 'after_micropub', static::$input, null );
 		return new WP_REST_Response( $resp, 200 );
 	}
@@ -415,8 +472,13 @@ class Micropub_Endpoint extends Micropub_Base {
 	private static function insert_post( &$args ) {
 
 		/**
+		 * Filters the arguments for wp_insert_post before insertion.
+		 *
 		 * This filters arguments before inserting into the Post Table.
-		 * If $args['ID'] is set, this will short circuit insertion to allow for custom database insertion.
+		 * If $args['ID'] is set, this will short circuit insertion to allow for
+		 * custom database insertion.
+		 *
+		 * @param array $args Arguments to be passed to wp_insert_post.
 		 */
 		$args = apply_filters( 'pre_insert_micropub_post', $args );
 		if ( array_key_exists( 'ID', $args ) ) {
@@ -440,15 +502,41 @@ class Micropub_Endpoint extends Micropub_Base {
 	private static function create( $user_id ) {
 		$args = static::mp_to_wp( static::$input );
 
-		// Allow Filtering of Post Type
+		/**
+		 * Filters the post type for a Micropub post.
+		 *
+		 * Called during the creation of a Micropub post. Defaults to 'post' but allows
+		 * for setting Micropub posts to a custom post type.
+		 *
+		 * @param string $post_type The post type. Default 'post'.
+		 * @param array  $input     The Micropub request input.
+		 */
 		$args['post_type'] = apply_filters( 'micropub_post_type', 'post', static::$input );
 
-		// Allow filtering of Tax Input
+		/**
+		 * Filters the taxonomy input for a Micropub post.
+		 *
+		 * Called during the creation of a Micropub post. Defaults to null but allows
+		 * for a Micropub post to set a custom taxonomy.
+		 *
+		 * @param array|null $tax_input Taxonomy terms to set. Default null.
+		 * @param array      $input     The Micropub request input.
+		 */
 		$args['tax_input'] = apply_filters( 'micropub_tax_input', null, static::$input );
 
 		$args = static::store_micropub_auth_response( $args );
 
 		$post_content = mp_get( $args, 'post_content', '' );
+
+		/**
+		 * Filters the post content for a Micropub post.
+		 *
+		 * Called during the handling of a Micropub request. The content generation
+		 * function is attached to this filter by default.
+		 *
+		 * @param string $post_content The post content.
+		 * @param array  $input        The Micropub request input.
+		 */
 		$post_content = apply_filters( 'micropub_post_content', $post_content, static::$input );
 		if ( $post_content ) {
 			$args['post_content'] = $post_content;
@@ -587,11 +675,14 @@ class Micropub_Endpoint extends Micropub_Base {
 		// wp_update_post sets it to the current time
 		$args['edit_date'] = true;
 
-		/* Filter Post Content
-		 * Post Content is initially generated from content properties in the mp_to_wp function however this function is called
-		 * multiple times for replace and delete
-		*/
+		/*
+		 * Filter Post Content.
+		 * Post Content is initially generated from content properties in the mp_to_wp function
+		 * however this function is called multiple times for replace and delete.
+		 */
 		$post_content = mp_get( $args, 'post_content', '' );
+
+		/** This filter is documented in includes/class-micropub-endpoint.php */
 		$post_content = apply_filters( 'micropub_post_content', $post_content, static::$input );
 		if ( $post_content ) {
 			$args['post_content'] = $post_content;
@@ -663,15 +754,27 @@ class Micropub_Endpoint extends Micropub_Base {
 
 	/**
 	 * Generates a suggestion for a title based on mf2 properties.
-	 * This can be used to generate a post slug
-	 * $mf2 MF2 Properties
 	 *
+	 * This can be used to generate a post slug.
+	 *
+	 * @param array $mf2 MF2 Properties.
+	 * @return string Suggested title.
 	 */
 	private static function suggest_post_title( $mf2 ) {
 		$props = mp_get( $mf2, 'properties' );
 		if ( isset( $props['name'] ) ) {
 			return $props['name'];
 		}
+
+		/**
+		 * Filters the suggested title for a Micropub post.
+		 *
+		 * Allows a suggested title to be generated. This can be used either to generate
+		 * the post slug or for individuals who want to use it to set a WordPress title.
+		 *
+		 * @param string $title      The suggested title. Default empty string.
+		 * @param array  $properties The MF2 properties from the Micropub request.
+		 */
 		return apply_filters( 'micropub_suggest_title', '', $props );
 	}
 
