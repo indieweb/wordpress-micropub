@@ -28,67 +28,6 @@ This project is placed in the public domain. You may also use it under the [CC0 
 
 ## WordPress details ##
 
-### Filters and hooks ###
-Adds ten filters:
-
-`before_micropub( $input )`
-
-Called before handling a Micropub request. Returns `$input`, possibly modified.
-
-`micropub_post_content( $post_content, $input )`
-
-Called during the handling of a Micropub request. The content generation function is attached to this filter by default. Returns `$post_content`, possibly modified.
-
-`micropub_post_type( $post_type = 'post', $input )`
-
-Called during the creation of a Micropub post. This defaults to post, but allows for setting Micropub posts to a custom post type.
-
-`micropub_tax_input( $tax_input, $input )`
-
-Called during the creation of a Micropub post. This defaults to nothing but allows for a Micropub post to set a custom taxonomy.
-
-`micropub_syndicate-to( $synd_urls, $user_id, $input )`
-
-Called to generate the list of `syndicate-to` targets to return in response to a query. Returns `$synd_urls`, an array, possibly modified. This filter is empty by default
-
-`micropub_query( $resp, $input )`
-
-Allows you to replace a query response with your own customized version to add additional information
-
-`micropub_suggest_title( $mf2 )`
-
-Allows a suggested title to be generated. This can be used either to generate the post slug or for individuals who want to use it to set a WordPress title
-
-`indieauth_scopes( $scopes )`
-
-This returns scopes from a plugin implementing IndieAuth. This filter is empty by default.
-
-`indieauth_response( $response )`
-
-This returns the token auth response from a plugin implementing IndieAuth. This filter is empty by default.
-
-`pre_insert_micropub_post( $args )`
-
-This filters the arguments sent to wp_insert_post just prior to its insertion. If the ID key is set, then this will short-circuit the insertion to allow for custom database coding.
-
-...and two hooks:
-
-`after_micropub( $input, $wp_args = null)`
-
-Called after handling a Micropub request. Not called if the request fails (ie doesn't return HTTP 2xx).
-
-`micropub_syndication( $ID, $syndicate_to )`
-
-
-Called only if there are syndication targets $syndicate_to for post $ID. $syndicate_to will be an array of UIDs that are verified as one or more of the UIDs added using the `micropub_syndicate-to` filter.
-
-Arguments:
-
-* `$input`: associative array, the Micropub request in [JSON format](http://micropub.net/draft/index.html#json-syntax). If the request was form-encoded or a multipart file upload, it's converted to JSON format.
-* `$wp_args`: optional associative array. For creates and updates, this is the arguments passed to `wp_insert_post` or `wp_update_post`. For deletes and undeletes, `args['ID']` contains the post id to be (un)deleted. Null for queries.
-
-### Other ###
-
 Stores [microformats2](http://microformats.org/wiki/microformats2) properties in [post metadata](http://codex.wordpress.org/Function_Reference/post_meta_Function_Examples) with keys prefixed by `mf2_`. [Details here.](https://indiewebcamp.com/WordPress_Data#Microformats_data) All values are arrays; use `unserialize()` to deserialize them.
 
 Does *not* support multithreading. PHP doesn't really either, so it generally won't matter, but just for the record.
