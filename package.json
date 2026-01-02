@@ -1,22 +1,30 @@
 {
   "name": "wordpress-micropub",
   "description": "Micropub for WordPress!",
+  "main": "micropub.php",
+  "devDependencies": {
+    "@wordpress/env": "^10.10.0"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/indieweb/wordpress-micropub.git"
   },
-  "devDependencies": {
-    "grunt": "^1.6.1",
-    "grunt-wp-readme-to-markdown": "^2.1.0"
-  },
+  "keywords": [
+    "indieweb",
+    "wordpress",
+    "micropub"
+  ],
   "license": "CC0",
   "bugs": {
     "url": "https://github.com/indieweb/wordpress-micropub/issues"
   },
   "homepage": "https://github.com/indieweb/wordpress-micropub",
-  "keywords": [
-    "indieweb",
-    "wordpress",
-    "micropub"
-  ]
+  "scripts": {
+    "env": "wp-env",
+    "env:start": "wp-env start",
+    "env:stop": "wp-env stop",
+    "env:destroy": "wp-env destroy",
+    "env:cli": "wp-env run cli",
+    "env:test": "wp-env run tests-cli --env-cwd=wp-content/plugins/micropub vendor/bin/phpunit"
+  }
 }
