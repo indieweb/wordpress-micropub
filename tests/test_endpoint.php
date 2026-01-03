@@ -118,13 +118,12 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 	}
 
 	public function query_source( $post_id ) {
-		$GET        = array(
+		$GET      = array(
 			'q'   => 'source',
 			'url' => 'http://example.org/?p=' . $post_id,
 		);
-		$request    = self::query_request( $GET );
-		$controller = new \Micropub\Rest\Endpoint_Controller();
-		$response   = $controller->query_handler( $request );
+		$request  = self::query_request( $GET );
+		$response = $this->dispatch( $request, self::$author_id );
 		return $response->get_data();
 	}
 
