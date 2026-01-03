@@ -2,23 +2,23 @@
 
 class Micropub_Endpoint_Post_Status_Test extends Micropub_UnitTestCase {
 	/**
-	 * An instance of the \Micropub\Endpoint class.
+	 * An instance of the \Micropub\Rest\Endpoint_Controller class.
 	 *
-	 * @var \Micropub\Endpoint
+	 * @var \Micropub\Rest\Endpoint_Controller
 	 */
 	private $endpoint;
 
 	/**
 	 * An instance of the private post_status method from
-	 * the \Micropub\Endpoint class.
+	 * the \Micropub\Rest\Endpoint_Controller class.
 	 */
 	private $method;
 
 	public function set_up() {
-		$this->endpoint = new \Micropub\Endpoint();
+		$this->endpoint = new \Micropub\Rest\Endpoint_Controller();
 
 		// Perform magic to access the private method for testing.
-		$ref          = new ReflectionClass( '\Micropub\Endpoint' );
+		$ref          = new ReflectionClass( '\Micropub\Rest\Endpoint_Controller' );
 		$this->method = $ref->getMethod( 'post_status' );
 		$this->method->setAccessible( true );
 	}

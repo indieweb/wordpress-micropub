@@ -3,6 +3,7 @@
 
 class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 
+	protected static $route = '/' . MICROPUB_NAMESPACE . '/endpoint';
 
 	// POST args
 	protected static $post = array(
@@ -82,24 +83,25 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 
 	public function test_register_routes() {
 		$routes = rest_get_server()->get_routes();
-		$this->assertArrayHasKey( \Micropub\Endpoint::get_route( true ), $routes, wp_json_encode( array_keys( $routes ) ) );
-		$this->assertCount( 2, $routes[ \Micropub\Endpoint::get_route( true ) ] );
+		$this->assertArrayHasKey( static::$route, $routes, wp_json_encode( array_keys( $routes ) ) );
+		$this->assertCount( 2, $routes[ static::$route ] );
 	}
 
 	public function test_parse_geo_uri() {
-		$geo = \Micropub\Endpoint::parse_geo_uri( 'geo:42.361,-71.092,25000;u=25000' );
+		$controller = new \Micropub\Rest\Endpoint_Controller();
+		$geo        = $controller->parse_geo_uri( 'geo:42.361,-71.092,25000;u=25000' );
 		$this->assertEquals( $geo, static::$geo );
 	}
 
 	public function create_form_request( $POST ) {
-		$request = new WP_REST_Request( 'POST', \Micropub\Endpoint::get_route( true ) );
+		$request = new WP_REST_Request( 'POST', static::$route );
 		$request->set_header( 'Content-Type', 'application/x-www-form-urlencoded' );
 		$request->set_body_params( $POST );
 		return $request;
 	}
 
 	public function create_json_request( $input ) {
-		$request = new WP_REST_Request( 'POST', \Micropub\Endpoint::get_route( true ) );
+		$request = new WP_REST_Request( 'POST', static::$route );
 		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( wp_json_encode( $input ) );
 		return $request;
@@ -110,18 +112,19 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 	}
 
 	public function query_request( $GET ) {
-		$request = new WP_REST_Request( 'GET', \Micropub\Endpoint::get_route( true ) );
+		$request = new WP_REST_Request( 'GET', static::$route );
 		$request->set_query_params( $GET );
 		return $request;
 	}
 
 	public function query_source( $post_id ) {
-		$GET      = array(
+		$GET        = array(
 			'q'   => 'source',
 			'url' => 'http://example.org/?p=' . $post_id,
 		);
-		$request  = self::query_request( $GET );
-		$response = \Micropub\Endpoint::query_handler( $request );
+		$request    = self::query_request( $GET );
+		$controller = new \Micropub\Rest\Endpoint_Controller();
+		$response   = $controller->query_handler( $request );
 		return $response->get_data();
 	}
 
@@ -230,7 +233,8 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 	}
 
 	public function test_form_to_json_encode() {
-		$output = \Micropub\Endpoint::form_to_json( static::$post );
+		$controller = new \Micropub\Rest\Endpoint_Controller();
+		$output     = $controller->form_to_json( static::$post );
 		$this->assertEquals( $output, static::$mf2 );
 	}
 

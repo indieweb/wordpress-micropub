@@ -3,6 +3,8 @@
 
 class Micropub_Media_Test extends Micropub_UnitTestCase {
 
+	protected static $route = '/' . MICROPUB_NAMESPACE . '/media';
+
 	protected $test_file;
 	protected $test_file2;
 
@@ -18,12 +20,12 @@ class Micropub_Media_Test extends Micropub_UnitTestCase {
 
 	public function test_register_routes() {
 		$routes = rest_get_server()->get_routes();
-		$this->assertArrayHasKey( \Micropub\Media::get_route( true ), $routes );
-		$this->assertCount( 2, $routes[ \Micropub\Media::get_route( true ) ] );
+		$this->assertArrayHasKey( static::$route, $routes );
+		$this->assertCount( 2, $routes[ static::$route ] );
 	}
 
 	public function upload_request() {
-		$request = new WP_REST_Request( 'POST', \Micropub\Media::get_route( true ) );
+		$request = new WP_REST_Request( 'POST', static::$route );
 		$request->set_header( 'Content-Type', 'image/jpeg' );
 		$request->set_file_params(
 			array(
@@ -39,20 +41,20 @@ class Micropub_Media_Test extends Micropub_UnitTestCase {
 	}
 
 	public function query_request( $GET ) {
-		$request = new WP_REST_Request( 'GET', \Micropub\Media::get_route( true ) );
+		$request = new WP_REST_Request( 'GET', static::$route );
 		$request->set_query_params( $GET );
 		return $request;
 	}
 
 	public function create_form_request( $POST ) {
-		$request = new WP_REST_Request( 'POST', \Micropub\Media::get_route( true ) );
+		$request = new WP_REST_Request( 'POST', static::$route );
 		$request->set_header( 'Content-Type', 'application/x-www-form-urlencoded' );
 		$request->set_body_params( $POST );
 		return $request;
 	}
 
 	public function create_json_request( $input ) {
-		$request = new WP_REST_Request( 'POST', \Micropub\Media::get_route( true ) );
+		$request = new WP_REST_Request( 'POST', static::$route );
 		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( wp_json_encode( $input ) );
 		return $request;
@@ -65,7 +67,8 @@ class Micropub_Media_Test extends Micropub_UnitTestCase {
 			'size'     => filesize( $this->test_file ),
 			'tmp_name' => $this->test_file,
 		);
-		$id         = \Micropub\Media::media_handle_upload( $file_array );
+		$controller = new \Micropub\Rest\Media_Controller();
+		$id         = $controller->media_handle_upload( $file_array );
 		$this->assertIsInt( $id );
 		$this->assertGreaterThanorEqual( 1, $id );
 	}
@@ -126,7 +129,7 @@ class Micropub_Media_Test extends Micropub_UnitTestCase {
 	}
 
 	public function test_empty_upload() {
-		$request  = new WP_REST_Request( 'POST', \Micropub\Media::get_route( true ) );
+		$request  = new WP_REST_Request( 'POST', static::$route );
 		$response = $this->dispatch( $request, self::$author_id );
 		$data     = $response->get_data();
 		$this->assertEquals( 400, $response->get_status(), wp_json_encode( $data ) );
