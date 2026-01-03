@@ -430,7 +430,7 @@ class Endpoint_Controller extends \WP_REST_Controller {
 	 * @return array MF2 formatted array.
 	 */
 	public function query( $post_id ) {
-		$resp  = $this->get_mf2( $post_id );
+		$resp  = \micropub_get_mf2( $post_id );
 		$props = \mp_get( $this->input, 'properties' );
 
 		if ( $props ) {
