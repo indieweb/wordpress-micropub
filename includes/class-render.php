@@ -26,7 +26,7 @@ class Render {
 		}
 
 		if ( self::should_dynamic_render() ) {
-			$input = Base::get_mf2( \get_the_ID() );
+			$input = \micropub_get_mf2( \get_the_ID() );
 			return self::generate_post_content( $content, $input );
 		}
 

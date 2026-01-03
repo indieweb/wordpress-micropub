@@ -7,6 +7,9 @@
 
 namespace Micropub;
 
+use Micropub\Rest\Endpoint_Controller;
+use Micropub\Rest\Media_Controller;
+
 /**
  * Micropub Class
  *
@@ -30,13 +33,6 @@ class Micropub {
 	const TEXT_DOMAIN = 'micropub';
 
 	/**
-	 * Whether the class has been initialized.
-	 *
-	 * @var boolean
-	 */
-	private $initialized = false;
-
-	/**
 	 * Get the instance of the class.
 	 *
 	 * @return Micropub
@@ -57,16 +53,31 @@ class Micropub {
 	}
 
 	/**
-	 * Initialize the plugin.
+	 * Initialize the plugin by registering hooks.
 	 */
 	public function init() {
-		if ( $this->initialized ) {
-			return;
-		}
+		\add_action( 'rest_api_init', array( $this, 'rest_init' ) );
+		\add_action( 'init', array( $this, 'plugin_init' ) );
+		\add_action( 'admin_notices', array( $this, 'ssl_notice' ) );
+	}
 
-		$this->register_hooks();
+	/**
+	 * Initialize REST routes.
+	 */
+	public function rest_init() {
+		( new Endpoint_Controller() )->register_routes();
+		( new Media_Controller() )->register_routes();
+	}
 
-		$this->initialized = true;
+	/**
+	 * Initialize plugin components.
+	 */
+	public function plugin_init() {
+		// Initialize Discovery.
+		Discovery::init();
+
+		// Initialize Micropub Render.
+		\add_filter( 'the_content', array( Render::class, 'render_content' ), 1 );
 	}
 
 	/**
@@ -75,24 +86,7 @@ class Micropub {
 	 * @return string
 	 */
 	public function get_version() {
-		return \get_file_data( MICROPUB_PLUGIN_FILE, array( 'Version' => 'Version' ) )['Version'];
-	}
-
-	/**
-	 * Register hooks.
-	 */
-	public function register_hooks() {
-		// Initialize Micropub Endpoint.
-		Endpoint::init();
-
-		// Initialize Micropub Media Endpoint.
-		Media::init();
-
-		// Initialize Micropub Render.
-		\add_filter( 'the_content', array( Render::class, 'render_content' ), 1 );
-
-		// Admin notices.
-		\add_action( 'admin_notices', array( $this, 'ssl_notice' ) );
+		return MICROPUB_PLUGIN_VERSION;
 	}
 
 	/**

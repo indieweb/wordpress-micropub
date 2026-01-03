@@ -30,6 +30,8 @@ See README for supported filters and actions.
  *
  */
 
+\define( 'MICROPUB_PLUGIN_VERSION', '2.4.0' );
+
 \defined( 'MICROPUB_NAMESPACE' ) || \define( 'MICROPUB_NAMESPACE', 'micropub/1.0' );
 \defined( 'MICROPUB_DISABLE_NAG' ) || \define( 'MICROPUB_DISABLE_NAG', 0 );
 
@@ -51,18 +53,8 @@ require_once MICROPUB_PLUGIN_DIR . 'includes/functions.php';
 // Compatibility Functions with Newer WordPress Versions.
 require_once MICROPUB_PLUGIN_DIR . 'includes/compat-functions.php';
 
-/**
- * Initialize the plugin.
- *
- * @return Micropub
- */
-function init() {
-	return Micropub::get_instance()->init();
-}
-
 if ( \class_exists( 'IndieAuth_Plugin' ) ) {
-	// Initialize the plugin.
-	\add_action( 'plugins_loaded', __NAMESPACE__ . '\init' );
+	\add_action( 'plugins_loaded', array( Micropub::get_instance(), 'init' ) );
 } else {
 	\add_action( 'admin_notices', __NAMESPACE__ . '\indieauth_not_installed_notice' );
 }
