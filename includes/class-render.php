@@ -14,6 +14,13 @@ namespace Micropub;
  */
 class Render {
 	/**
+	 * Initialize the Render class.
+	 */
+	public static function init() {
+		\add_filter( 'the_content', array( self::class, 'render_content' ), 1 );
+	}
+
+	/**
 	 * Dynamically Renders Microformats 2.
 	 *
 	 * @param string $content Post content.

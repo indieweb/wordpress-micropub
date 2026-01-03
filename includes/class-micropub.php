@@ -77,7 +77,7 @@ class Micropub {
 		Discovery::init();
 
 		// Initialize Micropub Render.
-		\add_filter( 'the_content', array( Render::class, 'render_content' ), 1 );
+		Render::init();
 	}
 
 	/**
