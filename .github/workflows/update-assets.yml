@@ -3,6 +3,9 @@ on:
   push:
     branches:
     - trunk
+    paths:
+    - '.wordpress-org/**'
+    - 'readme.md'
 jobs:
   trunk:
     name: Push to trunk
@@ -15,3 +18,4 @@ jobs:
         SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
         SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
         SLUG: micropub
+        README_NAME: readme.md
