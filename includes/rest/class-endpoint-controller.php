@@ -419,6 +419,13 @@ class Endpoint_Controller extends \WP_REST_Controller {
 	 * @return array
 	 */
 	protected function get_syndicate_targets( $user_id, $input = null ) {
+		/**
+		 * Filters the list of syndication targets.
+		 *
+		 * @param array $synd_urls Array of syndication target URLs. Empty by default.
+		 * @param int   $user_id   The user ID.
+		 * @param array $input     The Micropub request input.
+		 */
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 		return \apply_filters( 'micropub_syndicate-to', array(), $user_id, $input );
 	}

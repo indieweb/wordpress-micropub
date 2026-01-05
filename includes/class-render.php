@@ -60,6 +60,12 @@ class Render {
 				$should = true;
 			}
 		}
+		/**
+		 * Filters whether to dynamically render microformats for a Micropub post.
+		 *
+		 * @param bool    $should Whether to dynamically render. Default depends on post state.
+		 * @param WP_Post $post   The post object.
+		 */
 		return \apply_filters( 'micropub_dynamic_render', $should, $post );
 	}
 
