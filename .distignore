@@ -7,10 +7,9 @@
 .distignore
 .gitignore
 .svnignore
-.travis.yml
 .wp-env.json
 composer.lock
 package.json
 package-lock.json
 phpcs.xml
-phpunit.xml
+phpunit.xml.dist

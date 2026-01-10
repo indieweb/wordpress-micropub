@@ -2,39 +2,25 @@
 <ruleset name="WordPress Micropub">
 	<description>WordPress Micropub Standards</description>
 
-	<file>./micropub.php</file>
-	<file>./includes/</file>
-	<arg value="sp"/> <!-- Show sniff and progress -->
-	<arg name="parallel" value="8"/><!-- Enables parallel processing when available for faster results. -->
-	<arg name="colors"/>
-	<rule ref="PHPCompatibility">
-		<exclude name="PHPCompatibility.FunctionUse.NewFunctions.array_key_firstFound" /><!-- Exclude because added compat function -->
-		<exclude name="PHPCompatibility.FunctionUse.NewFunctions.array_key_lastFound" /><!-- Exclude because added compat function -->
-	</rule>
-	<config name="testVersion" value="5.6-"/>
-	<rule ref="WordPress-Core">
-		<exclude name="WordPress.Security.NonceVerification.Missing" /> <!-- Exclude because the form submission is part of the API -->
-	</rule>
-	<config name="minimum_supported_wp_version" value="4.9"/>
-	<rule ref="WordPress.Files.FileName">
-	<rule ref="WordPress.WP.I18n">
-		<properties>
-			<!-- Value: replace the text domain used. -->
-			<property name="text_domain" type="array" value="micropub"/>
-		</properties>
-	</rule>
-	<rule ref="WordPress.WhiteSpace.ControlStructureSpacing">
-		<properties>
-			<property name="blank_line_check" value="true"/>
-		</properties>
-	</rule>
-	<properties>
-	<property name="strict_class_file_names" value="false" />
-	</properties>
-	</rule>
-	<rule ref="WordPress-Extra"/>
-	<rule ref="WordPress.WP.I18n"/>
-	<config name="text_domain" value="micropub,default"/>
-	 <rule ref="WordPress.WP.DeprecatedFunctions" />
+	<file>.</file>
+	<exclude-pattern>.(git|github|vscode|idea|wordpress-org)</exclude-pattern>
+	<exclude-pattern>*\.(inc|css|js|svg)</exclude-pattern>
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*/tests/*</exclude-pattern>
+	<exclude-pattern>*.asset.php</exclude-pattern>
 
+	<arg value="ps"/>
+	<arg name="basepath" value="."/><!-- Strip the file paths down to the relevant bit -->
+	<arg name="colors"/>
+	<arg name="parallel" value="50"/>
+
+	<config name="testVersion" value="7.2-"/>
+	<config name="minimum_supported_wp_version" value="4.9"/>
+	<config name="text_domain" value="micropub,default"/>
+
+	<rule ref="PHPCompatibilityWP"/>
+	<rule ref="WordPress">
+		<exclude name="Universal.Operators.DisallowShortTernary" />
+	</rule>
 </ruleset>

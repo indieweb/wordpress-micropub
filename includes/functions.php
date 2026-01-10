@@ -1,12 +1,30 @@
 <?php
+/**
+ * Micropub utility functions.
+ *
+ * @package Micropub
+ */
 
+/**
+ * Check if an array is associative.
+ *
+ * @param mixed $assoc Value to check.
+ * @return bool True if associative array.
+ */
 function is_assoc_array( $assoc ) {
 	return is_array( $assoc ) && array_values( $assoc ) !== $assoc;
 }
 
 
-	// blatantly stolen from https://github.com/idno/Known/blob/master/Idno/Pages/File/View.php#L25
 if ( ! function_exists( 'getallheaders' ) ) {
+	/**
+	 * Get all HTTP headers.
+	 *
+	 * Polyfill for getallheaders() function.
+	 *
+	 * @see https://github.com/idno/Known/blob/master/Idno/Pages/File/View.php#L25
+	 * @return array HTTP headers.
+	 */
 	function getallheaders() {
 		$headers = array();
 		foreach ( $_SERVER as $name => $value ) {
@@ -23,6 +41,15 @@ if ( ! function_exists( 'getallheaders' ) ) {
 }
 
 if ( ! function_exists( 'mp_get' ) ) {
+	/**
+	 * Get a value from an array by key.
+	 *
+	 * @param array  $data  The data array.
+	 * @param string $key   The key to get.
+	 * @param mixed  $def   Default value if key not found.
+	 * @param bool   $index Whether to return only first element.
+	 * @return mixed The value or default.
+	 */
 	function mp_get( $data, $key, $def = array(), $index = false ) {
 		$return = $def;
 		if ( is_array( $data ) && isset( $data[ $key ] ) ) {
@@ -36,7 +63,13 @@ if ( ! function_exists( 'mp_get' ) ) {
 }
 
 if ( ! function_exists( 'mp_filter' ) ) {
-	// Searches for partial matches in an array of strings
+	/**
+	 * Searches for partial matches in an array of strings.
+	 *
+	 * @param array  $a      The array to filter.
+	 * @param string $filter The filter string to match.
+	 * @return array Filtered array values.
+	 */
 	function mp_filter( $a, $filter ) {
 		return array_values(
 			array_filter(
@@ -50,12 +83,23 @@ if ( ! function_exists( 'mp_filter' ) ) {
 }
 
 if ( ! function_exists( 'micropub_get_response' ) ) {
+	/**
+	 * Get the Micropub authentication response.
+	 *
+	 * @return mixed|null The IndieAuth response or null.
+	 */
 	function micropub_get_response() {
 		return apply_filters( 'indieauth_response', null );
 	}
 }
 
 if ( ! function_exists( 'is_micropub_post' ) ) {
+	/**
+	 * Check if a post was created via Micropub.
+	 *
+	 * @param WP_Post|int|null $post Post object or ID.
+	 * @return bool True if created via Micropub.
+	 */
 	function is_micropub_post( $post = null ) {
 		$post = get_post( $post );
 		if ( ! $post ) {
@@ -74,6 +118,12 @@ if ( ! function_exists( 'is_micropub_post' ) ) {
 }
 
 if ( ! function_exists( 'micropub_get_client_info' ) ) {
+	/**
+	 * Get the Micropub client info for a post.
+	 *
+	 * @param WP_Post|int|null $post Post object or ID.
+	 * @return array|string|false Client info array, empty string, or false.
+	 */
 	function micropub_get_client_info( $post = null ) {
 		$post = get_post( $post );
 		if ( ! $post ) {
@@ -106,6 +156,12 @@ if ( ! function_exists( 'micropub_get_client_info' ) ) {
 }
 
 if ( ! function_exists( 'micropub_client_info' ) ) {
+	/**
+	 * Display the Micropub client info for a post.
+	 *
+	 * @param WP_Post|int|null $post Post object or ID.
+	 * @param array|null       $args Display arguments.
+	 */
 	function micropub_client_info( $post = null, $args = null ) {
 		$client   = micropub_get_client_info( $post );
 		$defaults = array(
@@ -146,12 +202,25 @@ if ( ! function_exists( 'micropub_client_info' ) ) {
 }
 
 if ( ! function_exists( 'micropub_get_scopes' ) ) {
+	/**
+	 * Get the current IndieAuth scopes.
+	 *
+	 * @return mixed|null The scopes or null.
+	 */
 	function micropub_get_scopes() {
 		return apply_filters( 'indieauth_scopes', null );
 	}
 }
 
 if ( ! function_exists( 'micropub_get_post_datetime' ) ) {
+	/**
+	 * Get the post datetime with proper timezone handling.
+	 *
+	 * @param WP_Post|int|null $post     Post object or ID.
+	 * @param string           $field    Date field ('date' or 'modified').
+	 * @param string|null      $timezone Timezone string or null for default.
+	 * @return DateTimeImmutable|false DateTime object or false.
+	 */
 	function micropub_get_post_datetime( $post = null, $field = 'date', $timezone = null ) {
 		$post = get_post( $post );
 		if ( ! $post ) {
@@ -179,20 +248,26 @@ if ( ! function_exists( 'micropub_get_post_datetime' ) ) {
 }
 
 if ( ! function_exists( 'get_micropub_error' ) ) {
+	/**
+	 * Get a Micropub error from an object or response.
+	 *
+	 * @param mixed $obj Object or array to check for error.
+	 * @return \Micropub\Error|false Error object or false.
+	 */
 	function get_micropub_error( $obj ) {
 		if ( is_array( $obj ) ) {
-			// When checking the result of wp_remote_post
+			// When checking the result of wp_remote_post.
 			if ( isset( $obj['body'] ) ) {
 				$body = json_decode( $obj['body'], true );
 				if ( isset( $body['error'] ) ) {
-					return new WP_Micropub_Error(
+					return new \Micropub\Error(
 						$body['error'],
 						isset( $body['error_description'] ) ? $body['error_description'] : null,
 						$obj['response']['code']
 					);
 				}
 			}
-		} elseif ( is_object( $obj ) && 'WP_Micropub_Error' === get_class( $obj ) ) {
+		} elseif ( is_object( $obj ) && 'Micropub\Error' === get_class( $obj ) ) {
 			$data = $obj->get_data();
 			if ( isset( $data['error'] ) ) {
 				return $obj;
@@ -203,13 +278,24 @@ if ( ! function_exists( 'get_micropub_error' ) ) {
 }
 
 if ( ! function_exists( 'is_micropub_error' ) ) {
+	/**
+	 * Check if an object is a Micropub error.
+	 *
+	 * @param mixed $obj Object to check.
+	 * @return bool True if Micropub error.
+	 */
 	function is_micropub_error( $obj ) {
-		return ( $obj instanceof WP_Micropub_Error );
+		return ( $obj instanceof \Micropub\Error );
 	}
 }
 
 if ( ! function_exists( 'micropub_wp_error' ) ) {
-	// Converts WP_Error into Micropub Error
+	/**
+	 * Converts WP_Error into Micropub Error.
+	 *
+	 * @param WP_Error $error The WP_Error object.
+	 * @return \Micropub\Error|null The Micropub error or null.
+	 */
 	function micropub_wp_error( $error ) {
 		if ( is_wp_error( $error ) ) {
 			$data   = $error->get_error_data();
@@ -217,8 +303,53 @@ if ( ! function_exists( 'micropub_wp_error' ) ) {
 			if ( is_array( $data ) ) {
 				unset( $data['status'] );
 			}
-			return new WP_Micropub_Error( $error->get_error_code(), $error->get_error_message(), $status, $data );
+			return new \Micropub\Error( $error->get_error_code(), $error->get_error_message(), $status, $data );
 		}
 		return null;
+	}
+}
+
+if ( ! function_exists( 'micropub_get_mf2' ) ) {
+	/**
+	 * Get MF2 properties for a post.
+	 *
+	 * @param int|null $post_id Post ID.
+	 * @return array MF2 properties.
+	 */
+	function micropub_get_mf2( $post_id = null ) {
+		$mf2  = array();
+		$post = get_post( $post_id );
+
+		foreach ( get_post_meta( $post_id ) as $field => $val ) {
+			$val = maybe_unserialize( $val[0] );
+			if ( 'mf2_type' === $field ) {
+				$mf2['type'] = $val;
+			} elseif ( 'mf2_' === substr( $field, 0, 4 ) ) {
+				$mf2['properties'][ substr( $field, 4 ) ] = $val;
+			}
+		}
+
+		// Time Information.
+		$published                      = micropub_get_post_datetime( $post );
+		$updated                        = micropub_get_post_datetime( $post, 'modified' );
+		$mf2['properties']['published'] = array( $published->format( DATE_W3C ) );
+
+		if ( $published->getTimestamp() !== $updated->getTimestamp() ) {
+			$mf2['properties']['updated'] = array( $updated->format( DATE_W3C ) );
+		}
+
+		if ( ! empty( $post->post_title ) ) {
+			$mf2['properties']['name'] = array( $post->post_title );
+		}
+
+		if ( ! empty( $post->post_excerpt ) ) {
+			$mf2['properties']['summary'] = array( htmlspecialchars_decode( $post->post_excerpt ) );
+		}
+
+		if ( ! array_key_exists( 'content', $mf2['properties'] ) && ! empty( $post->post_content ) ) {
+			$mf2['properties']['content'] = array( htmlspecialchars_decode( $post->post_content ) );
+		}
+
+		return $mf2;
 	}
 }

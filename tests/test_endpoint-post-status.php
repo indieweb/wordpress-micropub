@@ -2,29 +2,29 @@
 
 class Micropub_Endpoint_Post_Status_Test extends Micropub_UnitTestCase {
 	/**
-	 * An instance of the Micropub_Endpoint class.
+	 * An instance of the \Micropub\Rest\Endpoint_Controller class.
 	 *
-	 * @var \Micropub_Endpoint
+	 * @var \Micropub\Rest\Endpoint_Controller
 	 */
 	private $endpoint;
 
 	/**
 	 * An instance of the private post_status method from
-	 * the Micropub_Endpoint class.
+	 * the \Micropub\Rest\Endpoint_Controller class.
 	 */
 	private $method;
 
 	public function set_up() {
-		$this->endpoint = new Micropub_Endpoint();
+		$this->endpoint = new \Micropub\Rest\Endpoint_Controller();
 
 		// Perform magic to access the private method for testing.
-		$ref = new ReflectionClass( 'Micropub_Endpoint' );
+		$ref          = new ReflectionClass( '\Micropub\Rest\Endpoint_Controller' );
 		$this->method = $ref->getMethod( 'post_status' );
 		$this->method->setAccessible( true );
 	}
 
 	/**
-	 * Provide possible conditions with which to test the Micropub_Endpoint's
+	 * Provide possible conditions with which to test the \Micropub\Endpoint's
 	 * post_status method.
 	 *
 	 * @return array A list of conditions.
@@ -34,50 +34,70 @@ class Micropub_Endpoint_Post_Status_Test extends Micropub_UnitTestCase {
 			array(
 				'publish',
 				array( 'properties' => array() ),
-				'The default post status of publish should be used if post-status and visibility are not provided.'
+				'The default post status of publish should be used if post-status and visibility are not provided.',
 			),
 			array(
 				'publish',
-				array( 'properties' => array( 'post-status' => array( 'published' ) ) )
+				array( 'properties' => array( 'post-status' => array( 'published' ) ) ),
 			),
 			array(
 				'draft',
-				array( 'properties' => array( 'post-status' => array( 'draft' ) ) )
+				array( 'properties' => array( 'post-status' => array( 'draft' ) ) ),
 			),
 			array(
 				null,
-				array( 'properties' => array( 'post-status' => array( 'invalid' ) ) )
+				array( 'properties' => array( 'post-status' => array( 'invalid' ) ) ),
 			),
 			array(
 				'private',
-				array( 'properties' => array( 'visibility' => array( 'private' ) ) )
+				array( 'properties' => array( 'visibility' => array( 'private' ) ) ),
 			),
 			array(
 				'publish',
 				array( 'properties' => array( 'visibility' => array( 'public' ) ) ),
-				'Public visibility with no specific post-status property should return the default post status.'
+				'Public visibility with no specific post-status property should return the default post status.',
 			),
 			array(
 				null,
 				array( 'properties' => array( 'visibility' => array( 'invalid' ) ) ),
-				'A null value should be returned when visibility is invalid.'
+				'A null value should be returned when visibility is invalid.',
 			),
 			array(
 				null,
-				array( 'properties' => array( 'visibility' => array( 'invalid' ), 'post-status' => array( 'published' ) ) ),
-				'A null value should be returned when visibility is invalid, even if post-status is valid.'
+				array(
+					'properties' => array(
+						'visibility'  => array( 'invalid' ),
+						'post-status' => array( 'published' ),
+					),
+				),
+				'A null value should be returned when visibility is invalid, even if post-status is valid.',
 			),
 			array(
 				'publish',
-				array( 'properties' => array( 'visibility' => array( 'public' ), 'post-status' => array( 'published' ) ) )
+				array(
+					'properties' => array(
+						'visibility'  => array( 'public' ),
+						'post-status' => array( 'published' ),
+					),
+				),
 			),
 			array(
 				'draft',
-				array( 'properties' => array( 'visibility' => array( 'public' ), 'post-status' => array( 'draft' ) ) )
+				array(
+					'properties' => array(
+						'visibility'  => array( 'public' ),
+						'post-status' => array( 'draft' ),
+					),
+				),
 			),
 			array(
 				'private',
-				array( 'properties' => array( 'visibility' => array( 'private' ), 'post-status' => array( 'publish' ) ) )
+				array(
+					'properties' => array(
+						'visibility'  => array( 'private' ),
+						'post-status' => array( 'publish' ),
+					),
+				),
 			),
 		);
 	}

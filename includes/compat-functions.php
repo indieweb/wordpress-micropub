@@ -1,5 +1,9 @@
 <?php
-
+/**
+ * Compatibility functions for older PHP/WordPress versions.
+ *
+ * @package Micropub
+ */
 
 if ( ! function_exists( 'current_datetime' ) ) {
 	/**
@@ -48,8 +52,8 @@ if ( ! function_exists( 'wp_timezone_string' ) ) {
 	 *
 	 * @since 5.3.0 - backported into Micropub
 	 *
-	* @return string PHP timezone string or a ±HH:MM offset.
-	*/
+	 * @return string PHP timezone string or a ±HH:MM offset.
+	 */
 	function wp_timezone_string() {
 		$timezone_string = get_option( 'timezone_string' );
 		if ( $timezone_string ) {
@@ -75,14 +79,19 @@ if ( ! function_exists( 'wp_timezone' ) ) {
 	 * @since 5.3.0 - backported into Simple Location
 	 *
 	 * @return DateTimeZone Timezone object.
-	*/
+	 */
 	function wp_timezone() {
 		return new DateTimeZone( wp_timezone_string() );
 	}
 }
 
-// Polyfill for pre-PHP 7.3.
 if ( ! function_exists( 'array_key_first' ) ) {
+	/**
+	 * Polyfill for pre-PHP 7.3.
+	 *
+	 * @param array $arr The array.
+	 * @return mixed The first key of the array, or null if empty.
+	 */
 	function array_key_first( array $arr ) {
 		foreach ( $arr as $key => $unused ) {
 			return $key;
@@ -91,8 +100,13 @@ if ( ! function_exists( 'array_key_first' ) ) {
 	}
 }
 
-// Polyfill for pre-PHP 7.3.
 if ( ! function_exists( 'array_key_last' ) ) {
+	/**
+	 * Polyfill for pre-PHP 7.3.
+	 *
+	 * @param array $a The array.
+	 * @return mixed The last key of the array, or null if empty.
+	 */
 	function array_key_last( $a ) {
 		if ( ! is_array( $a ) || empty( $a ) ) {
 			return null;
