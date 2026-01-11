@@ -325,6 +325,15 @@ if ( ! function_exists( 'micropub_get_mf2' ) ) {
 			if ( 'mf2_type' === $field ) {
 				$mf2['type'] = $val;
 			} elseif ( 'mf2_' === substr( $field, 0, 4 ) ) {
+				// Ensure property values are always arrays per MF2 spec.
+				// Skip empty strings as they indicate unset properties.
+				if ( '' === $val ) {
+					continue;
+				}
+				// Wrap non-array values in an array.
+				if ( ! is_array( $val ) ) {
+					$val = array( $val );
+				}
 				$mf2['properties'][ substr( $field, 4 ) ] = $val;
 			}
 		}
