@@ -497,7 +497,7 @@ EOF;
 		$this->assertEquals( 'bar', $tags[0]->name );
 		$mf2 = $this->query_source( $post->ID );
 		$this->assertArrayHasKey( 'published', $mf2['properties'] );
-		// We have confirmed it exists now compare everything but this.
+		// We have confirmed it exists now compare everything but these time properties.
 		unset( $mf2['properties']['published'] );
 		unset( $mf2['properties']['updated'] );
 		$this->assertEquals(
@@ -834,5 +834,87 @@ EOF;
 			);
 			$post  = self::check_create( self::create_json_request( $input ) );
 			$this->assertEquals( 'publish', $post->post_status );
+	}
+
+	function test_create_plain_text_autolinks_urls() {
+		$input = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array( 'Check out https://example.com for more info' ),
+			),
+		);
+		$post  = self::check_create( self::create_json_request( $input ) );
+		// URLs in plain text content should be auto-linked.
+		$this->assertStringContainsString( '<a href="https://example.com"', $post->post_content );
+		$this->assertStringContainsString( 'https://example.com</a>', $post->post_content );
+	}
+
+	function test_create_plain_text_autolinks_multiple_urls() {
+		$input = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array( 'Visit https://example.com and http://test.org today' ),
+			),
+		);
+		$post  = self::check_create( self::create_json_request( $input ) );
+		// Both URLs should be auto-linked.
+		$this->assertStringContainsString( '<a href="https://example.com"', $post->post_content );
+		$this->assertStringContainsString( '<a href="http://test.org"', $post->post_content );
+	}
+
+	function test_create_html_content_not_autolinked() {
+		$input = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array(
+					array( 'html' => '<p>Visit https://example.com today</p>' ),
+				),
+			),
+		);
+		$post  = self::check_create( self::create_json_request( $input ) );
+		// HTML content should not be auto-linked (preserved as-is).
+		$this->assertEquals( '<p>Visit https://example.com today</p>', $post->post_content );
+	}
+
+	function test_create_html_content_existing_link_preserved() {
+		$input = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array(
+					array( 'html' => '<p>Visit <a href="https://example.com">my site</a> today</p>' ),
+				),
+			),
+		);
+		$post  = self::check_create( self::create_json_request( $input ) );
+		// Existing links in HTML content should be preserved.
+		$this->assertEquals( '<p>Visit <a href="https://example.com">my site</a> today</p>', $post->post_content );
+	}
+
+	function test_create_html_content_code_block_preserved() {
+		$input = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array(
+					array( 'html' => '<p>Example: <code>https://example.com/api</code></p>' ),
+				),
+			),
+		);
+		$post  = self::check_create( self::create_json_request( $input ) );
+		// URLs in code blocks should not be auto-linked.
+		$this->assertEquals( '<p>Example: <code>https://example.com/api</code></p>', $post->post_content );
+	}
+
+	function test_create_html_content_pre_block_preserved() {
+		$input = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array(
+					array( 'html' => '<pre>curl https://example.com/api</pre>' ),
+				),
+			),
+		);
+		$post  = self::check_create( self::create_json_request( $input ) );
+		// URLs in pre blocks should not be auto-linked.
+		$this->assertEquals( '<pre>curl https://example.com/api</pre>', $post->post_content );
 	}
 }
