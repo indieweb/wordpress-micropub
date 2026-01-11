@@ -159,9 +159,15 @@ class Render {
 		}
 
 		if ( ! empty( $post_content ) ) {
-			$lines[] = '<div class="e-content">';
+			// Only wrap in e-content if theme doesn't already provide microformats2 support.
+			$wrap_econtent = ! Micropub::theme_supports_microformats2();
+			if ( $wrap_econtent ) {
+				$lines[] = '<div class="e-content">';
+			}
 			$lines[] = $post_content;
-			$lines[] = '</div>';
+			if ( $wrap_econtent ) {
+				$lines[] = '</div>';
+			}
 		}
 
 		// Generate gallery markup for media fields.
