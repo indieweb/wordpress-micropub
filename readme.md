@@ -80,6 +80,7 @@ Project and support maintained on GitHub at [indieweb/wordpress-micropub](https:
 * Fix q=source to return valid MF2 JSON for all properties
 * Fix REST response headers causing PHP warning
 * Replace admin notice with Site Health test for HTTPS check
+* Restructure test suite to match project conventions
 * Modernize build setup and workflows
 * Add PHPDoc documentation for all hooks and filters
 * Tested up to WordPress 7.0
