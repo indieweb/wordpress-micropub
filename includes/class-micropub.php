@@ -88,5 +88,4 @@ class Micropub {
 	public function get_version() {
 		return MICROPUB_PLUGIN_VERSION;
 	}
-
 }
