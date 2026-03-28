@@ -19,17 +19,6 @@
 
 namespace Micropub;
 
-/*
-See README for supported filters and actions.
- * Example command lines for testing:
- * Form-encoded:
- * curl -i -H 'Authorization: Bearer ...' -F h=entry -F name=foo -F content=bar \
- *   -F photo=@gallery/snarfed.gif 'http://localhost/wp-json/micropub/1.0/endpoint'
- * JSON:
- * curl -v -d @body.json -H 'Content-Type: application/json' 'http://localhost/w/?micropub=endpoint'
- *
- */
-
 \define( 'MICROPUB_PLUGIN_VERSION', '2.5.0' );
 
 \defined( 'MICROPUB_NAMESPACE' ) || \define( 'MICROPUB_NAMESPACE', 'micropub/1.0' );
