@@ -23,14 +23,13 @@ class Error extends \WP_REST_Response {
 	 * @param mixed  $debug             Debug data.
 	 */
 	public function __construct( $error, $error_description, $code = 200, $debug = null ) {
-		$this->set_status( $code );
 		$data = array(
 			'error'             => $error,
 			'error_description' => $error_description,
 			'data'              => $debug,
 		);
 		$data = array_filter( $data );
-		$this->set_data( $data );
+		parent::__construct( $data, $code );
 		if ( \WP_DEBUG && ! \defined( 'DIR_TESTDATA' ) ) {
 			\error_log( $this->to_log() ); // phpcs:ignore
 		}

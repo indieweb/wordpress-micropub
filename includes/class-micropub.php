@@ -58,7 +58,7 @@ class Micropub {
 	public function init() {
 		\add_action( 'rest_api_init', array( $this, 'rest_init' ) );
 		\add_action( 'init', array( $this, 'plugin_init' ) );
-		\add_action( 'admin_notices', array( $this, 'ssl_notice' ) );
+		Site_Health::init();
 	}
 
 	/**
@@ -89,17 +89,4 @@ class Micropub {
 		return MICROPUB_PLUGIN_VERSION;
 	}
 
-	/**
-	 * Display SSL warning notice.
-	 */
-	public function ssl_notice() {
-		if ( \is_ssl() || MICROPUB_DISABLE_NAG ) {
-			return;
-		}
-		?>
-		<div class="notice notice-warning">
-			<p><?php \esc_html_e( 'For security reasons you should use Micropub only on an HTTPS domain.', 'micropub' ); ?></p>
-		</div>
-		<?php
-	}
 }
