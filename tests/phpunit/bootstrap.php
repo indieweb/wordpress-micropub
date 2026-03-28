@@ -12,9 +12,8 @@ if ( false !== $_phpunit_polyfills_path ) {
 	define( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH', $_phpunit_polyfills_path );
 }
 
-require __DIR__ . '/class-indieauth-plugin.php';
+require __DIR__ . '/includes/class-indieauth-plugin.php';
 
-// define( 'WP_DEBUG', false );
 define( 'DIR_MEDIATESTDATA', __DIR__ . '/data' );
 
 $_tests_dir = getenv( 'WP_TESTS_DIR' );
@@ -31,17 +30,17 @@ if ( ! file_exists( $_tests_dir . '/includes/functions.php' ) ) {
 // Give access to tests_add_filter() function.
 require_once $_tests_dir . '/includes/functions.php';
 
-require_once dirname( __DIR__ ) . '/vendor/yoast/phpunit-polyfills/phpunitpolyfills-autoload.php';
+require_once dirname( __DIR__, 2 ) . '/vendor/yoast/phpunit-polyfills/phpunitpolyfills-autoload.php';
 
 /**
  * Manually load the plugin being tested.
  */
 function _manually_load_plugin() {
-	require dirname( __DIR__ ) . '/micropub.php';
+	require dirname( __DIR__, 2 ) . '/micropub.php';
 }
 tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
 
 // Start up the WP testing environment.
 require $_tests_dir . '/includes/bootstrap.php';
 
-require __DIR__ . '/class-micropub-unit-test-case.php';
+require __DIR__ . '/includes/class-micropub-unit-test-case.php';

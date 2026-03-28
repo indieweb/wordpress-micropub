@@ -1,21 +1,17 @@
 {
-  "core": null,
-  "port": 8893,
-  "testsPort": 8894,
-  "plugins": [
-    "."
-  ],
-  "mappings": {
-    "wp-content/plugins/micropub": "."
-  },
-  "env": {
-    "tests": {
-      "config": {
-        "WP_ENVIRONMENT_TYPE": "production"
-      }
-    }
-  },
-  "lifecycleScripts": {
-    "afterStart": "npx wp-env run cli wp rewrite structure /%year%/%monthnum%/%postname%/"
-  }
+	"core": null,
+	"plugins": [ "." ],
+	"env": {
+		"tests": {
+			"config": {
+				"WP_ENVIRONMENT_TYPE": "production"
+			},
+			"mappings": {
+				"wp-content/plugins/micropub": "."
+			}
+		}
+	},
+	"lifecycleScripts": {
+		"afterStart": "npx wp-env run cli wp rewrite structure /%year%/%monthnum%/%postname%/"
+	}
 }

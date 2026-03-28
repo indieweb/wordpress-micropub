@@ -478,8 +478,7 @@ EOF;
 		$this->assertEquals( 'bar', $tags[0]->name );
 		$mf2 = $this->query_source( $post->ID );
 		$this->assertArrayHasKey( 'published', $mf2['properties'] );
-		$this->assertArrayHasKey( 'updated', $mf2['properties'] );
-		// We have confirmed they exist now compare everything but these.
+		// We have confirmed it exists now compare everything but this.
 		unset( $mf2['properties']['published'] );
 		unset( $mf2['properties']['updated'] );
 		$this->assertEquals(

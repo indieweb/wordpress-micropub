@@ -4,19 +4,17 @@ on:
     branches:
       - trunk
     paths:
-      - '**.php'
+      - '**/*.php'
       - 'composer.json'
       - 'composer.lock'
-      - 'phpunit.xml'
-      - 'tests/**'
+      - 'phpunit.xml.dist'
       - '.github/workflows/phpunit.yml'
   pull_request:
     paths:
-      - '**.php'
+      - '**/*.php'
       - 'composer.json'
       - 'composer.lock'
-      - 'phpunit.xml'
-      - 'tests/**'
+      - 'phpunit.xml.dist'
       - '.github/workflows/phpunit.yml'
 
 concurrency:
@@ -36,12 +34,22 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=10s --health-retries=10
     strategy:
       matrix:
-        php-versions: ['8.5', '8.4', '8.3', '8.2', '8.0', '7.4', '7.2']
+        php-versions: ['7.4', '8.3', '8.5']
+        include:
+          - wp-version: latest
+          - wp-version: '6.5'
+            php-versions: '7.4'
+          - wp-version: trunk
+            php-versions: '8.5'
     steps:
+      - name: Install svn
+        run: |
+          sudo apt-get update
+          sudo apt-get install subversion
+
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Install SVN
-        run: sudo apt-get update && sudo apt-get install -y subversion
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -49,13 +57,15 @@ jobs:
           coverage: none
           tools: composer, phpunit-polyfills
           extensions: mysql
+
       - name: Install Composer dependencies for PHP
-        uses: "ramsey/composer-install@v4"
-      - name: Install SVN
-        run: sudo apt-get update && sudo apt-get install -y subversion
+        uses: ramsey/composer-install@v4
+
       - name: Setup Test Environment
-        run: composer setup-local-tests
+        run: bash bin/install-wp-tests.sh wordpress_test root root 127.0.0.1 ${{ matrix.wp-version }}
+
       - name: Unit Testing
-        run: composer phpunit
+        run: ./vendor/bin/phpunit
         env:
           PHP_VERSION: ${{ matrix.php-versions }}
+          WP_ENVIRONMENT_TYPE: production
