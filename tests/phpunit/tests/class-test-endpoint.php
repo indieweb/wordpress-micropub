@@ -480,6 +480,7 @@ EOF;
 		$this->assertArrayHasKey( 'published', $mf2['properties'] );
 		// We have confirmed it exists now compare everything but this.
 		unset( $mf2['properties']['published'] );
+		unset( $mf2['properties']['updated'] );
 		$this->assertEquals(
 			array(
 				'properties' => array(

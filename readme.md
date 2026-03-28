@@ -1,10 +1,10 @@
 # Micropub
 
-- Contributors: indieweb, snarfed, dshanske
+- Contributors: indieweb, snarfed, dshanske, pfefferle
 - Tags: micropub, publish, indieweb, microformats
 - Requires at least: 4.9.9
-- Tested up to: 6.9
-- Stable tag: 2.4.0
+- Tested up to: 7.0
+- Stable tag: 2.5.0
 - Requires PHP: 7.2
 - License: CC0
 - License URI: http://creativecommons.org/publicdomain/zero/1.0/
@@ -67,12 +67,23 @@ Supports Proposed Extensions:
 These configuration options can be enabled by adding them to your wp-config.php:
 
 * `define('MICROPUB_NAMESPACE', 'micropub/1.0')` - Change the namespace for the micropub endpoint
-* `define('MICROPUB_DISABLE_NAG', 1)` - Disable notices for insecure sites
 * `define('MICROPUB_DRAFT_MODE', 1)` - Override default post status and set to draft for debugging
 
 ## Changelog
 
 Project and support maintained on GitHub at [indieweb/wordpress-micropub](https://github.com/indieweb/wordpress-micropub).
+
+### 2.5.0
+
+* Add namespaces and PSR-4 autoloader
+* Refactor REST API to use WP_REST_Controller pattern
+* Fix q=source to return valid MF2 JSON for all properties
+* Fix REST response headers causing PHP warning
+* Replace admin notice with Site Health test for HTTPS check
+* Restructure test suite to match project conventions
+* Modernize build setup and workflows
+* Add PHPDoc documentation for all hooks and filters
+* Tested up to WordPress 7.0
 
 ### 2.4.0
 

@@ -12,28 +12,16 @@
  * Text Domain: micropub
  * License: CC0
  * License URI: http://creativecommons.org/publicdomain/zero/1.0/
- * Version: 2.4.0
+ * Version: 2.5.0
  *
  * @package Micropub
  */
 
 namespace Micropub;
 
-/*
-See README for supported filters and actions.
- * Example command lines for testing:
- * Form-encoded:
- * curl -i -H 'Authorization: Bearer ...' -F h=entry -F name=foo -F content=bar \
- *   -F photo=@gallery/snarfed.gif 'http://localhost/wp-json/micropub/1.0/endpoint'
- * JSON:
- * curl -v -d @body.json -H 'Content-Type: application/json' 'http://localhost/w/?micropub=endpoint'
- *
- */
-
-\define( 'MICROPUB_PLUGIN_VERSION', '2.4.0' );
+\define( 'MICROPUB_PLUGIN_VERSION', '2.5.0' );
 
 \defined( 'MICROPUB_NAMESPACE' ) || \define( 'MICROPUB_NAMESPACE', 'micropub/1.0' );
-\defined( 'MICROPUB_DISABLE_NAG' ) || \define( 'MICROPUB_DISABLE_NAG', 0 );
 
 // For debugging purposes this will set all Micropub posts to Draft.
 \defined( 'MICROPUB_DRAFT_MODE' ) || \define( 'MICROPUB_DRAFT_MODE', '0' );

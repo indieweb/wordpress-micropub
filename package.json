@@ -21,10 +21,8 @@
   "homepage": "https://github.com/indieweb/wordpress-micropub",
   "scripts": {
     "env": "wp-env",
-    "env:start": "wp-env start",
-    "env:stop": "wp-env stop",
-    "env:destroy": "wp-env destroy",
-    "env:cli": "wp-env run cli",
-    "env:test": "wp-env run tests-cli --env-cwd=wp-content/plugins/micropub vendor/bin/phpunit"
+    "env-start": "wp-env start",
+    "env-stop": "wp-env stop",
+    "env-test": "wp-env run tests-cli --env-cwd=\"wp-content/plugins/micropub\" vendor/bin/phpunit"
   }
 }
