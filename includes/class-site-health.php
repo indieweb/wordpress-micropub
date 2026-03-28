@@ -55,7 +55,7 @@ class Site_Health {
 			'test'        => 'micropub_ssl',
 		);
 
-		if ( ! \is_ssl() ) {
+		if ( 'https' !== \wp_parse_url( \home_url(), PHP_URL_SCHEME ) ) {
 			$result['status']      = 'recommended';
 			$result['label']       = \__( 'Micropub is not running on HTTPS', 'micropub' );
 			$result['description'] = \sprintf(
