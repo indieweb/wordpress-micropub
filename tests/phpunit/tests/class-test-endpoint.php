@@ -231,6 +231,25 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 		self::check( $response, 403, 'insufficient_scope' );
 	}
 
+	public function test_create_returns_error_when_wp_insert_post_fails() {
+		// Force wp_insert_post to return a WP_Error with the empty-content
+		// code, mimicking the situation reported in issue #319.
+		add_filter( 'wp_insert_post_empty_content', '__return_true' );
+
+		$input    = array(
+			'h'           => 'entry',
+			'repost-of'   => 'https://example.com/post',
+			'post-status' => 'draft',
+		);
+		$response = $this->dispatch( self::create_form_request( $input ), static::$author_id );
+
+		remove_filter( 'wp_insert_post_empty_content', '__return_true' );
+
+		// The response must surface the error (not silently return 201 with the
+		// error nested inside the body).
+		self::check( $response, 400, 'empty_content' );
+	}
+
 	public function test_form_to_json_encode() {
 		$controller = new \Micropub\Rest\Endpoint_Controller();
 		$output     = $controller->form_to_json( static::$post );
