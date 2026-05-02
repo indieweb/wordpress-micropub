@@ -299,7 +299,7 @@ if ( ! function_exists( 'micropub_wp_error' ) ) {
 	function micropub_wp_error( $error ) {
 		if ( is_wp_error( $error ) ) {
 			$data   = $error->get_error_data();
-			$status = isset( $data['status'] ) ? $data['status'] : 200;
+			$status = isset( $data['status'] ) ? $data['status'] : 400;
 			if ( is_array( $data ) ) {
 				unset( $data['status'] );
 			}

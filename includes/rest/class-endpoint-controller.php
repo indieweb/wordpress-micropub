@@ -522,6 +522,11 @@ class Endpoint_Controller extends \WP_REST_Controller {
 		}
 
 		$this->insert_post( $args );
+
+		if ( \is_micropub_error( $args['ID'] ) ) {
+			return $args['ID'];
+		}
+
 		$this->default_file_handler( $args['ID'] );
 
 		return $args;
@@ -640,6 +645,11 @@ class Endpoint_Controller extends \WP_REST_Controller {
 		}
 
 		$this->update_post( $args );
+
+		if ( \is_micropub_error( $args['ID'] ) ) {
+			return $args['ID'];
+		}
+
 		$this->default_file_handler( $post_id );
 
 		return $args;
