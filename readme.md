@@ -4,7 +4,7 @@
 - Tags: micropub, publish, indieweb, microformats
 - Requires at least: 4.9.9
 - Tested up to: 7.0
-- Stable tag: 2.5.0
+- Stable tag: 2.5.1
 - Requires PHP: 7.2
 - License: CC0
 - License URI: http://creativecommons.org/publicdomain/zero/1.0/
@@ -72,6 +72,10 @@ These configuration options can be enabled by adding them to your wp-config.php:
 ## Changelog
 
 Project and support maintained on GitHub at [indieweb/wordpress-micropub](https://github.com/indieweb/wordpress-micropub).
+
+### 2.5.1
+
+* Fix error responses for failed post inserts and updates, returning the proper HTTP status code instead of a success response
 
 ### 2.5.0
 
