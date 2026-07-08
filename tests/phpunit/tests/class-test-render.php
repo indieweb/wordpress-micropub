@@ -241,8 +241,6 @@ EOF
 	function test_econtent_wrapper_when_theme_does_not_support_microformats2() {
 		// Ensure no theme support.
 		remove_theme_support( 'microformats2' );
-		// Clear any cached detection.
-		delete_option( \Micropub\Micropub::MICROFORMATS2_SUPPORT_OPTION );
 
 		$content      = '<p>Test content</p>';
 		$input        = array(
@@ -256,10 +254,10 @@ EOF
 		$this->assertEquals( "<div class=\"e-content\">\n<p>Test content</p>\n</div>", $post_content );
 	}
 
-	function test_no_econtent_wrapper_with_cached_mf2_support() {
-		// Simulate cached detection of microformats2 support.
+	function test_no_econtent_wrapper_with_filtered_mf2_support() {
+		// Simulate a plugin declaring microformats2 support via the filter.
 		remove_theme_support( 'microformats2' );
-		update_option( \Micropub\Micropub::MICROFORMATS2_SUPPORT_OPTION, 'yes' );
+		add_filter( 'micropub_theme_supports_microformats2', '__return_true' );
 
 		$content      = '<p>Test content</p>';
 		$input        = array(
@@ -269,10 +267,10 @@ EOF
 		);
 		$post_content = \Micropub\Render::generate_post_content( $content, $input );
 
-		// Should not have e-content wrapper due to cached support.
+		// Should not have e-content wrapper due to filtered support.
 		$this->assertEquals( '<p>Test content</p>', $post_content );
 
 		// Clean up.
-		delete_option( \Micropub\Micropub::MICROFORMATS2_SUPPORT_OPTION );
+		remove_filter( 'micropub_theme_supports_microformats2', '__return_true' );
 	}
 }
