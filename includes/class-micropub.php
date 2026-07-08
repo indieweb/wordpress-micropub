@@ -113,6 +113,11 @@ class Micropub {
 	 * cached detection results. If no cached result exists and we're
 	 * on a singular page, it will detect and cache the result.
 	 *
+	 * Detection is only scheduled on singular frontend views. In other
+	 * contexts (admin, REST API requests) this returns the cached result,
+	 * or false if no detection has run yet — so content is wrapped by
+	 * default until a frontend view populates the cache.
+	 *
 	 * @return bool True if theme supports microformats2.
 	 */
 	public static function theme_supports_microformats2() {
@@ -166,8 +171,8 @@ class Micropub {
 		}
 
 		// Check if e-content exists as a class attribute value.
-		// Matches class="...e-content..." or class='...e-content...'.
-		$has_support = preg_match( '/class=["\'][^"\']*\be-content\b[^"\']*["\']/', $filtered );
+		// Matches class="...e-content...", class='...e-content...' or class=e-content (unquoted).
+		$has_support = preg_match( '/\bclass\s*=\s*(?:"[^"]*\be-content\b[^"]*"|\'[^\']*\be-content\b[^\']*\'|[^\s>]*\be-content\b[^\s>]*)/i', $filtered );
 
 		\update_option( self::MICROFORMATS2_SUPPORT_OPTION, $has_support ? 'yes' : 'no', false );
 	}

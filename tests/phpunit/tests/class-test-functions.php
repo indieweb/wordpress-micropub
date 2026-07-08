@@ -123,6 +123,18 @@ class MicropubMicroformats2DetectionTest extends WP_UnitTestCase {
 		$this->assertEquals( 'yes', get_option( \Micropub\Micropub::MICROFORMATS2_SUPPORT_OPTION ) );
 	}
 
+	function test_detect_microformats2_support_finds_econtent_unquoted() {
+		// Start output buffering to simulate page output.
+		ob_start();
+		echo '<html><body><div class=e-content>Test</div></body></html>';
+
+		\Micropub\Micropub::detect_microformats2_support();
+
+		ob_end_clean();
+
+		$this->assertEquals( 'yes', get_option( \Micropub\Micropub::MICROFORMATS2_SUPPORT_OPTION ) );
+	}
+
 	function test_detect_microformats2_support_ignores_econtent_in_code_blocks() {
 		// Start output buffering to simulate page output.
 		ob_start();
