@@ -862,6 +862,21 @@ EOF;
 		$this->assertStringContainsString( '<a href="http://test.org"', $post->post_content );
 	}
 
+	function test_create_content_value_autolinks_urls() {
+		$input = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array(
+					array( 'value' => 'Check out https://example.com for more info' ),
+				),
+			),
+		);
+		$post  = self::check_create( self::create_json_request( $input ) );
+		// Plain text content in a value property should be auto-linked, too.
+		$this->assertStringContainsString( '<a href="https://example.com"', $post->post_content );
+		$this->assertStringContainsString( 'https://example.com</a>', $post->post_content );
+	}
+
 	function test_create_html_content_not_autolinked() {
 		$input = array(
 			'type'       => array( 'h-entry' ),
