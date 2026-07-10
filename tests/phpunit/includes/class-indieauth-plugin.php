@@ -1,4 +1,6 @@
 <?php
 
-class IndieAuth_Plugin {
+namespace IndieAuth;
+
+class IndieAuth {
 }
