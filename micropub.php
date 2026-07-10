@@ -41,7 +41,7 @@ require_once MICROPUB_PLUGIN_DIR . 'includes/functions.php';
 // Compatibility Functions with Newer WordPress Versions.
 require_once MICROPUB_PLUGIN_DIR . 'includes/compat-functions.php';
 
-if ( \class_exists( 'IndieAuth_Plugin' ) ) {
+if ( \class_exists( \IndieAuth\IndieAuth::class ) ) {
 	\add_action( 'plugins_loaded', array( Micropub::get_instance(), 'init' ) );
 } else {
 	\add_action( 'admin_notices', __NAMESPACE__ . '\indieauth_not_installed_notice' );
