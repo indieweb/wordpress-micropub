@@ -342,10 +342,10 @@ if ( ! function_exists( 'micropub_get_mf2' ) ) {
 		$published                      = micropub_get_post_datetime( $post );
 		$updated                        = micropub_get_post_datetime( $post, 'modified' );
 
-		if( false !== $published ) {
+		if ( false !== $published ) {
 			$mf2['properties']['published'] = array( $published->format( DATE_W3C ) );
 
-			if( ( false !== $updated ) && $published->getTimestamp() !== $updated->getTimestamp() ) {
+			if ( ( false !== $updated ) && $published->getTimestamp() !== $updated->getTimestamp() ) {
 				$mf2['properties']['updated'] = array( $updated->format( DATE_W3C ) );
 			}
 		}
