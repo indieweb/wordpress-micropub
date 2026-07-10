@@ -341,10 +341,13 @@ if ( ! function_exists( 'micropub_get_mf2' ) ) {
 		// Time Information.
 		$published                      = micropub_get_post_datetime( $post );
 		$updated                        = micropub_get_post_datetime( $post, 'modified' );
-		$mf2['properties']['published'] = array( $published->format( DATE_W3C ) );
 
-		if ( $published->getTimestamp() !== $updated->getTimestamp() ) {
-			$mf2['properties']['updated'] = array( $updated->format( DATE_W3C ) );
+		if( false !== $published ) {
+			$mf2['properties']['published'] = array( $published->format( DATE_W3C ) );
+
+			if( ( false !== $updated ) && $published->getTimestamp() !== $updated->getTimestamp() ) {
+				$mf2['properties']['updated'] = array( $updated->format( DATE_W3C ) );
+			}
 		}
 
 		if ( ! empty( $post->post_title ) ) {
