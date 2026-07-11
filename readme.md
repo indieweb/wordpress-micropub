@@ -4,7 +4,7 @@
 - Tags: micropub, publish, indieweb, microformats
 - Requires at least: 4.9.9
 - Tested up to: 7.0
-- Stable tag: 2.5.1
+- Stable tag: 2.5.2
 - Requires PHP: 7.2
 - License: CC0
 - License URI: http://creativecommons.org/publicdomain/zero/1.0/
@@ -73,9 +73,10 @@ These configuration options can be enabled by adding them to your wp-config.php:
 
 Project and support maintained on GitHub at [indieweb/wordpress-micropub](https://github.com/indieweb/wordpress-micropub).
 
-### Unreleased
+### 2.5.2
 
 * Detect the IndieAuth plugin via the `INDIEAUTH_PLUGIN_VERSION` constant instead of a class check, which avoids coupling to IndieAuth's class names (indieweb/wordpress-indieauth#319) and requires IndieAuth 4.7.0 or later
+* Fix a crash in the post preview when a post has no valid published or modified date
 
 ### 2.5.1
 
