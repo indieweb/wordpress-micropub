@@ -12,7 +12,8 @@ if ( false !== $_phpunit_polyfills_path ) {
 	define( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH', $_phpunit_polyfills_path );
 }
 
-require __DIR__ . '/includes/class-indieauth-plugin.php';
+// Simulate an active IndieAuth plugin (4.7.0+ defines this constant).
+define( 'INDIEAUTH_PLUGIN_VERSION', '4.7.0' );
 
 define( 'DIR_MEDIATESTDATA', __DIR__ . '/data' );
 

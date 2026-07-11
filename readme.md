@@ -73,6 +73,10 @@ These configuration options can be enabled by adding them to your wp-config.php:
 
 Project and support maintained on GitHub at [indieweb/wordpress-micropub](https://github.com/indieweb/wordpress-micropub).
 
+### Unreleased
+
+* Detect the IndieAuth plugin via the `INDIEAUTH_PLUGIN_VERSION` constant instead of a class check, which avoids coupling to IndieAuth's class names (indieweb/wordpress-indieauth#319) and requires IndieAuth 4.7.0 or later
+
 ### 2.5.1
 
 * Fix error responses for failed post inserts and updates, returning the proper HTTP status code instead of a success response
