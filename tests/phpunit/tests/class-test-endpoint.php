@@ -937,4 +937,103 @@ EOF;
 			$post  = self::check_create( self::create_json_request( $input ) );
 			$this->assertEquals( 'publish', $post->post_status );
 	}
+
+	/**
+	 * Forces wp_insert_post() to fail by giving the post an unregistered type.
+	 */
+	public static function break_the_insert( $args ) {
+		$args['post_type'] = 'not_a_registered_post_type';
+		return $args;
+	}
+
+	/**
+	 * A client_uid is what sends the post ID through wp_set_object_terms(), which
+	 * is where the failed insert used to be cast to int.
+	 */
+	public static function auth_response_with_client_uid( $response ) {
+		return array_merge( static::$micropub_auth_response, array( 'client_uid' => 42 ) );
+	}
+
+	/**
+	 * check_error() returns a Micropub\Error rather than throwing, and an object is
+	 * truthy, so a failed insert used to be passed on as a post ID: to
+	 * wp_set_object_terms(), which cast it to int, and to get_permalink(), which
+	 * produced a bogus post_url.
+	 */
+	/**
+	 * Runs the controller's insert_post() on arguments wp_insert_post() rejects.
+	 *
+	 * insert_post() is protected and takes its arguments by reference, so it is
+	 * reached through a bound closure rather than reflection.
+	 *
+	 * @return array The arguments the controller was left with.
+	 */
+	protected function insert_a_failing_post() {
+		$controller = new \Micropub\Rest\Endpoint_Controller();
+
+		$insert = Closure::bind(
+			function ( &$args ) {
+				$this->insert_post( $args );
+			},
+			$controller,
+			\Micropub\Rest\Endpoint_Controller::class
+		);
+
+		$args = array(
+			'post_type'    => 'not_a_registered_post_type',
+			'post_title'   => 'a title',
+			'post_content' => 'some content',
+		);
+		$insert( $args );
+
+		return $args;
+	}
+
+	public function test_a_failed_insert_is_not_used_as_a_post_id() {
+		$args   = array();
+		$errors = $this->record_php_errors(
+			function () use ( &$args ) {
+				$args = $this->insert_a_failing_post();
+			}
+		);
+
+		$this->assertSame( array(), $errors, 'PHP diagnostics: ' . wp_json_encode( $errors ) );
+		$this->assertTrue( is_micropub_error( $args['ID'] ) );
+		$this->assertArrayNotHasKey( 'post_url', $args );
+	}
+
+	/**
+	 * kses only has to be suspended for wp_insert_post() itself, so the filters
+	 * come back on the error path too.
+	 */
+	public function test_a_failed_insert_restores_the_kses_filters() {
+		$this->insert_a_failing_post();
+
+		$this->assertNotFalse( has_filter( 'content_save_pre', 'wp_filter_post_kses' ) );
+	}
+
+	public function test_a_failed_create_returns_an_error_without_a_warning() {
+		add_filter( 'pre_insert_micropub_post', array( get_called_class(), 'break_the_insert' ) );
+		add_filter( 'indieauth_response', array( get_called_class(), 'auth_response_with_client_uid' ), 13 );
+
+		$request  = self::create_json_request(
+			array(
+				'type'       => array( 'h-entry' ),
+				'properties' => array( 'content' => array( 'This is a test' ) ),
+			)
+		);
+		$response = null;
+		$errors   = $this->record_php_errors(
+			function () use ( $request, &$response ) {
+				$response = $this->dispatch( $request, static::$author_id );
+			}
+		);
+
+		remove_filter( 'pre_insert_micropub_post', array( get_called_class(), 'break_the_insert' ) );
+		remove_filter( 'indieauth_response', array( get_called_class(), 'auth_response_with_client_uid' ), 13 );
+
+		$this->assertSame( array(), $errors, 'PHP diagnostics: ' . wp_json_encode( $errors ) );
+		$this->assertGreaterThanOrEqual( 400, $response->get_status() );
+		$this->assertArrayNotHasKey( 'post_url', (array) $response->get_data() );
+	}
 }
