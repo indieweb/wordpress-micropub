@@ -3,8 +3,6 @@
 
 class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 
-	protected static $route = '/' . MICROPUB_NAMESPACE . '/endpoint';
-
 	// POST args
 	protected static $post = array(
 		'h'         => 'entry',
@@ -91,40 +89,6 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 		$controller = new \Micropub\Rest\Endpoint_Controller();
 		$geo        = $controller->parse_geo_uri( 'geo:42.361,-71.092,25000;u=25000' );
 		$this->assertEquals( $geo, static::$geo );
-	}
-
-	public function create_form_request( $POST ) {
-		$request = new WP_REST_Request( 'POST', static::$route );
-		$request->set_header( 'Content-Type', 'application/x-www-form-urlencoded' );
-		$request->set_body_params( $POST );
-		return $request;
-	}
-
-	public function create_json_request( $input ) {
-		$request = new WP_REST_Request( 'POST', static::$route );
-		$request->set_header( 'Content-Type', 'application/json' );
-		$request->set_body( wp_json_encode( $input ) );
-		return $request;
-	}
-
-	public function insert_post() {
-		return wp_insert_post( static::$wp_args );
-	}
-
-	public function query_request( $GET ) {
-		$request = new WP_REST_Request( 'GET', static::$route );
-		$request->set_query_params( $GET );
-		return $request;
-	}
-
-	public function query_source( $post_id ) {
-		$GET      = array(
-			'q'   => 'source',
-			'url' => 'http://example.org/?p=' . $post_id,
-		);
-		$request  = self::query_request( $GET );
-		$response = $this->dispatch( $request, self::$author_id );
-		return $response->get_data();
 	}
 
 	public function check( $response, $status, $expected = null ) {
@@ -428,7 +392,7 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 		$this->assertEquals( '2016-01-01 12:01:23', get_post( $post_id )->post_date );
 		$input    = array(
 			'action'  => 'update',
-			'url'     => 'http://example.org/?p=' . $post_id,
+			'url'     => home_url( '/?p=' . $post_id ),
 			'replace' => array( 'content' => array( 'new<br>content' ) ),
 			'add'     => array(
 				'category'    => array( 'add tag' ),
@@ -484,7 +448,7 @@ EOF;
 		$post_id  = $this->check_create( self::create_form_request( $POST ) )->ID;
 		$input    = array(
 			'action' => 'update',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 			'add'    => array( 'category' => array( 'foo', 'bar' ) ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -517,7 +481,7 @@ EOF;
 		$post_id  = $this->check_create( self::create_form_request( $POST ) )->ID;
 		$input    = array(
 			'action' => 'update',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 			'delete' => array( 'location' ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -534,7 +498,7 @@ EOF;
 		$post_id  = self::insert_post();
 		$input    = array(
 			'action' => 'update',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 			'add'    => array( 'content' => array( 'foo' ) ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -544,7 +508,7 @@ EOF;
 	public function test_update_post_not_found() {
 		$input    = array(
 			'action'  => 'update',
-			'url'     => 'http://example.org/?p=999',
+			'url'     => home_url( '/?p=999' ),
 			'replace' => array( 'content' => array( 'unused' ) ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -554,7 +518,7 @@ EOF;
 	public function test_update_post_subscriber() {
 		$input    = array(
 			'action'  => 'update',
-			'url'     => 'http://example.org/?p=999',
+			'url'     => home_url( '/?p=999' ),
 			'replace' => array( 'content' => array( 'unused' ) ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$subscriber_id );
@@ -566,7 +530,7 @@ EOF;
 		$post_id  = $this->check_create( self::create_form_request( $POST ) )->ID;
 		$input    = array(
 			'action' => 'update',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 			'delete' => array(
 				'category' => array(
 					'tag1',  // exists
@@ -590,7 +554,7 @@ EOF;
 		$this->assertEquals( 2, count( wp_get_post_tags( $post_id ) ) );
 		$input    = array(
 			'action' => 'update',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 			'delete' => array( 'category' ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -601,7 +565,7 @@ EOF;
 		$post_id  = self::insert_post();
 		$input    = array(
 			'action' => 'update',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 			'delete' => array( 'content' => array( 'to delete ' ) ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -612,7 +576,7 @@ EOF;
 		$post_id  = self::insert_post();
 		$input    = array(
 			'action' => 'update',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 			'add'    => array( 'photo' => array() ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -714,7 +678,7 @@ EOF;
 		$post_id  = self::insert_post();
 		$input    = array(
 			'action'  => 'update',
-			'url'     => 'http://example.org/?p=' . $post_id,
+			'url'     => home_url( '/?p=' . $post_id ),
 			'replace' => 'foo',
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -724,7 +688,7 @@ EOF;
 		$post_id  = self::insert_post();
 		$input    = array(
 			'action' => 'update',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 			'add'    => 'foo',
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -734,7 +698,7 @@ EOF;
 		$post_id  = self::insert_post();
 		$input    = array(
 			'action' => 'update',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 			'delete' => 'foo',
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -744,7 +708,7 @@ EOF;
 		$post_id  = self::insert_post();
 		$POST     = array(
 			'action' => 'delete',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 		);
 		$response = $this->dispatch( self::create_form_request( $POST ), static::$author_id );
 		$this->check( $response, 200 );
@@ -756,7 +720,7 @@ EOF;
 		$post_id  = self::insert_post();
 		$POST     = array(
 			'action' => 'delete',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 		);
 		$response = $this->dispatch( self::create_form_request( $POST ), static::$subscriber_id );
 		$this->check( $response, 403, 'insufficient_scope' );
@@ -765,7 +729,7 @@ EOF;
 	public function test_delete_post_not_found() {
 		$POST     = array(
 			'action' => 'delete',
-			'url'    => 'http://example.org/?p=999',
+			'url'    => home_url( '/?p=999' ),
 		);
 		$response = $this->dispatch( self::create_form_request( $POST ), static::$author_id );
 		$this->check(
@@ -773,7 +737,7 @@ EOF;
 			400,
 			array(
 				'error'             => 'invalid_request',
-				'error_description' => 'http://example.org/?p=999 not found',
+				'error_description' => home_url( '/?p=999' ) . ' not found',
 			)
 		);
 	}
@@ -799,7 +763,7 @@ EOF;
 	public function test_undelete_post_not_found() {
 		$POST     = array(
 			'action' => 'undelete',
-			'url'    => 'http://example.org/?p=999',
+			'url'    => home_url( '/?p=999' ),
 		);
 		$response = $this->dispatch( self::create_form_request( $POST ), static::$author_id );
 		$this->check(
@@ -807,7 +771,7 @@ EOF;
 			400,
 			array(
 				'error'             => 'invalid_request',
-				'error_description' => 'deleted post http://example.org/?p=999 not found',
+				'error_description' => 'deleted post ' . home_url( '/?p=999' ) . ' not found',
 			)
 		);
 	}
@@ -816,7 +780,7 @@ EOF;
 		$post_id  = self::insert_post();
 		$POST     = array(
 			'action' => 'foo',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 		);
 		$response = $this->dispatch( self::create_form_request( $POST ), static::$author_id );
 		$this->check( $response, 400, 'invalid_request' );
