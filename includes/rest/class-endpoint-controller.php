@@ -912,8 +912,9 @@ class Endpoint_Controller extends \WP_REST_Controller {
 					}
 				} else {
 					foreach ( $values as $val ) {
+						// alt is optional in the object form of a media value, value is not.
 						$url       = is_array( $val ) ? $val['value'] : $val;
-						$desc      = is_array( $val ) ? $val['alt'] : null;
+						$desc      = is_array( $val ) ? \mp_get( $val, 'alt', null ) : null;
 						$att_ids[] = $this->check_error(
 							$media_controller->media_sideload_url( $url, $post_id, $desc )
 						);
