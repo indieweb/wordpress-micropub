@@ -674,13 +674,21 @@ class Endpoint_Controller extends \WP_REST_Controller {
 
 		\kses_remove_filters();
 		$args['ID'] = $this->check_error( \wp_insert_post( $args, true ) );
+		\kses_init_filters();
 
-		if ( $args['ID'] && array_key_exists( 'client_uid', $this->micropub_auth_response ) ) {
+		// check_error() returns an Error object rather than throwing, and an object
+		// is truthy, so the insert failure has to be tested for explicitly before
+		// the ID is used as a post ID. The caller checks for it too, but only after
+		// this method has returned.
+		if ( \is_micropub_error( $args['ID'] ) ) {
+			return;
+		}
+
+		if ( array_key_exists( 'client_uid', $this->micropub_auth_response ) ) {
 			\wp_set_object_terms( $args['ID'], array( $this->micropub_auth_response['client_uid'] ), 'indieauth_client' );
 		}
 
 		$args['post_url'] = \get_permalink( $args['ID'] );
-		\kses_init_filters();
 	}
 
 	/**
