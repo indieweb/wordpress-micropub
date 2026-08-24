@@ -826,6 +826,22 @@ class Endpoint_Controller extends \WP_REST_Controller {
 			$args['post_category'] = array();
 			$args['tags_input']    = array();
 			foreach ( $props['category'] as $mp_cat ) {
+				// A category is not always a string. Person tags are sent as nested
+				// microformats2 h-cards, for example by OwnYourSwarm on a check-in, in
+				// which case the person is tagged by their URL. The full h-card is kept
+				// in the mf2_category meta, which store_mf2() builds from the original
+				// input rather than from these arguments.
+				if ( is_array( $mp_cat ) ) {
+					$mp_cat = \mp_get( \mp_get( $mp_cat, 'properties' ), 'url', '', true );
+				}
+
+				// Anything that did not resolve to a usable term — an h-card carrying no
+				// URL, or a nested object of some other kind — would otherwise reach
+				// trim() inside wp_set_object_terms() and raise a TypeError on PHP 8.
+				if ( ! is_scalar( $mp_cat ) || '' === $mp_cat ) {
+					continue;
+				}
+
 				$wp_cat = \get_category_by_slug( $mp_cat );
 				if ( $wp_cat ) {
 					$args['post_category'][] = $wp_cat->term_id;
