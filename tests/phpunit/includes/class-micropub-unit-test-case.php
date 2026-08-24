@@ -4,6 +4,8 @@
 class Micropub_UnitTestCase extends WP_UnitTestCase {
 
 
+	protected static $route = '/' . MICROPUB_NAMESPACE . '/endpoint';
+
 	protected static $author_id;
 	protected static $subscriber_id;
 	protected static $scopes;
@@ -55,6 +57,31 @@ class Micropub_UnitTestCase extends WP_UnitTestCase {
 		parent::set_up();
 	}
 
+	/**
+	 * Runs a callback with a handler that records every PHP diagnostic it raises.
+	 *
+	 * @param callable $callback The code under test.
+	 * @return string[] The messages raised, empty when the callback stayed quiet.
+	 */
+	protected function record_php_errors( $callback ) {
+		$errors = array();
+
+		set_error_handler(
+			function ( $errno, $errstr ) use ( &$errors ) {
+				$errors[] = $errstr;
+				return true;
+			}
+		);
+
+		try {
+			$callback();
+		} finally {
+			restore_error_handler();
+		}
+
+		return $errors;
+	}
+
 	public function dispatch( $request, $user_id ) {
 		add_filter( 'indieauth_scopes', array( get_called_class(), 'scopes' ), 12 );
 		add_filter( 'indieauth_response', array( get_called_class(), 'auth_response' ), 12 );
@@ -63,14 +90,14 @@ class Micropub_UnitTestCase extends WP_UnitTestCase {
 	}
 
 	public function create_form_request( $POST ) {
-		$request = new WP_REST_Request( 'POST', \Micropub\Endpoint::get_route( true ) );
+		$request = new WP_REST_Request( 'POST', static::$route );
 		$request->set_header( 'Content-Type', 'application/x-www-form-urlencoded' );
 		$request->set_body_params( $POST );
 		return $request;
 	}
 
 	public function create_json_request( $input ) {
-		$request = new WP_REST_Request( 'POST', \Micropub\Endpoint::get_route( true ) );
+		$request = new WP_REST_Request( 'POST', static::$route );
 		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( wp_json_encode( $input ) );
 		return $request;
@@ -81,7 +108,7 @@ class Micropub_UnitTestCase extends WP_UnitTestCase {
 	}
 
 	public function query_request( $GET ) {
-		$request = new WP_REST_Request( 'GET', \Micropub\Endpoint::get_route( true ) );
+		$request = new WP_REST_Request( 'GET', static::$route );
 		$request->set_query_params( $GET );
 		return $request;
 	}
@@ -89,10 +116,10 @@ class Micropub_UnitTestCase extends WP_UnitTestCase {
 	public function query_source( $post_id ) {
 		$GET      = array(
 			'q'   => 'source',
-			'url' => 'http://example.org/?p=' . $post_id,
+			'url' => home_url( '/?p=' . $post_id ),
 		);
 		$request  = self::query_request( $GET );
-		$response = \Micropub\Endpoint::query_handler( $request );
+		$response = $this->dispatch( $request, static::$author_id );
 		return $response->get_data();
 	}
 }
