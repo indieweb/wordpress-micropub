@@ -3,8 +3,8 @@
 - Contributors: indieweb, snarfed, dshanske, pfefferle
 - Tags: micropub, publish, indieweb, microformats
 - Requires at least: 4.9.9
-- Tested up to: 7.0
-- Stable tag: 2.5.2
+- Tested up to: 7.1
+- Stable tag: 2.5.3
 - Requires PHP: 7.2
 - License: CC0
 - License URI: http://creativecommons.org/publicdomain/zero/1.0/
@@ -72,6 +72,14 @@ These configuration options can be enabled by adding them to your wp-config.php:
 ## Changelog
 
 Project and support maintained on GitHub at [indieweb/wordpress-micropub](https://github.com/indieweb/wordpress-micropub).
+
+### 2.5.3
+
+* Fix a fatal error when a category is sent as a nested h-card, for example a person tag from a Swarm check-in, which is now tagged by their URL (#329)
+* Fix a failed post insert being used as a post ID, which caused a PHP warning and a wrong `post_url` in the response
+* Sideload photos, videos and audio that are added or replaced by an update request, so media sent after the post was created is no longer ignored (#292, #259)
+* Store the local attachment URL in the `mf2_photo`, `mf2_video`, `mf2_audio` and `mf2_featured` meta instead of the remote source URL
+* Tested up to WordPress 7.1
 
 ### 2.5.2
 
