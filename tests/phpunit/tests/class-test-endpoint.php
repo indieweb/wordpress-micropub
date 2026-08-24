@@ -608,6 +608,108 @@ EOF;
 		$this->check( $response, 400, 'invalid_request' );
 	}
 
+	public function test_update_add_media_property_allowed() {
+		$post_id  = self::insert_post();
+		$input    = array(
+			'action' => 'update',
+			'url'    => 'http://example.org/?p=' . $post_id,
+			'add'    => array( 'photo' => array() ),
+		);
+		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
+		$this->check( $response, 200 );
+	}
+
+	public function test_media_values_collects_from_properties_add_and_replace() {
+		$controller = new \Micropub\Rest\Endpoint_Controller();
+		$reflection = new ReflectionObject( $controller );
+		$input      = $reflection->getProperty( 'input' );
+		$input->setAccessible( true );
+		$input->setValue(
+			$controller,
+			array(
+				'properties' => array( 'photo' => array( 'https://example.com/a.jpg' ) ),
+				'add'        => array( 'photo' => array( 'https://example.com/b.jpg' ) ),
+				'replace'    => array( 'photo' => array( 'https://example.com/c.jpg' ) ),
+			)
+		);
+
+		$this->assertEquals(
+			array(
+				'https://example.com/a.jpg',
+				'https://example.com/b.jpg',
+				'https://example.com/c.jpg',
+			),
+			$controller->media_values( 'photo' )
+		);
+		$this->assertEquals( array(), $controller->media_values( 'video' ) );
+	}
+
+	public function test_store_media_meta_replaces_source_urls() {
+		$post_id    = self::insert_post();
+		$controller = new \Micropub\Rest\Endpoint_Controller();
+
+		// What store_mf2() would have written from the request.
+		update_post_meta( $post_id, 'mf2_photo', array( 'http://localhost/kept.jpg', 'https://example.com/remote.jpg' ) );
+
+		$controller->store_media_meta(
+			$post_id,
+			'photo',
+			array( 'https://example.com/remote.jpg' ),
+			array( 'http://localhost/wp-content/uploads/local.jpg' )
+		);
+
+		$this->assertEquals(
+			array( 'http://localhost/kept.jpg', 'http://localhost/wp-content/uploads/local.jpg' ),
+			get_post_meta( $post_id, 'mf2_photo', true )
+		);
+	}
+
+	public function test_store_media_meta_handles_values_with_alt_text() {
+		$post_id    = self::insert_post();
+		$controller = new \Micropub\Rest\Endpoint_Controller();
+		$photo      = array(
+			'value' => 'https://example.com/remote.jpg',
+			'alt'   => 'a description',
+		);
+
+		update_post_meta( $post_id, 'mf2_photo', array( $photo ) );
+
+		$controller->store_media_meta( $post_id, 'photo', array( $photo ), array( 'http://localhost/wp-content/uploads/local.jpg' ) );
+
+		$this->assertEquals(
+			array( 'http://localhost/wp-content/uploads/local.jpg' ),
+			get_post_meta( $post_id, 'mf2_photo', true )
+		);
+	}
+
+	public function test_store_media_meta_keeps_values_that_were_not_sideloaded() {
+		$post_id    = self::insert_post();
+		$controller = new \Micropub\Rest\Endpoint_Controller();
+
+		update_post_meta( $post_id, 'mf2_photo', array( 'https://example.com/remote.jpg' ) );
+
+		// An uploaded file part wins over the URLs in the request, which are then
+		// never sideloaded and so must survive the write untouched.
+		$controller->store_media_meta( $post_id, 'photo', array(), array( 'http://localhost/wp-content/uploads/upload.jpg' ) );
+
+		$this->assertEquals(
+			array( 'https://example.com/remote.jpg', 'http://localhost/wp-content/uploads/upload.jpg' ),
+			get_post_meta( $post_id, 'mf2_photo', true )
+		);
+	}
+
+	public function test_store_media_meta_on_first_write() {
+		$post_id    = self::insert_post();
+		$controller = new \Micropub\Rest\Endpoint_Controller();
+
+		$controller->store_media_meta( $post_id, 'photo', array(), array( 'http://localhost/wp-content/uploads/local.jpg' ) );
+
+		$this->assertEquals(
+			array( 'http://localhost/wp-content/uploads/local.jpg' ),
+			get_post_meta( $post_id, 'mf2_photo', true )
+		);
+	}
+
 	public function test_update_replace_not_array() {
 		$post_id  = self::insert_post();
 		$input    = array(

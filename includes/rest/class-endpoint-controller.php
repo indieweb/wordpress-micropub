@@ -18,6 +18,13 @@ class Endpoint_Controller extends \WP_REST_Controller {
 	use Micropub;
 
 	/**
+	 * Properties whose values are media that has to be sideloaded.
+	 *
+	 * @var string[]
+	 */
+	const MEDIA_PROPERTIES = array( 'photo', 'video', 'audio', 'featured' );
+
+	/**
 	 * The namespace of this controller's route.
 	 *
 	 * @var string
@@ -552,19 +559,20 @@ class Endpoint_Controller extends \WP_REST_Controller {
 			if ( ! is_array( $add ) ) {
 				return new Error( 'invalid_request', 'add must be an object', 400 );
 			}
-			if ( array_diff( array_keys( $add ), array( 'category', 'syndication' ) ) ) {
-				return new Error( 'invalid_request', 'can only add to category and syndication; other properties not supported', 400 );
+			$addable = array_merge( array( 'category', 'syndication' ), self::MEDIA_PROPERTIES );
+			if ( array_diff( array_keys( $add ), $addable ) ) {
+				return new Error( 'invalid_request', sprintf( 'can only add to %1$s; other properties not supported', implode( ', ', $addable ) ), 400 );
 			}
 			$add_args = $this->mp_to_wp( array( 'properties' => $add ) );
-			if ( $add_args['tags_input'] ) {
+			if ( \mp_get( $add_args, 'tags_input' ) ) {
 				$args['tags_input'] = array_merge(
-					$args['tags_input'] ? $args['tags_input'] : array(),
+					\mp_get( $args, 'tags_input' ),
 					$add_args['tags_input']
 				);
 			}
-			if ( $add_args['post_category'] ) {
+			if ( \mp_get( $add_args, 'post_category' ) ) {
 				$args['post_category'] = array_merge(
-					$args['post_category'] ? $args['post_category'] : array(),
+					\mp_get( $args, 'post_category' ),
 					$add_args['post_category']
 				);
 			}
@@ -873,6 +881,28 @@ class Endpoint_Controller extends \WP_REST_Controller {
 	}
 
 	/**
+	 * Collects the media values of a property from the request.
+	 *
+	 * A create request carries media under `properties`, an update request under
+	 * `add` or `replace`, so all three have to be considered.
+	 *
+	 * @param string $field The property name.
+	 * @return array The values found, in request order.
+	 */
+	public function media_values( $field ) {
+		$values = array();
+
+		foreach ( array( 'properties', 'add', 'replace' ) as $key ) {
+			$group = \mp_get( $this->input, $key );
+			if ( is_array( $group ) && isset( $group[ $field ] ) ) {
+				$values = array_merge( $values, (array) $group[ $field ] );
+			}
+		}
+
+		return $values;
+	}
+
+	/**
 	 * Handles file uploads.
 	 *
 	 * @param int $post_id Post ID.
@@ -880,11 +910,16 @@ class Endpoint_Controller extends \WP_REST_Controller {
 	public function default_file_handler( $post_id ) {
 		$media_controller = new Media_Controller();
 
-		foreach ( array( 'photo', 'video', 'audio', 'featured' ) as $field ) {
-			$props   = \mp_get( $this->input, 'properties' );
+		foreach ( self::MEDIA_PROPERTIES as $field ) {
+			$values  = $this->media_values( $field );
 			$att_ids = array();
 
-			if ( isset( $this->files[ $field ] ) || isset( $props[ $field ] ) ) {
+			// Only the values that were actually sideloaded may be swapped out of the
+			// metadata further down. An uploaded file part takes precedence over them,
+			// in which case they are left alone rather than dropped.
+			$sideloaded = array();
+
+			if ( isset( $this->files[ $field ] ) || ! empty( $values ) ) {
 				if ( isset( $this->files[ $field ] ) ) {
 					$files = $this->files[ $field ];
 					if ( is_array( $files['name'] ) ) {
@@ -899,13 +934,16 @@ class Endpoint_Controller extends \WP_REST_Controller {
 							$media_controller->media_handle_upload( $files, $post_id )
 						);
 					}
-				} elseif ( isset( $props[ $field ] ) ) {
-					foreach ( $props[ $field ] as $val ) {
+				} else {
+					foreach ( $values as $val ) {
+						// alt is optional in the object form of a media value, value is not.
 						$url       = is_array( $val ) ? $val['value'] : $val;
-						$desc      = is_array( $val ) ? $val['alt'] : null;
+						$desc      = is_array( $val ) ? \mp_get( $val, 'alt', null ) : null;
 						$att_ids[] = $this->check_error(
 							$media_controller->media_sideload_url( $url, $post_id, $desc )
 						);
+
+						$sideloaded[] = $val;
 					}
 				}
 
@@ -925,9 +963,43 @@ class Endpoint_Controller extends \WP_REST_Controller {
 				} else {
 					$this->input['properties'][ $field ] = array_merge( $this->input['properties'][ $field ], $att_urls );
 				}
-				\add_post_meta( $post_id, 'mf2_' . $field, $att_urls, true );
+				$this->store_media_meta( $post_id, $field, $sideloaded, $att_urls );
 			}
 		}
+	}
+
+	/**
+	 * Stores the local URLs of sideloaded media as post metadata.
+	 *
+	 * `store_mf2()` has already written the values as they arrived, which for
+	 * sideloaded media means the remote source URLs. Swap those out for the local
+	 * ones rather than appending, so the property does not end up listing every
+	 * attachment twice.
+	 *
+	 * @param int    $post_id  Post ID.
+	 * @param string $field    The property name.
+	 * @param array  $sources  The source values that were sideloaded.
+	 * @param array  $att_urls The local URLs of the resulting attachments.
+	 */
+	public function store_media_meta( $post_id, $field, $sources, $att_urls ) {
+		$key      = 'mf2_' . $field;
+		$existing = \get_post_meta( $post_id, $key, true );
+		$existing = is_array( $existing ) ? $existing : array();
+
+		$urls = array();
+		foreach ( $sources as $source ) {
+			$urls[] = is_array( $source ) && isset( $source['value'] ) ? $source['value'] : $source;
+		}
+
+		$keep = array();
+		foreach ( $existing as $value ) {
+			$url = is_array( $value ) && isset( $value['value'] ) ? $value['value'] : $value;
+			if ( ! in_array( $url, $urls, true ) ) {
+				$keep[] = $value;
+			}
+		}
+
+		\update_post_meta( $post_id, $key, array_merge( $keep, $att_urls ) );
 	}
 
 	/**
