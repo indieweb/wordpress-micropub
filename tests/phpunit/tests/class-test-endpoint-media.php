@@ -25,31 +25,6 @@ class Micropub_Endpoint_Media_Test extends Micropub_UnitTestCase {
 	}
 
 	/**
-	 * Serves download_url() from the local test data instead of the network.
-	 *
-	 * download_url() passes a filename and asks for a streamed response, so the
-	 * bytes have to be put in place here rather than returned in the body.
-	 */
-	public function serve_test_image( $preempt, $args ) {
-		if ( empty( $args['filename'] ) ) {
-			return $preempt;
-		}
-
-		copy( DIR_MEDIATESTDATA . '/canola.jpg', $args['filename'] );
-
-		return array(
-			'headers'  => array(),
-			'body'     => '',
-			'response' => array(
-				'code'    => 200,
-				'message' => 'OK',
-			),
-			'cookies'  => array(),
-			'filename' => $args['filename'],
-		);
-	}
-
-	/**
 	 * A source URL for a photo.
 	 *
 	 * It sits on the site's own host so that wp_http_validate_url() does not have
