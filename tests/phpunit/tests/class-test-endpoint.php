@@ -682,6 +682,22 @@ EOF;
 		);
 	}
 
+	public function test_store_media_meta_keeps_values_that_were_not_sideloaded() {
+		$post_id    = self::insert_post();
+		$controller = new \Micropub\Rest\Endpoint_Controller();
+
+		update_post_meta( $post_id, 'mf2_photo', array( 'https://example.com/remote.jpg' ) );
+
+		// An uploaded file part wins over the URLs in the request, which are then
+		// never sideloaded and so must survive the write untouched.
+		$controller->store_media_meta( $post_id, 'photo', array(), array( 'http://localhost/wp-content/uploads/upload.jpg' ) );
+
+		$this->assertEquals(
+			array( 'https://example.com/remote.jpg', 'http://localhost/wp-content/uploads/upload.jpg' ),
+			get_post_meta( $post_id, 'mf2_photo', true )
+		);
+	}
+
 	public function test_store_media_meta_on_first_write() {
 		$post_id    = self::insert_post();
 		$controller = new \Micropub\Rest\Endpoint_Controller();

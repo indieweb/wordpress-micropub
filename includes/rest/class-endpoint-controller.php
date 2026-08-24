@@ -890,6 +890,11 @@ class Endpoint_Controller extends \WP_REST_Controller {
 			$values  = $this->media_values( $field );
 			$att_ids = array();
 
+			// Only the values that were actually sideloaded may be swapped out of the
+			// metadata further down. An uploaded file part takes precedence over them,
+			// in which case they are left alone rather than dropped.
+			$sideloaded = array();
+
 			if ( isset( $this->files[ $field ] ) || ! empty( $values ) ) {
 				if ( isset( $this->files[ $field ] ) ) {
 					$files = $this->files[ $field ];
@@ -912,6 +917,8 @@ class Endpoint_Controller extends \WP_REST_Controller {
 						$att_ids[] = $this->check_error(
 							$media_controller->media_sideload_url( $url, $post_id, $desc )
 						);
+
+						$sideloaded[] = $val;
 					}
 				}
 
@@ -931,7 +938,7 @@ class Endpoint_Controller extends \WP_REST_Controller {
 				} else {
 					$this->input['properties'][ $field ] = array_merge( $this->input['properties'][ $field ], $att_urls );
 				}
-				$this->store_media_meta( $post_id, $field, $values, $att_urls );
+				$this->store_media_meta( $post_id, $field, $sideloaded, $att_urls );
 			}
 		}
 	}
