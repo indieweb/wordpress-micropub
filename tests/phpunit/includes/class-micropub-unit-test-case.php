@@ -58,6 +58,32 @@ class Micropub_UnitTestCase extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Serves download_url() from the local test data instead of the network.
+	 *
+	 * download_url() asks for a streamed response and passes the file to write to,
+	 * so the bytes go in place here rather than into the returned body. Hook it on
+	 * pre_http_request to sideload without touching the network.
+	 */
+	public function serve_test_image( $preempt, $args ) {
+		if ( empty( $args['filename'] ) ) {
+			return $preempt;
+		}
+
+		copy( DIR_MEDIATESTDATA . '/canola.jpg', $args['filename'] );
+
+		return array(
+			'headers'  => array(),
+			'body'     => '',
+			'response' => array(
+				'code'    => 200,
+				'message' => 'OK',
+			),
+			'cookies'  => array(),
+			'filename' => $args['filename'],
+		);
+	}
+
+	/**
 	 * Runs a callback with a handler that records every PHP diagnostic it raises.
 	 *
 	 * @param callable $callback The code under test.
