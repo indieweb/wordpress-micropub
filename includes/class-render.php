@@ -70,6 +70,27 @@ class Render {
 	}
 
 	/**
+	 * Check if the current theme provides its own microformats2 markup.
+	 *
+	 * When the theme already outputs an e-content wrapper, Micropub skips
+	 * adding its own to avoid duplicate e-content elements.
+	 *
+	 * @return bool True if the theme supports microformats2.
+	 */
+	public static function theme_supports_microformats2() {
+		/**
+		 * Filters whether the theme provides its own microformats2 markup.
+		 *
+		 * Themes declare support via add_theme_support( 'microformats2' ).
+		 * Plugins or themes that add an e-content wrapper without declaring
+		 * support can return true here to prevent a duplicate wrapper.
+		 *
+		 * @param bool $supports Whether the theme supports microformats2.
+		 */
+		return \apply_filters( 'micropub_theme_supports_microformats2', \current_theme_supports( 'microformats2' ) );
+	}
+
+	/**
 	 * Generates and returns a post_content string suitable for wp_insert_post()
 	 * and friends.
 	 *
@@ -159,9 +180,15 @@ class Render {
 		}
 
 		if ( ! empty( $post_content ) ) {
-			$lines[] = '<div class="e-content">';
+			// Only wrap in e-content if theme doesn't already provide microformats2 support.
+			$wrap_econtent = ! self::theme_supports_microformats2();
+			if ( $wrap_econtent ) {
+				$lines[] = '<div class="e-content">';
+			}
 			$lines[] = $post_content;
-			$lines[] = '</div>';
+			if ( $wrap_econtent ) {
+				$lines[] = '</div>';
+			}
 		}
 
 		// Generate gallery markup for media fields.

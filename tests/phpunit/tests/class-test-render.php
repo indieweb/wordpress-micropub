@@ -218,4 +218,59 @@ EOF
 			$post_content
 		);
 	}
+
+	function test_no_econtent_wrapper_when_theme_supports_microformats2() {
+		// Simulate theme support for microformats2.
+		add_theme_support( 'microformats2' );
+
+		$content      = '<p>Test content</p>';
+		$input        = array(
+			'properties' => array(
+				'content' => array( $content ),
+			),
+		);
+		$post_content = \Micropub\Render::generate_post_content( $content, $input );
+
+		// Should not have e-content wrapper.
+		$this->assertEquals( '<p>Test content</p>', $post_content );
+
+		// Clean up.
+		remove_theme_support( 'microformats2' );
+	}
+
+	function test_econtent_wrapper_when_theme_does_not_support_microformats2() {
+		// Ensure no theme support.
+		remove_theme_support( 'microformats2' );
+
+		$content      = '<p>Test content</p>';
+		$input        = array(
+			'properties' => array(
+				'content' => array( $content ),
+			),
+		);
+		$post_content = \Micropub\Render::generate_post_content( $content, $input );
+
+		// Should have e-content wrapper.
+		$this->assertEquals( "<div class=\"e-content\">\n<p>Test content</p>\n</div>", $post_content );
+	}
+
+	function test_no_econtent_wrapper_with_filtered_mf2_support() {
+		// Simulate a plugin declaring microformats2 support via the filter.
+		remove_theme_support( 'microformats2' );
+		add_filter( 'micropub_theme_supports_microformats2', '__return_true' );
+
+		$content      = '<p>Test content</p>';
+		$input        = array(
+			'properties' => array(
+				'content' => array( $content ),
+			),
+		);
+		$post_content = \Micropub\Render::generate_post_content( $content, $input );
+
+		// Should not have e-content wrapper due to filtered support.
+		$this->assertEquals( '<p>Test content</p>', $post_content );
+
+		// Clean up.
+		remove_filter( 'micropub_theme_supports_microformats2', '__return_true' );
+	}
 }
