@@ -218,4 +218,66 @@ EOF
 			$post_content
 		);
 	}
+
+	function test_escapes_interaction() {
+		$input        = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'like-of' => array(
+					array(
+						'url'  => 'http://example.invalid/" onclick="alert(1)',
+						'name' => '<script>alert(1)</script>',
+					),
+				),
+			),
+		);
+		$post_content = \Micropub\Render::generate_post_content( '', $input );
+		$this->assertStringNotContainsString( '<script>', $post_content );
+		$this->assertStringNotContainsString( '" onclick=', $post_content );
+		$this->assertStringContainsString( '&lt;script&gt;alert(1)&lt;/script&gt;', $post_content );
+	}
+
+	function test_escapes_reply() {
+		$input        = $this->create_interaction( 'in-reply-to' );
+		$input['properties']['in-reply-to'] = array( 'javascript:alert(1)' );
+		$post_content = \Micropub\Render::generate_post_content( '', $input );
+		$this->assertStringNotContainsString( 'javascript:', $post_content );
+	}
+
+	function test_escapes_checkin_and_rsvp() {
+		$input        = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'rsvp'    => array( '"><script>alert(1)</script>' ),
+				'checkin' => array(
+					array(
+						'properties' => array(
+							'name' => array( '<script>alert(2)</script>' ),
+							'url'  => array( 'http://place/" onclick="alert(3)' ),
+						),
+					),
+				),
+			),
+		);
+		$post_content = \Micropub\Render::generate_post_content( '', $input );
+		$this->assertStringNotContainsString( '<script>', $post_content );
+		$this->assertStringNotContainsString( '" onclick=', $post_content );
+	}
+
+	function test_escapes_event() {
+		$input        = array(
+			'type'       => array( 'h-event' ),
+			'properties' => array(
+				'name'        => array( '<script>alert(1)</script>' ),
+				'location'    => array( 'http://a/" onclick="alert(2)' ),
+				'summary'     => array( '<em>ok</em><script>alert(3)</script>' ),
+				'description' => array( '<img src=x onerror=alert(4)>' ),
+			),
+		);
+		$post_content = \Micropub\Render::generate_post_content( '', $input );
+		$this->assertStringNotContainsString( '<script>', $post_content );
+		$this->assertStringNotContainsString( '" onclick=', $post_content );
+		$this->assertStringNotContainsString( 'onerror', $post_content );
+		$this->assertStringContainsString( '<em>ok</em>', $post_content );
+	}
 }
