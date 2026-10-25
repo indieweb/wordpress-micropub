@@ -510,6 +510,10 @@ class Media_Controller extends \WP_REST_Controller {
 	public function media_sideload_url( $url, $post_id = 0, $alt = null ) {
 		$id = \attachment_url_to_postid( $url );
 		if ( $id ) {
+			// Reference other users' media, but only attach media the user may edit.
+			if ( ! \current_user_can( 'edit_post', $id ) ) {
+				return $id;
+			}
 			\wp_update_post(
 				array(
 					'ID'          => $id,

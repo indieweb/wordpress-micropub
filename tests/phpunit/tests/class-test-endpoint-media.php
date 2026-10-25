@@ -10,7 +10,7 @@ class Micropub_Endpoint_Media_Test extends Micropub_UnitTestCase {
 	);
 
 	public function insert_post() {
-		return wp_insert_post( static::$wp_args );
+		return wp_insert_post( array_merge( static::$wp_args, array( 'post_author' => static::$author_id ) ) );
 	}
 
 	public function set_up() {
@@ -200,5 +200,31 @@ class Micropub_Endpoint_Media_Test extends Micropub_UnitTestCase {
 		$response = $this->dispatch( $request, static::$author_id );
 		$this->assertEquals( 400, $response->get_status() );
 		$this->assertEquals( 'invalid_request', $response->get_data()['error'] );
+	}
+
+	public function test_update_add_does_not_reparent_other_users_attachment() {
+		$admin_id      = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$admin_post    = self::factory()->post->create( array( 'post_author' => $admin_id ) );
+		$attachment_id = self::factory()->attachment->create_object(
+			'admin-photo.jpg',
+			$admin_post,
+			array(
+				'post_author'    => $admin_id,
+				'post_mime_type' => 'image/jpeg',
+			)
+		);
+		$post_id       = self::insert_post();
+
+		$request = self::create_json_request(
+			array(
+				'action' => 'update',
+				'url'    => $this->post_url( $post_id ),
+				'add'    => array( 'photo' => array( wp_get_attachment_url( $attachment_id ) ) ),
+			)
+		);
+
+		$response = $this->dispatch( $request, static::$author_id );
+		$this->assertEquals( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertEquals( $admin_post, get_post( $attachment_id )->post_parent );
 	}
 }
