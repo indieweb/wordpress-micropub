@@ -1000,4 +1000,43 @@ EOF;
 		$this->assertGreaterThanOrEqual( 400, $response->get_status() );
 		$this->assertArrayNotHasKey( 'post_url', (array) $response->get_data() );
 	}
+
+	public function test_create_html_content_is_filtered_for_author() {
+		$input = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array( array( 'html' => '<p class="p-note">hi</p><script>alert(1)</script>' ) ),
+			),
+		);
+		$post  = self::check_create( self::create_json_request( $input ) );
+		$this->assertStringNotContainsString( '<script>', $post->post_content );
+		$this->assertStringContainsString( '<p class="p-note">hi</p>', $post->post_content );
+	}
+
+	public function test_create_html_content_is_kept_for_unfiltered_html() {
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		if ( is_multisite() ) {
+			grant_super_admin( $admin_id );
+		}
+		$input = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array( array( 'html' => '<script>alert(1)</script>' ) ),
+			),
+		);
+		$post  = self::check_create( self::create_json_request( $input ), $admin_id );
+		$this->assertStringContainsString( '<script>alert(1)</script>', $post->post_content );
+	}
+
+	public function test_update_html_content_is_filtered_for_author() {
+		$post_id  = $this->check_create( self::create_form_request( self::$post ) )->ID;
+		$input    = array(
+			'action'  => 'update',
+			'url'     => home_url( '/?p=' . $post_id ),
+			'replace' => array( 'content' => array( array( 'html' => '<script>alert(1)</script>' ) ) ),
+		);
+		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
+		$this->check( $response, 200 );
+		$this->assertStringNotContainsString( '<script>', get_post( $post_id )->post_content );
+	}
 }

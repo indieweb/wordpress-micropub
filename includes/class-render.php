@@ -119,15 +119,15 @@ class Render {
 						$lines[] = sprintf(
 							'<a class="u-%1s" href="%2s"></a>',
 							$prop,
-							$val['url']
+							\esc_url( $val['url'] )
 						);
 					} else {
 						$lines[] = sprintf(
 							'<p>%1s <a class="u-%2s" href="%3s">%4s</a>.</p>',
 							$verbs[ $prop ],
 							$prop,
-							$val['url'],
-							$val['name']
+							\esc_url( $val['url'] ),
+							\esc_html( $val['name'] )
 						);
 					}
 				}
@@ -139,13 +139,19 @@ class Render {
 			$checkin = \wp_is_numeric_array( $props['checkin'] ) ? $props['checkin'][0] : $props['checkin'];
 			$name    = $checkin['properties']['name'][0];
 			$urls    = $checkin['properties']['url'];
-			$lines[] = '<p>Checked into <a class="h-card p-location" href="' .
-				( isset( $urls[1] ) ? $urls[1] : $urls[0] ) . '">' . $name . '</a>.</p>';
+			$lines[] = sprintf(
+				'<p>Checked into <a class="h-card p-location" href="%1$s">%2$s</a>.</p>',
+				\esc_url( isset( $urls[1] ) ? $urls[1] : $urls[0] ),
+				\esc_html( $name )
+			);
 		}
 
 		if ( isset( $props['rsvp'] ) ) {
-			$lines[] = '<p>RSVPs <data class="p-rsvp" value="' . $props['rsvp'][0] .
-				'">' . $props['rsvp'][0] . '</data>.</p>';
+			$lines[] = sprintf(
+				'<p>RSVPs <data class="p-rsvp" value="%1$s">%2$s</data>.</p>',
+				\esc_attr( $props['rsvp'][0] ),
+				\esc_html( $props['rsvp'][0] )
+			);
 		}
 
 		// Event.
@@ -155,7 +161,7 @@ class Render {
 
 		// If there is no content use the summary property as content.
 		if ( empty( $post_content ) && isset( $props['summary'] ) ) {
-			$post_content = $props['summary'][0];
+			$post_content = \wp_kses_post( $props['summary'][0] );
 		}
 
 		if ( ! empty( $post_content ) ) {
@@ -186,7 +192,7 @@ class Render {
 		$lines[] = '<div class="h-event">';
 
 		if ( isset( $props['name'] ) ) {
-			$lines[] = '<h1 class="p-name">' . $props['name'][0] . '</h1>';
+			$lines[] = sprintf( '<h1 class="p-name">%s</h1>', \esc_html( $props['name'][0] ) );
 		}
 
 		$lines[] = '<p>';
@@ -194,15 +200,17 @@ class Render {
 		foreach ( array( 'start', 'end' ) as $cls ) {
 			if ( isset( $props[ $cls ][0] ) ) {
 				$datetime = new \DateTimeImmutable( $props[ $cls ][0] );
-				$times[]  = '<time class="dt-' . $cls . '" datetime="' .
-					$datetime->format( DATE_W3C ) . '">' . $datetime->format( DATE_W3C ) . '</time>';
+				$times[]  = sprintf( '<time class="dt-%1$s" datetime="%2$s">%2$s</time>', $cls, $datetime->format( DATE_W3C ) );
 			}
 		}
 		$lines[] = implode( "\nto\n", $times );
 
 		if ( isset( $props['location'] ) && 'geo:' !== substr( $props['location'][0], 0, 4 ) ) {
-			$lines[] = 'at <a class="p-location" href="' . $props['location'][0] . '">' .
-			$props['location'][0] . '</a>';
+			$lines[] = sprintf(
+				'at <a class="p-location" href="%1$s">%2$s</a>',
+				\esc_url( $props['location'][0] ),
+				\esc_html( $props['location'][0] )
+			);
 		}
 
 		end( $lines );
@@ -210,11 +218,11 @@ class Render {
 		$lines[]                 = '</p>';
 
 		if ( isset( $props['summary'] ) ) {
-			$lines[] = '<p class="p-summary">' . urldecode( $props['summary'][0] ) . '</p>';
+			$lines[] = sprintf( '<p class="p-summary">%s</p>', \wp_kses_post( urldecode( $props['summary'][0] ) ) );
 		}
 
 		if ( isset( $props['description'] ) ) {
-			$lines[] = '<p class="p-description">' . urldecode( $props['description'][0] ) . '</p>';
+			$lines[] = sprintf( '<p class="p-description">%s</p>', \wp_kses_post( urldecode( $props['description'][0] ) ) );
 		}
 
 		$lines[] = '</div>';
