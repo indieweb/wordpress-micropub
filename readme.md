@@ -4,7 +4,7 @@
 - Tags: micropub, publish, indieweb, microformats
 - Requires at least: 4.9.9
 - Tested up to: 7.1
-- Stable tag: 2.5.3
+- Stable tag: 2.5.4
 - Requires PHP: 7.2
 - License: CC0
 - License URI: http://creativecommons.org/publicdomain/zero/1.0/
@@ -72,6 +72,12 @@ These configuration options can be enabled by adding them to your wp-config.php:
 ## Changelog
 
 Project and support maintained on GitHub at [indieweb/wordpress-micropub](https://github.com/indieweb/wordpress-micropub).
+
+### 2.5.4
+
+* Fix the alt text that clients send for photos being discarded (#335)
+* Escape interaction and event properties when they are rendered into the post content, and keep the kses filters active when a post is inserted
+* Check the per-post capabilities for update, delete, undelete and source queries, and require `upload_files` when a post includes media
 
 ### 2.5.3
 
