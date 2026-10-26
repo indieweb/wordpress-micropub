@@ -1001,6 +1001,84 @@ EOF;
 		$this->assertArrayNotHasKey( 'post_url', (array) $response->get_data() );
 	}
 
+	public function test_update_other_users_post() {
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$post_id  = self::factory()->post->create( array( 'post_author' => $admin_id, 'post_content' => 'original' ) );
+		$input    = array(
+			'action'  => 'update',
+			'url'     => home_url( '/?p=' . $post_id ),
+			'replace' => array( 'content' => array( 'changed' ) ),
+		);
+		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
+		$this->check( $response, 403, 'insufficient_scope' );
+		$this->assertEquals( 'original', get_post( $post_id )->post_content );
+	}
+
+	public function test_delete_other_users_post() {
+		$admin_id       = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$contributor_id = self::factory()->user->create( array( 'role' => 'contributor' ) );
+		$post_id        = self::factory()->post->create( array( 'post_author' => $admin_id ) );
+		$POST           = array(
+			'action' => 'delete',
+			'url'    => home_url( '/?p=' . $post_id ),
+		);
+		foreach ( array( static::$author_id, $contributor_id ) as $user_id ) {
+			$response = $this->dispatch( self::create_form_request( $POST ), $user_id );
+			$this->check( $response, 403, 'insufficient_scope' );
+			$this->assertEquals( 'publish', get_post( $post_id )->post_status );
+		}
+	}
+
+	public function test_undelete_other_users_post() {
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$post_id  = self::factory()->post->create( array( 'post_author' => $admin_id ) );
+		$url      = get_the_guid( $post_id );
+		wp_trash_post( $post_id );
+		$POST     = array(
+			'action' => 'undelete',
+			'url'    => $url,
+		);
+		$response = $this->dispatch( self::create_form_request( $POST ), static::$author_id );
+		$this->check( $response, 403, 'insufficient_scope' );
+		$this->assertEquals( 'trash', get_post( $post_id )->post_status );
+	}
+
+	public function test_undelete_does_not_publish_for_contributor() {
+		$contributor_id = self::factory()->user->create( array( 'role' => 'contributor' ) );
+		$post_id        = self::factory()->post->create(
+			array(
+				'post_author' => $contributor_id,
+				'post_status' => 'pending',
+			)
+		);
+		$url            = get_the_guid( $post_id );
+		wp_trash_post( $post_id );
+		$POST     = array(
+			'action' => 'undelete',
+			'url'    => $url,
+		);
+		$response = $this->dispatch( self::create_form_request( $POST ), $contributor_id );
+		$this->check( $response, 200 );
+		$this->assertNotEquals( 'publish', get_post( $post_id )->post_status );
+	}
+
+	public function test_query_source_other_users_draft() {
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$post_id  = self::factory()->post->create(
+			array(
+				'post_author'  => $admin_id,
+				'post_status'  => 'draft',
+				'post_content' => 'secret',
+			)
+		);
+		$GET      = array(
+			'q'   => 'source',
+			'url' => home_url( '/?p=' . $post_id ),
+		);
+		$response = $this->dispatch( self::query_request( $GET ), static::$author_id );
+		$this->check( $response, 403, 'insufficient_scope' );
+	}
+
 	public function test_create_html_content_is_filtered_for_author() {
 		$input = array(
 			'type'       => array( 'h-entry' ),

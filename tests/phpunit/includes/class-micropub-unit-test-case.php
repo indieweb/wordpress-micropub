@@ -130,7 +130,7 @@ class Micropub_UnitTestCase extends WP_UnitTestCase {
 	}
 
 	public function insert_post() {
-		return wp_insert_post( static::$wp_args );
+		return wp_insert_post( array_merge( static::$wp_args, array( 'post_author' => static::$author_id ) ) );
 	}
 
 	public function query_request( $GET ) {

@@ -10,7 +10,7 @@ class Micropub_Endpoint_Media_Test extends Micropub_UnitTestCase {
 	);
 
 	public function insert_post() {
-		return wp_insert_post( static::$wp_args );
+		return wp_insert_post( array_merge( static::$wp_args, array( 'post_author' => static::$author_id ) ) );
 	}
 
 	public function set_up() {
@@ -200,5 +200,101 @@ class Micropub_Endpoint_Media_Test extends Micropub_UnitTestCase {
 		$response = $this->dispatch( $request, static::$author_id );
 		$this->assertEquals( 400, $response->get_status() );
 		$this->assertEquals( 'invalid_request', $response->get_data()['error'] );
+	}
+
+	public function test_update_add_does_not_reparent_other_users_attachment() {
+		$admin_id      = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$admin_post    = self::factory()->post->create( array( 'post_author' => $admin_id ) );
+		$attachment_id = self::factory()->attachment->create_object(
+			'admin-photo.jpg',
+			$admin_post,
+			array(
+				'post_author'    => $admin_id,
+				'post_mime_type' => 'image/jpeg',
+			)
+		);
+		$post_id       = self::insert_post();
+
+		$request = self::create_json_request(
+			array(
+				'action' => 'update',
+				'url'    => $this->post_url( $post_id ),
+				'add'    => array( 'photo' => array( wp_get_attachment_url( $attachment_id ) ) ),
+			)
+		);
+
+		$response = $this->dispatch( $request, static::$author_id );
+		$this->assertEquals( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertEquals( $admin_post, get_post( $attachment_id )->post_parent );
+	}
+
+	public function test_create_with_photo_url_needs_upload_files() {
+		$contributor_id = self::factory()->user->create( array( 'role' => 'contributor' ) );
+		$request        = self::create_json_request(
+			array(
+				'type'       => array( 'h-entry' ),
+				'properties' => array(
+					'content' => array( 'x' ),
+					'photo'   => array( $this->source_url( 'doc.jpg' ) ),
+				),
+			)
+		);
+
+		$response = $this->dispatch( $request, $contributor_id );
+		$this->assertEquals( 403, $response->get_status() );
+		$this->assertEquals( 'insufficient_scope', $response->get_data()['error'] );
+		$this->assertEmpty( get_posts( array( 'post_status' => 'any' ) ) );
+		$this->assertEmpty( get_posts( array( 'post_type' => 'attachment', 'post_status' => 'any' ) ) );
+	}
+
+	public function test_create_with_photo_file_needs_upload_files() {
+		$contributor_id = self::factory()->user->create( array( 'role' => 'contributor' ) );
+		$request        = new WP_REST_Request( 'POST', static::$route );
+		$request->set_header( 'Content-Type', 'multipart/form-data' );
+		$request->set_body_params(
+			array(
+				'h'       => 'entry',
+				'content' => 'x',
+			)
+		);
+		$request->set_file_params(
+			array(
+				'photo' => array(
+					'name'     => 'doc.jpg',
+					'type'     => 'image/jpeg',
+					'tmp_name' => '/tmp/doc.jpg',
+					'error'    => 0,
+					'size'     => 1,
+				),
+			)
+		);
+
+		$response = $this->dispatch( $request, $contributor_id );
+		$this->assertEquals( 403, $response->get_status() );
+		$this->assertEquals( 'insufficient_scope', $response->get_data()['error'] );
+		$this->assertEmpty( get_posts( array( 'post_status' => 'any' ) ) );
+	}
+
+	public function test_update_add_photo_needs_upload_files() {
+		$post_id = self::insert_post();
+		$no_upload = function ( $allcaps ) {
+			$allcaps['upload_files'] = false;
+			return $allcaps;
+		};
+		add_filter( 'user_has_cap', $no_upload );
+
+		$request  = self::create_json_request(
+			array(
+				'action' => 'update',
+				'url'    => $this->post_url( $post_id ),
+				'add'    => array( 'photo' => array( $this->source_url( 'added.jpg' ) ) ),
+			)
+		);
+		$response = $this->dispatch( $request, static::$author_id );
+		remove_filter( 'user_has_cap', $no_upload );
+
+		$this->assertEquals( 403, $response->get_status() );
+		$this->assertEquals( 'insufficient_scope', $response->get_data()['error'] );
+		$this->assertEmpty( get_attached_media( 'image', $post_id ) );
 	}
 }

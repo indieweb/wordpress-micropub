@@ -12,14 +12,14 @@
  * Text Domain: micropub
  * License: CC0
  * License URI: http://creativecommons.org/publicdomain/zero/1.0/
- * Version: 2.5.3
+ * Version: 2.5.4
  *
  * @package Micropub
  */
 
 namespace Micropub;
 
-\define( 'MICROPUB_PLUGIN_VERSION', '2.5.3' );
+\define( 'MICROPUB_PLUGIN_VERSION', '2.5.4' );
 
 \defined( 'MICROPUB_NAMESPACE' ) || \define( 'MICROPUB_NAMESPACE', 'micropub/1.0' );
 

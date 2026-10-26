@@ -138,6 +138,15 @@ class Endpoint_Controller extends \WP_REST_Controller {
 			return new Error( 'invalid_request', sprintf( 'URL is Required for %1$s action', $action ), 400 );
 		}
 
+		// Media is stored as attachments, so it needs the same capability as the media endpoint.
+		if ( ! \current_user_can( 'upload_files' ) ) {
+			foreach ( self::MEDIA_PROPERTIES as $field ) {
+				if ( isset( $this->files[ $field ] ) || $this->media_values( $field ) ) {
+					return new Error( 'insufficient_scope', 'insufficient to upload media', 403, $this->scopes );
+				}
+			}
+		}
+
 		switch ( $action ) {
 			case 'create':
 				$args = $this->handle_create( $user_id );
@@ -155,6 +164,9 @@ class Endpoint_Controller extends \WP_REST_Controller {
 				if ( ! $args ) {
 					return new Error( 'invalid_request', sprintf( '%1$s not found', $url ), 400 );
 				}
+				if ( ! \current_user_can( 'delete_post', $args['ID'] ) ) {
+					return new Error( 'insufficient_scope', sprintf( 'insufficient to delete %1$s', $url ), 403, $this->scopes );
+				}
 				$this->check_error( \wp_trash_post( $args['ID'] ) );
 				break;
 			case 'undelete':
@@ -166,8 +178,13 @@ class Endpoint_Controller extends \WP_REST_Controller {
 					)
 				) as $post_id ) {
 					if ( \get_the_guid( $post_id ) === $url ) {
+						if ( ! \current_user_can( 'delete_post', $post_id ) ) {
+							return new Error( 'insufficient_scope', sprintf( 'insufficient to undelete %1$s', $url ), 403, $this->scopes );
+						}
 						\wp_untrash_post( $post_id );
-						\wp_publish_post( $post_id );
+						if ( \current_user_can( 'publish_post', $post_id ) ) {
+							\wp_publish_post( $post_id );
+						}
 						$found = true;
 						$args  = array( 'ID' => $post_id );
 					}
@@ -260,7 +277,7 @@ class Endpoint_Controller extends \WP_REST_Controller {
 		 */
 		$resp = \apply_filters( 'micropub_query', $resp, $this->input );
 
-		if ( \is_wp_error( $resp ) ) {
+		if ( \is_wp_error( $resp ) || \is_micropub_error( $resp ) ) {
 			return $resp;
 		}
 
@@ -282,6 +299,9 @@ class Endpoint_Controller extends \WP_REST_Controller {
 			$post_id = \url_to_postid( $this->input['url'] );
 			if ( ! $post_id ) {
 				return new Error( 'invalid_request', sprintf( 'not found: %1$s', $this->input['url'] ), 400 );
+			}
+			if ( ! \current_user_can( 'read_post', $post_id ) ) {
+				return new Error( 'insufficient_scope', sprintf( 'insufficient to read %1$s', $this->input['url'] ), 403, $this->scopes );
 			}
 			return $this->query( $post_id );
 		}
@@ -551,6 +571,10 @@ class Endpoint_Controller extends \WP_REST_Controller {
 
 		if ( ! $args ) {
 			return new Error( 'invalid_request', sprintf( '%1$s not found', $input['url'] ), 400 );
+		}
+
+		if ( ! \current_user_can( 'edit_post', $post_id ) ) {
+			return new Error( 'insufficient_scope', sprintf( 'insufficient to update %1$s', $input['url'] ), 403, $this->scopes );
 		}
 
 		// Add.
