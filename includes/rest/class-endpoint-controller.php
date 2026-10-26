@@ -138,6 +138,15 @@ class Endpoint_Controller extends \WP_REST_Controller {
 			return new Error( 'invalid_request', sprintf( 'URL is Required for %1$s action', $action ), 400 );
 		}
 
+		// Media is stored as attachments, so it needs the same capability as the media endpoint.
+		if ( ! \current_user_can( 'upload_files' ) ) {
+			foreach ( self::MEDIA_PROPERTIES as $field ) {
+				if ( isset( $this->files[ $field ] ) || $this->media_values( $field ) ) {
+					return new Error( 'insufficient_scope', 'insufficient to upload media', 403, $this->scopes );
+				}
+			}
+		}
+
 		switch ( $action ) {
 			case 'create':
 				$args = $this->handle_create( $user_id );
