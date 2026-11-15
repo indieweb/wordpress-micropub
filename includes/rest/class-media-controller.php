@@ -345,7 +345,7 @@ class Media_Controller extends \WP_REST_Controller {
 
 		$tmp = \download_url( $url );
 		if ( \is_wp_error( $tmp ) ) {
-			return new Error( 'invalid_request', $tmp->get_message(), 400 );
+			return new Error( 'invalid_request', $tmp->get_error_message(), 400 );
 		}
 
 		$file_array = array(
