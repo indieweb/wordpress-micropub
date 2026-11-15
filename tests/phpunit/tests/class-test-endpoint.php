@@ -461,7 +461,7 @@ EOF;
 		$this->assertEquals( 'bar', $tags[0]->name );
 		$mf2 = $this->query_source( $post->ID );
 		$this->assertArrayHasKey( 'published', $mf2['properties'] );
-		// We have confirmed it exists now compare everything but this.
+		// We have confirmed it exists now compare everything but these time properties.
 		unset( $mf2['properties']['published'] );
 		unset( $mf2['properties']['updated'] );
 		$this->assertEquals(
@@ -900,6 +900,134 @@ EOF;
 			);
 			$post  = self::check_create( self::create_json_request( $input ) );
 			$this->assertEquals( 'publish', $post->post_status );
+	}
+
+	/**
+	 * Renders a post the way a theme does.
+	 *
+	 * @param WP_Post $post The post.
+	 * @return string The filtered content.
+	 */
+	protected function render_post( $post ) {
+		$GLOBALS['post'] = $post;
+		setup_postdata( $post );
+		$content = apply_filters( 'the_content', $post->post_content );
+		wp_reset_postdata();
+		unset( $GLOBALS['post'] );
+		return $content;
+	}
+
+	function test_create_plain_text_autolinks_urls() {
+		$input = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array( 'Check out https://example.com for more info' ),
+			),
+		);
+		$post  = self::check_create( self::create_json_request( $input ) );
+		// The stored content stays as sent, the URL is linked on output.
+		$this->assertEquals( 'Check out https://example.com for more info', $post->post_content );
+		$this->assertStringContainsString( '<a href="https://example.com">', $this->render_post( $post ) );
+	}
+
+	function test_create_plain_text_autolinks_multiple_urls() {
+		$input    = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array( 'Visit https://example.com and http://test.org today' ),
+			),
+		);
+		$post     = self::check_create( self::create_json_request( $input ) );
+		$rendered = $this->render_post( $post );
+		$this->assertStringContainsString( '<a href="https://example.com"', $rendered );
+		$this->assertStringContainsString( '<a href="http://test.org"', $rendered );
+	}
+
+	function test_create_content_value_autolinks_urls() {
+		$input = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array(
+					array( 'value' => 'Check out https://example.com for more info' ),
+				),
+			),
+		);
+		$post  = self::check_create( self::create_json_request( $input ) );
+		$this->assertEquals( 'Check out https://example.com for more info', $post->post_content );
+		$this->assertStringContainsString( '<a href="https://example.com"', $this->render_post( $post ) );
+	}
+
+	function test_create_html_content_autolinks_bare_urls() {
+		$input = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array(
+					array( 'html' => '<p>Visit https://example.com today</p>' ),
+				),
+			),
+		);
+		$post  = self::check_create( self::create_json_request( $input ) );
+		$this->assertEquals( '<p>Visit https://example.com today</p>', $post->post_content );
+		$this->assertStringContainsString( '<a href="https://example.com"', $this->render_post( $post ) );
+	}
+
+	function test_create_html_content_existing_link_preserved() {
+		$input    = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array(
+					array( 'html' => '<p>Visit <a href="https://example.com">my site</a> today</p>' ),
+				),
+			),
+		);
+		$post     = self::check_create( self::create_json_request( $input ) );
+		$rendered = $this->render_post( $post );
+		$this->assertStringContainsString( '<a href="https://example.com">my site</a>', $rendered );
+		$this->assertSame( 1, substr_count( $rendered, '<a ' ) );
+	}
+
+	function test_create_html_content_code_block_preserved() {
+		$input = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array(
+					array( 'html' => '<p>Example: <code>https://example.com/api</code></p>' ),
+				),
+			),
+		);
+		$post  = self::check_create( self::create_json_request( $input ) );
+		$this->assertStringNotContainsString( '<a ', $this->render_post( $post ) );
+	}
+
+	function test_create_html_content_pre_block_preserved() {
+		$input = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array(
+					array( 'html' => '<pre>curl https://example.com/api</pre>' ),
+				),
+			),
+		);
+		$post  = self::check_create( self::create_json_request( $input ) );
+		$this->assertStringNotContainsString( '<a ', $this->render_post( $post ) );
+	}
+
+	function test_query_source_returns_plain_text_content_without_links() {
+		$input  = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array( 'See https://example.com/?a=1&b=2 now' ),
+			),
+		);
+		$post   = self::check_create( self::create_json_request( $input ) );
+		$source = $this->query_source( $post->ID );
+		// Clients editing the post must get back what they sent, not generated markup.
+		$this->assertEquals( array( 'See https://example.com/?a=1&b=2 now' ), $source['properties']['content'] );
+	}
+
+	function test_non_micropub_post_not_autolinked() {
+		$post = self::factory()->post->create_and_get( array( 'post_content' => 'Visit https://example.com today' ) );
+		$this->assertStringNotContainsString( '<a ', $this->render_post( $post ) );
 	}
 
 	/**

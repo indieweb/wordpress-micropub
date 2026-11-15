@@ -890,8 +890,8 @@ class Endpoint_Controller extends \WP_REST_Controller {
 		if ( isset( $props['content'] ) ) {
 			$content = $props['content'][0];
 			if ( is_array( $content ) ) {
-				$args['post_content'] = $content['html'] ? $content['html'] :
-							\htmlspecialchars( $content['value'] );
+				$args['post_content'] = ! empty( $content['html'] ) ? $content['html'] :
+							\htmlspecialchars( \mp_get( $content, 'value', '' ) );
 			} elseif ( $content ) {
 				$args['post_content'] = \htmlspecialchars( $content );
 			}
