@@ -891,10 +891,9 @@ class Endpoint_Controller extends \WP_REST_Controller {
 			$content = $props['content'][0];
 			if ( is_array( $content ) ) {
 				$args['post_content'] = ! empty( $content['html'] ) ? $content['html'] :
-							\make_clickable( \htmlspecialchars( \mp_get( $content, 'value', '' ) ) );
+							\htmlspecialchars( \mp_get( $content, 'value', '' ) );
 			} elseif ( $content ) {
-				// Auto-link URLs in plain text content.
-				$args['post_content'] = \make_clickable( \htmlspecialchars( $content ) );
+				$args['post_content'] = \htmlspecialchars( $content );
 			}
 		}
 

@@ -32,6 +32,12 @@ class Render {
 			return $content;
 		}
 
+		// Auto-link URLs on output, so the stored content stays as the client sent it.
+		// No rel="nofollow", these are the author's own links.
+		\add_filter( 'make_clickable_rel', '__return_empty_string' );
+		$content = \make_clickable( $content );
+		\remove_filter( 'make_clickable_rel', '__return_empty_string' );
+
 		if ( self::should_dynamic_render() ) {
 			$input = \micropub_get_mf2( \get_the_ID() );
 			return self::generate_post_content( $content, $input );
