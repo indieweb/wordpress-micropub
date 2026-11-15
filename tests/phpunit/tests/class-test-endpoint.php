@@ -1117,4 +1117,36 @@ EOF;
 		$this->check( $response, 200 );
 		$this->assertStringNotContainsString( '<script>', get_post( $post_id )->post_content );
 	}
+
+	/**
+	 * An update that replaces the content stores mf2_content, which used to switch
+	 * off dynamic rendering, so the like-of markup was gone after the edit.
+	 */
+	public function test_update_content_keeps_dynamic_rendering() {
+		$input   = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'like-of' => array( 'http://target' ),
+				'content' => array( 'original' ),
+			),
+		);
+		$post_id = $this->check_create( self::create_json_request( $input ) )->ID;
+
+		$update   = array(
+			'action'  => 'update',
+			'url'     => home_url( '/?p=' . $post_id ),
+			'replace' => array( 'content' => array( 'changed' ) ),
+		);
+		$response = $this->dispatch( self::create_json_request( $update ), static::$author_id );
+		$this->check( $response, 200 );
+
+		$GLOBALS['post'] = get_post( $post_id );
+		setup_postdata( $GLOBALS['post'] );
+		$rendered = apply_filters( 'the_content', $GLOBALS['post']->post_content );
+		wp_reset_postdata();
+		unset( $GLOBALS['post'] );
+
+		$this->assertStringContainsString( 'class="u-like-of" href="http://target"', $rendered );
+		$this->assertStringContainsString( 'changed', $rendered );
+	}
 }
