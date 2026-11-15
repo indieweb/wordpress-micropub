@@ -3,8 +3,8 @@
 - Contributors: indieweb, snarfed, dshanske, pfefferle
 - Tags: micropub, publish, indieweb, microformats
 - Requires at least: 4.9.9
-- Tested up to: 7.0
-- Stable tag: 2.5.0
+- Tested up to: 7.1
+- Stable tag: 2.5.4
 - Requires PHP: 7.2
 - License: CC0
 - License URI: http://creativecommons.org/publicdomain/zero/1.0/
@@ -72,6 +72,29 @@ These configuration options can be enabled by adding them to your wp-config.php:
 ## Changelog
 
 Project and support maintained on GitHub at [indieweb/wordpress-micropub](https://github.com/indieweb/wordpress-micropub).
+
+### 2.5.4
+
+* Fix the alt text that clients send for photos being discarded (#335)
+* Escape interaction and event properties when they are rendered into the post content, and keep the kses filters active when a post is inserted
+* Check the per-post capabilities for update, delete, undelete and source queries, and require `upload_files` when a post includes media
+
+### 2.5.3
+
+* Fix a fatal error when a category is sent as a nested h-card, for example a person tag from a Swarm check-in, which is now tagged by their URL (#329)
+* Fix a failed post insert being used as a post ID, which caused a PHP warning and a wrong `post_url` in the response
+* Sideload photos, videos and audio that are added or replaced by an update request, so media sent after the post was created is no longer ignored (#292, #259)
+* Store the local attachment URL in the `mf2_photo`, `mf2_video`, `mf2_audio` and `mf2_featured` meta instead of the remote source URL
+* Tested up to WordPress 7.1
+
+### 2.5.2
+
+* Detect the IndieAuth plugin via the `INDIEAUTH_PLUGIN_VERSION` constant instead of a class check, which avoids coupling to IndieAuth's class names (indieweb/wordpress-indieauth#319) and requires IndieAuth 4.7.0 or later
+* Fix a crash in the post preview when a post has no valid published or modified date
+
+### 2.5.1
+
+* Fix error responses for failed post inserts and updates, returning the proper HTTP status code instead of a success response
 
 ### 2.5.0
 

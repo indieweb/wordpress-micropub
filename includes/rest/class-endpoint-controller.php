@@ -18,6 +18,13 @@ class Endpoint_Controller extends \WP_REST_Controller {
 	use Micropub;
 
 	/**
+	 * Properties whose values are media that has to be sideloaded.
+	 *
+	 * @var string[]
+	 */
+	const MEDIA_PROPERTIES = array( 'photo', 'video', 'audio', 'featured' );
+
+	/**
 	 * The namespace of this controller's route.
 	 *
 	 * @var string
@@ -131,6 +138,15 @@ class Endpoint_Controller extends \WP_REST_Controller {
 			return new Error( 'invalid_request', sprintf( 'URL is Required for %1$s action', $action ), 400 );
 		}
 
+		// Media is stored as attachments, so it needs the same capability as the media endpoint.
+		if ( ! \current_user_can( 'upload_files' ) ) {
+			foreach ( self::MEDIA_PROPERTIES as $field ) {
+				if ( isset( $this->files[ $field ] ) || $this->media_values( $field ) ) {
+					return new Error( 'insufficient_scope', 'insufficient to upload media', 403, $this->scopes );
+				}
+			}
+		}
+
 		switch ( $action ) {
 			case 'create':
 				$args = $this->handle_create( $user_id );
@@ -148,6 +164,9 @@ class Endpoint_Controller extends \WP_REST_Controller {
 				if ( ! $args ) {
 					return new Error( 'invalid_request', sprintf( '%1$s not found', $url ), 400 );
 				}
+				if ( ! \current_user_can( 'delete_post', $args['ID'] ) ) {
+					return new Error( 'insufficient_scope', sprintf( 'insufficient to delete %1$s', $url ), 403, $this->scopes );
+				}
 				$this->check_error( \wp_trash_post( $args['ID'] ) );
 				break;
 			case 'undelete':
@@ -159,8 +178,13 @@ class Endpoint_Controller extends \WP_REST_Controller {
 					)
 				) as $post_id ) {
 					if ( \get_the_guid( $post_id ) === $url ) {
+						if ( ! \current_user_can( 'delete_post', $post_id ) ) {
+							return new Error( 'insufficient_scope', sprintf( 'insufficient to undelete %1$s', $url ), 403, $this->scopes );
+						}
 						\wp_untrash_post( $post_id );
-						\wp_publish_post( $post_id );
+						if ( \current_user_can( 'publish_post', $post_id ) ) {
+							\wp_publish_post( $post_id );
+						}
 						$found = true;
 						$args  = array( 'ID' => $post_id );
 					}
@@ -253,7 +277,7 @@ class Endpoint_Controller extends \WP_REST_Controller {
 		 */
 		$resp = \apply_filters( 'micropub_query', $resp, $this->input );
 
-		if ( \is_wp_error( $resp ) ) {
+		if ( \is_wp_error( $resp ) || \is_micropub_error( $resp ) ) {
 			return $resp;
 		}
 
@@ -275,6 +299,9 @@ class Endpoint_Controller extends \WP_REST_Controller {
 			$post_id = \url_to_postid( $this->input['url'] );
 			if ( ! $post_id ) {
 				return new Error( 'invalid_request', sprintf( 'not found: %1$s', $this->input['url'] ), 400 );
+			}
+			if ( ! \current_user_can( 'read_post', $post_id ) ) {
+				return new Error( 'insufficient_scope', sprintf( 'insufficient to read %1$s', $this->input['url'] ), 403, $this->scopes );
 			}
 			return $this->query( $post_id );
 		}
@@ -546,25 +573,30 @@ class Endpoint_Controller extends \WP_REST_Controller {
 			return new Error( 'invalid_request', sprintf( '%1$s not found', $input['url'] ), 400 );
 		}
 
+		if ( ! \current_user_can( 'edit_post', $post_id ) ) {
+			return new Error( 'insufficient_scope', sprintf( 'insufficient to update %1$s', $input['url'] ), 403, $this->scopes );
+		}
+
 		// Add.
 		$add = \mp_get( $input, 'add', false );
 		if ( $add ) {
 			if ( ! is_array( $add ) ) {
 				return new Error( 'invalid_request', 'add must be an object', 400 );
 			}
-			if ( array_diff( array_keys( $add ), array( 'category', 'syndication' ) ) ) {
-				return new Error( 'invalid_request', 'can only add to category and syndication; other properties not supported', 400 );
+			$addable = array_merge( array( 'category', 'syndication' ), self::MEDIA_PROPERTIES );
+			if ( array_diff( array_keys( $add ), $addable ) ) {
+				return new Error( 'invalid_request', sprintf( 'can only add to %1$s; other properties not supported', implode( ', ', $addable ) ), 400 );
 			}
 			$add_args = $this->mp_to_wp( array( 'properties' => $add ) );
-			if ( $add_args['tags_input'] ) {
+			if ( \mp_get( $add_args, 'tags_input' ) ) {
 				$args['tags_input'] = array_merge(
-					$args['tags_input'] ? $args['tags_input'] : array(),
+					\mp_get( $args, 'tags_input' ),
 					$add_args['tags_input']
 				);
 			}
-			if ( $add_args['post_category'] ) {
+			if ( \mp_get( $add_args, 'post_category' ) ) {
 				$args['post_category'] = array_merge(
-					$args['post_category'] ? $args['post_category'] : array(),
+					\mp_get( $args, 'post_category' ),
 					$add_args['post_category']
 				);
 			}
@@ -672,15 +704,21 @@ class Endpoint_Controller extends \WP_REST_Controller {
 			return;
 		}
 
-		\kses_remove_filters();
 		$args['ID'] = $this->check_error( \wp_insert_post( $args, true ) );
 
-		if ( $args['ID'] && array_key_exists( 'client_uid', $this->micropub_auth_response ) ) {
+		// check_error() returns an Error object rather than throwing, and an object
+		// is truthy, so the insert failure has to be tested for explicitly before
+		// the ID is used as a post ID. The caller checks for it too, but only after
+		// this method has returned.
+		if ( \is_micropub_error( $args['ID'] ) ) {
+			return;
+		}
+
+		if ( array_key_exists( 'client_uid', $this->micropub_auth_response ) ) {
 			\wp_set_object_terms( $args['ID'], array( $this->micropub_auth_response['client_uid'] ), 'indieauth_client' );
 		}
 
 		$args['post_url'] = \get_permalink( $args['ID'] );
-		\kses_init_filters();
 	}
 
 	/**
@@ -689,10 +727,8 @@ class Endpoint_Controller extends \WP_REST_Controller {
 	 * @param array $args Post arguments.
 	 */
 	protected function update_post( &$args ) {
-		\kses_remove_filters();
 		$args['ID']       = $this->check_error( \wp_update_post( $args, true ) );
 		$args['post_url'] = \get_permalink( $args['ID'] );
-		\kses_init_filters();
 	}
 
 	/**
@@ -826,6 +862,22 @@ class Endpoint_Controller extends \WP_REST_Controller {
 			$args['post_category'] = array();
 			$args['tags_input']    = array();
 			foreach ( $props['category'] as $mp_cat ) {
+				// A category is not always a string. Person tags are sent as nested
+				// microformats2 h-cards, for example by OwnYourSwarm on a check-in, in
+				// which case the person is tagged by their URL. The full h-card is kept
+				// in the mf2_category meta, which store_mf2() builds from the original
+				// input rather than from these arguments.
+				if ( is_array( $mp_cat ) ) {
+					$mp_cat = \mp_get( \mp_get( $mp_cat, 'properties' ), 'url', '', true );
+				}
+
+				// Anything that did not resolve to a usable term — an h-card carrying no
+				// URL, or a nested object of some other kind — would otherwise reach
+				// trim() inside wp_set_object_terms() and raise a TypeError on PHP 8.
+				if ( ! is_scalar( $mp_cat ) || '' === $mp_cat ) {
+					continue;
+				}
+
 				$wp_cat = \get_category_by_slug( $mp_cat );
 				if ( $wp_cat ) {
 					$args['post_category'][] = $wp_cat->term_id;
@@ -850,6 +902,28 @@ class Endpoint_Controller extends \WP_REST_Controller {
 	}
 
 	/**
+	 * Collects the media values of a property from the request.
+	 *
+	 * A create request carries media under `properties`, an update request under
+	 * `add` or `replace`, so all three have to be considered.
+	 *
+	 * @param string $field The property name.
+	 * @return array The values found, in request order.
+	 */
+	public function media_values( $field ) {
+		$values = array();
+
+		foreach ( array( 'properties', 'add', 'replace' ) as $key ) {
+			$group = \mp_get( $this->input, $key );
+			if ( is_array( $group ) && isset( $group[ $field ] ) ) {
+				$values = array_merge( $values, (array) $group[ $field ] );
+			}
+		}
+
+		return $values;
+	}
+
+	/**
 	 * Handles file uploads.
 	 *
 	 * @param int $post_id Post ID.
@@ -857,11 +931,16 @@ class Endpoint_Controller extends \WP_REST_Controller {
 	public function default_file_handler( $post_id ) {
 		$media_controller = new Media_Controller();
 
-		foreach ( array( 'photo', 'video', 'audio', 'featured' ) as $field ) {
-			$props   = \mp_get( $this->input, 'properties' );
+		foreach ( self::MEDIA_PROPERTIES as $field ) {
+			$values  = $this->media_values( $field );
 			$att_ids = array();
 
-			if ( isset( $this->files[ $field ] ) || isset( $props[ $field ] ) ) {
+			// Only the values that were actually sideloaded may be swapped out of the
+			// metadata further down. An uploaded file part takes precedence over them,
+			// in which case they are left alone rather than dropped.
+			$sideloaded = array();
+
+			if ( isset( $this->files[ $field ] ) || ! empty( $values ) ) {
 				if ( isset( $this->files[ $field ] ) ) {
 					$files = $this->files[ $field ];
 					if ( is_array( $files['name'] ) ) {
@@ -876,13 +955,16 @@ class Endpoint_Controller extends \WP_REST_Controller {
 							$media_controller->media_handle_upload( $files, $post_id )
 						);
 					}
-				} elseif ( isset( $props[ $field ] ) ) {
-					foreach ( $props[ $field ] as $val ) {
+				} else {
+					foreach ( $values as $val ) {
+						// alt is optional in the object form of a media value, value is not.
 						$url       = is_array( $val ) ? $val['value'] : $val;
-						$desc      = is_array( $val ) ? $val['alt'] : null;
+						$desc      = is_array( $val ) ? \mp_get( $val, 'alt', null ) : null;
 						$att_ids[] = $this->check_error(
 							$media_controller->media_sideload_url( $url, $post_id, $desc )
 						);
+
+						$sideloaded[] = $val;
 					}
 				}
 
@@ -902,9 +984,43 @@ class Endpoint_Controller extends \WP_REST_Controller {
 				} else {
 					$this->input['properties'][ $field ] = array_merge( $this->input['properties'][ $field ], $att_urls );
 				}
-				\add_post_meta( $post_id, 'mf2_' . $field, $att_urls, true );
+				$this->store_media_meta( $post_id, $field, $sideloaded, $att_urls );
 			}
 		}
+	}
+
+	/**
+	 * Stores the local URLs of sideloaded media as post metadata.
+	 *
+	 * `store_mf2()` has already written the values as they arrived, which for
+	 * sideloaded media means the remote source URLs. Swap those out for the local
+	 * ones rather than appending, so the property does not end up listing every
+	 * attachment twice.
+	 *
+	 * @param int    $post_id  Post ID.
+	 * @param string $field    The property name.
+	 * @param array  $sources  The source values that were sideloaded.
+	 * @param array  $att_urls The local URLs of the resulting attachments.
+	 */
+	public function store_media_meta( $post_id, $field, $sources, $att_urls ) {
+		$key      = 'mf2_' . $field;
+		$existing = \get_post_meta( $post_id, $key, true );
+		$existing = is_array( $existing ) ? $existing : array();
+
+		$urls = array();
+		foreach ( $sources as $source ) {
+			$urls[] = is_array( $source ) && isset( $source['value'] ) ? $source['value'] : $source;
+		}
+
+		$keep = array();
+		foreach ( $existing as $value ) {
+			$url = is_array( $value ) && isset( $value['value'] ) ? $value['value'] : $value;
+			if ( ! in_array( $url, $urls, true ) ) {
+				$keep[] = $value;
+			}
+		}
+
+		\update_post_meta( $post_id, $key, array_merge( $keep, $att_urls ) );
 	}
 
 	/**

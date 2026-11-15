@@ -159,4 +159,107 @@ class Micropub_Media_Test extends Micropub_UnitTestCase {
 		$this->assertArrayHasKey( 'height', $data );
 		$this->assertArrayHasKey( 'width', $data );
 	}
+
+	/**
+	 * A source URL on the site's own host, so that wp_http_validate_url() does not
+	 * have to resolve a hostname. Nothing is fetched either way.
+	 */
+	protected function sideload( $alt = null ) {
+		add_filter( 'pre_http_request', array( $this, 'serve_test_image' ), 10, 2 );
+
+		$controller = new \Micropub\Rest\Media_Controller();
+		$id         = $controller->media_sideload_url( home_url( '/remote/canola.jpg' ), 0, $alt );
+
+		remove_filter( 'pre_http_request', array( $this, 'serve_test_image' ), 10 );
+
+		$this->assertIsInt( $id, 'Sideload failed: ' . wp_json_encode( $id ) );
+
+		return $id;
+	}
+
+	/**
+	 * The alt of a media value used to be passed down as far as insert_attachment()
+	 * and then dropped, so the description a client sent was lost.
+	 */
+	public function test_sideload_stores_the_alt_text() {
+		$id = $this->sideload( 'a field of canola' );
+
+		$this->assertEquals( 'a field of canola', get_post_meta( $id, '_wp_attachment_image_alt', true ) );
+	}
+
+	public function test_sideload_without_alt_stores_no_alt_text() {
+		$id = $this->sideload();
+
+		$this->assertEquals( '', get_post_meta( $id, '_wp_attachment_image_alt', true ) );
+	}
+
+	public function test_sideload_strips_tags_from_the_alt_text() {
+		$id = $this->sideload( 'a <strong>field</strong> of canola' );
+
+		$this->assertEquals( 'a field of canola', get_post_meta( $id, '_wp_attachment_image_alt', true ) );
+	}
+
+	/**
+	 * The alt has to survive the whole way from the request, not just the last call.
+	 */
+	public function test_alt_from_a_create_request_reaches_the_attachment() {
+		add_filter( 'pre_http_request', array( $this, 'serve_test_image' ), 10, 2 );
+
+		$request = new WP_REST_Request( 'POST', '/' . MICROPUB_NAMESPACE . '/endpoint' );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body(
+			wp_json_encode(
+				array(
+					'type'       => array( 'h-entry' ),
+					'properties' => array(
+						'content' => array( 'a photo post' ),
+						'photo'   => array(
+							array(
+								'value' => home_url( '/remote/canola.jpg' ),
+								'alt'   => 'a field of canola',
+							),
+						),
+					),
+				)
+			)
+		);
+
+		$response = $this->dispatch( $request, static::$author_id );
+
+		remove_filter( 'pre_http_request', array( $this, 'serve_test_image' ), 10 );
+
+		$this->assertEquals( 201, $response->get_status(), wp_json_encode( $response->get_data() ) );
+
+		$posts       = get_posts( array( 'post_type' => 'post' ) );
+		$attachments = get_attached_media( 'image', $posts[0]->ID );
+		$this->assertCount( 1, $attachments );
+
+		$attachment_id = array_values( $attachments )[0]->ID;
+		$this->assertEquals( 'a field of canola', get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ) );
+	}
+
+	/**
+	 * The media endpoint reads a name parameter, which insert_attachment() used to
+	 * accept and ignore.
+	 */
+	public function test_upload_uses_the_name_as_the_attachment_title() {
+		$request = self::upload_request();
+		$request->set_param( 'name', 'a field of canola' );
+
+		$response = $this->dispatch( $request, self::$author_id );
+		$this->assertEquals( 201, $response->get_status(), wp_json_encode( $response->get_data() ) );
+
+		$attachment_id = attachment_url_to_postid( $response->get_data()['url'] );
+		$this->assertEquals( 'a field of canola', get_post( $attachment_id )->post_title );
+	}
+
+	public function test_upload_without_a_name_falls_back_to_the_filename() {
+		$response = $this->dispatch( self::upload_request(), self::$author_id );
+		$this->assertEquals( 201, $response->get_status(), wp_json_encode( $response->get_data() ) );
+
+		// wp_handle_sideload() makes the filename unique, so earlier uploads in the
+		// same run leave the title as canola-1 and so on.
+		$attachment_id = attachment_url_to_postid( $response->get_data()['url'] );
+		$this->assertStringStartsWith( 'canola', get_post( $attachment_id )->post_title );
+	}
 }
