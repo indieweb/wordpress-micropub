@@ -131,6 +131,26 @@ class Micropub_Endpoint_Categories_Test extends Micropub_UnitTestCase {
 	}
 
 	/**
+	 * q=category returns the category names, so a client sends a name back. It
+	 * was only matched by slug, so a category whose slug is not its sanitized
+	 * name, after a rename for example, became a new tag.
+	 */
+	public function test_an_existing_category_name_becomes_a_category() {
+		self::factory()->term->create(
+			array(
+				'taxonomy' => 'category',
+				'name'     => 'Open Web',
+				'slug'     => 'openweb',
+			)
+		);
+
+		$post_id = $this->create_with_categories( array( 'Open Web' ) );
+
+		$this->assertContains( 'Open Web', $this->category_names( $post_id ) );
+		$this->assertSame( array(), $this->tag_names( $post_id ) );
+	}
+
+	/**
 	 * A check-in carries the venue as a string and the people as h-cards.
 	 */
 	public function test_strings_and_h_cards_can_be_mixed() {
