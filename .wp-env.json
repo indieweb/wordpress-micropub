@@ -1,6 +1,6 @@
 {
 	"core": null,
-	"plugins": [ "." ],
+	"plugins": [ "https://downloads.wordpress.org/plugin/indieauth.zip", "." ],
 	"env": {
 		"tests": {
 			"config": {

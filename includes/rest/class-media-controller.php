@@ -376,9 +376,10 @@ class Media_Controller extends \WP_REST_Controller {
 	 * @param array  $file    File data.
 	 * @param int    $post_id Post ID.
 	 * @param string $title   Attachment title.
+	 * @param string $alt     Alternative text describing the media.
 	 * @return int|Error
 	 */
-	protected function insert_attachment( $file, $post_id = 0, $title = null ) {
+	protected function insert_attachment( $file, $post_id = 0, $title = null, $alt = null ) {
 		$args = array(
 			'post_mime_type' => $file['type'],
 			'guid'           => $file['url'],
@@ -399,6 +400,10 @@ class Media_Controller extends \WP_REST_Controller {
 			}
 		}
 
+		if ( $title ) {
+			$args['post_title'] = $title;
+		}
+
 		if ( empty( $args['post_title'] ) ) {
 			$args['post_title'] = preg_replace( '/\.[^.]+$/', '', \wp_basename( $file['file'] ) );
 		}
@@ -411,6 +416,10 @@ class Media_Controller extends \WP_REST_Controller {
 			} else {
 				return new Error( 'invalid_request', $id->get_error_message(), 400 );
 			}
+		}
+
+		if ( $alt ) {
+			\update_post_meta( $id, '_wp_attachment_image_alt', \wp_slash( \wp_strip_all_tags( $alt ) ) );
 		}
 
 		// Set Client Application Taxonomy if available.
@@ -495,12 +504,16 @@ class Media_Controller extends \WP_REST_Controller {
 	 *
 	 * @param string $url     URL to sideload from.
 	 * @param int    $post_id Post ID to attach to.
-	 * @param string $title   Attachment title.
+	 * @param string $alt     Alternative text describing the media.
 	 * @return int|Error
 	 */
-	public function media_sideload_url( $url, $post_id = 0, $title = null ) {
+	public function media_sideload_url( $url, $post_id = 0, $alt = null ) {
 		$id = \attachment_url_to_postid( $url );
 		if ( $id ) {
+			// Reference other users' media, but only attach media the user may edit.
+			if ( ! \current_user_can( 'edit_post', $id ) ) {
+				return $id;
+			}
 			\wp_update_post(
 				array(
 					'ID'          => $id,
@@ -515,7 +528,7 @@ class Media_Controller extends \WP_REST_Controller {
 			return $file;
 		}
 
-		return $this->insert_attachment( $file, $post_id, $title );
+		return $this->insert_attachment( $file, $post_id, null, $alt );
 	}
 
 	/**

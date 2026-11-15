@@ -3,8 +3,6 @@
 
 class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 
-	protected static $route = '/' . MICROPUB_NAMESPACE . '/endpoint';
-
 	// POST args
 	protected static $post = array(
 		'h'         => 'entry',
@@ -91,40 +89,6 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 		$controller = new \Micropub\Rest\Endpoint_Controller();
 		$geo        = $controller->parse_geo_uri( 'geo:42.361,-71.092,25000;u=25000' );
 		$this->assertEquals( $geo, static::$geo );
-	}
-
-	public function create_form_request( $POST ) {
-		$request = new WP_REST_Request( 'POST', static::$route );
-		$request->set_header( 'Content-Type', 'application/x-www-form-urlencoded' );
-		$request->set_body_params( $POST );
-		return $request;
-	}
-
-	public function create_json_request( $input ) {
-		$request = new WP_REST_Request( 'POST', static::$route );
-		$request->set_header( 'Content-Type', 'application/json' );
-		$request->set_body( wp_json_encode( $input ) );
-		return $request;
-	}
-
-	public function insert_post() {
-		return wp_insert_post( static::$wp_args );
-	}
-
-	public function query_request( $GET ) {
-		$request = new WP_REST_Request( 'GET', static::$route );
-		$request->set_query_params( $GET );
-		return $request;
-	}
-
-	public function query_source( $post_id ) {
-		$GET      = array(
-			'q'   => 'source',
-			'url' => 'http://example.org/?p=' . $post_id,
-		);
-		$request  = self::query_request( $GET );
-		$response = $this->dispatch( $request, self::$author_id );
-		return $response->get_data();
 	}
 
 	public function check( $response, $status, $expected = null ) {
@@ -428,7 +392,7 @@ class Micropub_Endpoint_Test extends Micropub_UnitTestCase {
 		$this->assertEquals( '2016-01-01 12:01:23', get_post( $post_id )->post_date );
 		$input    = array(
 			'action'  => 'update',
-			'url'     => 'http://example.org/?p=' . $post_id,
+			'url'     => home_url( '/?p=' . $post_id ),
 			'replace' => array( 'content' => array( 'new<br>content' ) ),
 			'add'     => array(
 				'category'    => array( 'add tag' ),
@@ -484,7 +448,7 @@ EOF;
 		$post_id  = $this->check_create( self::create_form_request( $POST ) )->ID;
 		$input    = array(
 			'action' => 'update',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 			'add'    => array( 'category' => array( 'foo', 'bar' ) ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -517,7 +481,7 @@ EOF;
 		$post_id  = $this->check_create( self::create_form_request( $POST ) )->ID;
 		$input    = array(
 			'action' => 'update',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 			'delete' => array( 'location' ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -534,7 +498,7 @@ EOF;
 		$post_id  = self::insert_post();
 		$input    = array(
 			'action' => 'update',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 			'add'    => array( 'content' => array( 'foo' ) ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -544,7 +508,7 @@ EOF;
 	public function test_update_post_not_found() {
 		$input    = array(
 			'action'  => 'update',
-			'url'     => 'http://example.org/?p=999',
+			'url'     => home_url( '/?p=999' ),
 			'replace' => array( 'content' => array( 'unused' ) ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -554,7 +518,7 @@ EOF;
 	public function test_update_post_subscriber() {
 		$input    = array(
 			'action'  => 'update',
-			'url'     => 'http://example.org/?p=999',
+			'url'     => home_url( '/?p=999' ),
 			'replace' => array( 'content' => array( 'unused' ) ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$subscriber_id );
@@ -566,7 +530,7 @@ EOF;
 		$post_id  = $this->check_create( self::create_form_request( $POST ) )->ID;
 		$input    = array(
 			'action' => 'update',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 			'delete' => array(
 				'category' => array(
 					'tag1',  // exists
@@ -590,7 +554,7 @@ EOF;
 		$this->assertEquals( 2, count( wp_get_post_tags( $post_id ) ) );
 		$input    = array(
 			'action' => 'update',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 			'delete' => array( 'category' ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -601,18 +565,120 @@ EOF;
 		$post_id  = self::insert_post();
 		$input    = array(
 			'action' => 'update',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 			'delete' => array( 'content' => array( 'to delete ' ) ),
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
 		$this->check( $response, 400, 'invalid_request' );
 	}
 
+	public function test_update_add_media_property_allowed() {
+		$post_id  = self::insert_post();
+		$input    = array(
+			'action' => 'update',
+			'url'    => home_url( '/?p=' . $post_id ),
+			'add'    => array( 'photo' => array() ),
+		);
+		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
+		$this->check( $response, 200 );
+	}
+
+	public function test_media_values_collects_from_properties_add_and_replace() {
+		$controller = new \Micropub\Rest\Endpoint_Controller();
+		$reflection = new ReflectionObject( $controller );
+		$input      = $reflection->getProperty( 'input' );
+		$input->setAccessible( true );
+		$input->setValue(
+			$controller,
+			array(
+				'properties' => array( 'photo' => array( 'https://example.com/a.jpg' ) ),
+				'add'        => array( 'photo' => array( 'https://example.com/b.jpg' ) ),
+				'replace'    => array( 'photo' => array( 'https://example.com/c.jpg' ) ),
+			)
+		);
+
+		$this->assertEquals(
+			array(
+				'https://example.com/a.jpg',
+				'https://example.com/b.jpg',
+				'https://example.com/c.jpg',
+			),
+			$controller->media_values( 'photo' )
+		);
+		$this->assertEquals( array(), $controller->media_values( 'video' ) );
+	}
+
+	public function test_store_media_meta_replaces_source_urls() {
+		$post_id    = self::insert_post();
+		$controller = new \Micropub\Rest\Endpoint_Controller();
+
+		// What store_mf2() would have written from the request.
+		update_post_meta( $post_id, 'mf2_photo', array( 'http://localhost/kept.jpg', 'https://example.com/remote.jpg' ) );
+
+		$controller->store_media_meta(
+			$post_id,
+			'photo',
+			array( 'https://example.com/remote.jpg' ),
+			array( 'http://localhost/wp-content/uploads/local.jpg' )
+		);
+
+		$this->assertEquals(
+			array( 'http://localhost/kept.jpg', 'http://localhost/wp-content/uploads/local.jpg' ),
+			get_post_meta( $post_id, 'mf2_photo', true )
+		);
+	}
+
+	public function test_store_media_meta_handles_values_with_alt_text() {
+		$post_id    = self::insert_post();
+		$controller = new \Micropub\Rest\Endpoint_Controller();
+		$photo      = array(
+			'value' => 'https://example.com/remote.jpg',
+			'alt'   => 'a description',
+		);
+
+		update_post_meta( $post_id, 'mf2_photo', array( $photo ) );
+
+		$controller->store_media_meta( $post_id, 'photo', array( $photo ), array( 'http://localhost/wp-content/uploads/local.jpg' ) );
+
+		$this->assertEquals(
+			array( 'http://localhost/wp-content/uploads/local.jpg' ),
+			get_post_meta( $post_id, 'mf2_photo', true )
+		);
+	}
+
+	public function test_store_media_meta_keeps_values_that_were_not_sideloaded() {
+		$post_id    = self::insert_post();
+		$controller = new \Micropub\Rest\Endpoint_Controller();
+
+		update_post_meta( $post_id, 'mf2_photo', array( 'https://example.com/remote.jpg' ) );
+
+		// An uploaded file part wins over the URLs in the request, which are then
+		// never sideloaded and so must survive the write untouched.
+		$controller->store_media_meta( $post_id, 'photo', array(), array( 'http://localhost/wp-content/uploads/upload.jpg' ) );
+
+		$this->assertEquals(
+			array( 'https://example.com/remote.jpg', 'http://localhost/wp-content/uploads/upload.jpg' ),
+			get_post_meta( $post_id, 'mf2_photo', true )
+		);
+	}
+
+	public function test_store_media_meta_on_first_write() {
+		$post_id    = self::insert_post();
+		$controller = new \Micropub\Rest\Endpoint_Controller();
+
+		$controller->store_media_meta( $post_id, 'photo', array(), array( 'http://localhost/wp-content/uploads/local.jpg' ) );
+
+		$this->assertEquals(
+			array( 'http://localhost/wp-content/uploads/local.jpg' ),
+			get_post_meta( $post_id, 'mf2_photo', true )
+		);
+	}
+
 	public function test_update_replace_not_array() {
 		$post_id  = self::insert_post();
 		$input    = array(
 			'action'  => 'update',
-			'url'     => 'http://example.org/?p=' . $post_id,
+			'url'     => home_url( '/?p=' . $post_id ),
 			'replace' => 'foo',
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -622,7 +688,7 @@ EOF;
 		$post_id  = self::insert_post();
 		$input    = array(
 			'action' => 'update',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 			'add'    => 'foo',
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -632,7 +698,7 @@ EOF;
 		$post_id  = self::insert_post();
 		$input    = array(
 			'action' => 'update',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 			'delete' => 'foo',
 		);
 		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
@@ -642,7 +708,7 @@ EOF;
 		$post_id  = self::insert_post();
 		$POST     = array(
 			'action' => 'delete',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 		);
 		$response = $this->dispatch( self::create_form_request( $POST ), static::$author_id );
 		$this->check( $response, 200 );
@@ -654,7 +720,7 @@ EOF;
 		$post_id  = self::insert_post();
 		$POST     = array(
 			'action' => 'delete',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 		);
 		$response = $this->dispatch( self::create_form_request( $POST ), static::$subscriber_id );
 		$this->check( $response, 403, 'insufficient_scope' );
@@ -663,7 +729,7 @@ EOF;
 	public function test_delete_post_not_found() {
 		$POST     = array(
 			'action' => 'delete',
-			'url'    => 'http://example.org/?p=999',
+			'url'    => home_url( '/?p=999' ),
 		);
 		$response = $this->dispatch( self::create_form_request( $POST ), static::$author_id );
 		$this->check(
@@ -671,7 +737,7 @@ EOF;
 			400,
 			array(
 				'error'             => 'invalid_request',
-				'error_description' => 'http://example.org/?p=999 not found',
+				'error_description' => home_url( '/?p=999' ) . ' not found',
 			)
 		);
 	}
@@ -697,7 +763,7 @@ EOF;
 	public function test_undelete_post_not_found() {
 		$POST     = array(
 			'action' => 'undelete',
-			'url'    => 'http://example.org/?p=999',
+			'url'    => home_url( '/?p=999' ),
 		);
 		$response = $this->dispatch( self::create_form_request( $POST ), static::$author_id );
 		$this->check(
@@ -705,7 +771,7 @@ EOF;
 			400,
 			array(
 				'error'             => 'invalid_request',
-				'error_description' => 'deleted post http://example.org/?p=999 not found',
+				'error_description' => 'deleted post ' . home_url( '/?p=999' ) . ' not found',
 			)
 		);
 	}
@@ -714,7 +780,7 @@ EOF;
 		$post_id  = self::insert_post();
 		$POST     = array(
 			'action' => 'foo',
-			'url'    => 'http://example.org/?p=' . $post_id,
+			'url'    => home_url( '/?p=' . $post_id ),
 		);
 		$response = $this->dispatch( self::create_form_request( $POST ), static::$author_id );
 		$this->check( $response, 400, 'invalid_request' );
@@ -834,5 +900,221 @@ EOF;
 			);
 			$post  = self::check_create( self::create_json_request( $input ) );
 			$this->assertEquals( 'publish', $post->post_status );
+	}
+
+	/**
+	 * Forces wp_insert_post() to fail by giving the post an unregistered type.
+	 */
+	public static function break_the_insert( $args ) {
+		$args['post_type'] = 'not_a_registered_post_type';
+		return $args;
+	}
+
+	/**
+	 * A client_uid is what sends the post ID through wp_set_object_terms(), which
+	 * is where the failed insert used to be cast to int.
+	 */
+	public static function auth_response_with_client_uid( $response ) {
+		return array_merge( static::$micropub_auth_response, array( 'client_uid' => 42 ) );
+	}
+
+	/**
+	 * check_error() returns a Micropub\Error rather than throwing, and an object is
+	 * truthy, so a failed insert used to be passed on as a post ID: to
+	 * wp_set_object_terms(), which cast it to int, and to get_permalink(), which
+	 * produced a bogus post_url.
+	 */
+	/**
+	 * Runs the controller's insert_post() on arguments wp_insert_post() rejects.
+	 *
+	 * insert_post() is protected and takes its arguments by reference, so it is
+	 * reached through a bound closure rather than reflection.
+	 *
+	 * @return array The arguments the controller was left with.
+	 */
+	protected function insert_a_failing_post() {
+		$controller = new \Micropub\Rest\Endpoint_Controller();
+
+		$insert = Closure::bind(
+			function ( &$args ) {
+				$this->insert_post( $args );
+			},
+			$controller,
+			\Micropub\Rest\Endpoint_Controller::class
+		);
+
+		$args = array(
+			'post_type'    => 'not_a_registered_post_type',
+			'post_title'   => 'a title',
+			'post_content' => 'some content',
+		);
+		$insert( $args );
+
+		return $args;
+	}
+
+	public function test_a_failed_insert_is_not_used_as_a_post_id() {
+		$args   = array();
+		$errors = $this->record_php_errors(
+			function () use ( &$args ) {
+				$args = $this->insert_a_failing_post();
+			}
+		);
+
+		$this->assertSame( array(), $errors, 'PHP diagnostics: ' . wp_json_encode( $errors ) );
+		$this->assertTrue( is_micropub_error( $args['ID'] ) );
+		$this->assertArrayNotHasKey( 'post_url', $args );
+	}
+
+	/**
+	 * kses only has to be suspended for wp_insert_post() itself, so the filters
+	 * come back on the error path too.
+	 */
+	public function test_a_failed_insert_restores_the_kses_filters() {
+		$this->insert_a_failing_post();
+
+		$this->assertNotFalse( has_filter( 'content_save_pre', 'wp_filter_post_kses' ) );
+	}
+
+	public function test_a_failed_create_returns_an_error_without_a_warning() {
+		add_filter( 'pre_insert_micropub_post', array( get_called_class(), 'break_the_insert' ) );
+		add_filter( 'indieauth_response', array( get_called_class(), 'auth_response_with_client_uid' ), 13 );
+
+		$request  = self::create_json_request(
+			array(
+				'type'       => array( 'h-entry' ),
+				'properties' => array( 'content' => array( 'This is a test' ) ),
+			)
+		);
+		$response = null;
+		$errors   = $this->record_php_errors(
+			function () use ( $request, &$response ) {
+				$response = $this->dispatch( $request, static::$author_id );
+			}
+		);
+
+		remove_filter( 'pre_insert_micropub_post', array( get_called_class(), 'break_the_insert' ) );
+		remove_filter( 'indieauth_response', array( get_called_class(), 'auth_response_with_client_uid' ), 13 );
+
+		$this->assertSame( array(), $errors, 'PHP diagnostics: ' . wp_json_encode( $errors ) );
+		$this->assertGreaterThanOrEqual( 400, $response->get_status() );
+		$this->assertArrayNotHasKey( 'post_url', (array) $response->get_data() );
+	}
+
+	public function test_update_other_users_post() {
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$post_id  = self::factory()->post->create( array( 'post_author' => $admin_id, 'post_content' => 'original' ) );
+		$input    = array(
+			'action'  => 'update',
+			'url'     => home_url( '/?p=' . $post_id ),
+			'replace' => array( 'content' => array( 'changed' ) ),
+		);
+		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
+		$this->check( $response, 403, 'insufficient_scope' );
+		$this->assertEquals( 'original', get_post( $post_id )->post_content );
+	}
+
+	public function test_delete_other_users_post() {
+		$admin_id       = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$contributor_id = self::factory()->user->create( array( 'role' => 'contributor' ) );
+		$post_id        = self::factory()->post->create( array( 'post_author' => $admin_id ) );
+		$POST           = array(
+			'action' => 'delete',
+			'url'    => home_url( '/?p=' . $post_id ),
+		);
+		foreach ( array( static::$author_id, $contributor_id ) as $user_id ) {
+			$response = $this->dispatch( self::create_form_request( $POST ), $user_id );
+			$this->check( $response, 403, 'insufficient_scope' );
+			$this->assertEquals( 'publish', get_post( $post_id )->post_status );
+		}
+	}
+
+	public function test_undelete_other_users_post() {
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$post_id  = self::factory()->post->create( array( 'post_author' => $admin_id ) );
+		$url      = get_the_guid( $post_id );
+		wp_trash_post( $post_id );
+		$POST     = array(
+			'action' => 'undelete',
+			'url'    => $url,
+		);
+		$response = $this->dispatch( self::create_form_request( $POST ), static::$author_id );
+		$this->check( $response, 403, 'insufficient_scope' );
+		$this->assertEquals( 'trash', get_post( $post_id )->post_status );
+	}
+
+	public function test_undelete_does_not_publish_for_contributor() {
+		$contributor_id = self::factory()->user->create( array( 'role' => 'contributor' ) );
+		$post_id        = self::factory()->post->create(
+			array(
+				'post_author' => $contributor_id,
+				'post_status' => 'pending',
+			)
+		);
+		$url            = get_the_guid( $post_id );
+		wp_trash_post( $post_id );
+		$POST     = array(
+			'action' => 'undelete',
+			'url'    => $url,
+		);
+		$response = $this->dispatch( self::create_form_request( $POST ), $contributor_id );
+		$this->check( $response, 200 );
+		$this->assertNotEquals( 'publish', get_post( $post_id )->post_status );
+	}
+
+	public function test_query_source_other_users_draft() {
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$post_id  = self::factory()->post->create(
+			array(
+				'post_author'  => $admin_id,
+				'post_status'  => 'draft',
+				'post_content' => 'secret',
+			)
+		);
+		$GET      = array(
+			'q'   => 'source',
+			'url' => home_url( '/?p=' . $post_id ),
+		);
+		$response = $this->dispatch( self::query_request( $GET ), static::$author_id );
+		$this->check( $response, 403, 'insufficient_scope' );
+	}
+
+	public function test_create_html_content_is_filtered_for_author() {
+		$input = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array( array( 'html' => '<p class="p-note">hi</p><script>alert(1)</script>' ) ),
+			),
+		);
+		$post  = self::check_create( self::create_json_request( $input ) );
+		$this->assertStringNotContainsString( '<script>', $post->post_content );
+		$this->assertStringContainsString( '<p class="p-note">hi</p>', $post->post_content );
+	}
+
+	public function test_create_html_content_is_kept_for_unfiltered_html() {
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		if ( is_multisite() ) {
+			grant_super_admin( $admin_id );
+		}
+		$input = array(
+			'type'       => array( 'h-entry' ),
+			'properties' => array(
+				'content' => array( array( 'html' => '<script>alert(1)</script>' ) ),
+			),
+		);
+		$post  = self::check_create( self::create_json_request( $input ), $admin_id );
+		$this->assertStringContainsString( '<script>alert(1)</script>', $post->post_content );
+	}
+
+	public function test_update_html_content_is_filtered_for_author() {
+		$post_id  = $this->check_create( self::create_form_request( self::$post ) )->ID;
+		$input    = array(
+			'action'  => 'update',
+			'url'     => home_url( '/?p=' . $post_id ),
+			'replace' => array( 'content' => array( array( 'html' => '<script>alert(1)</script>' ) ) ),
+		);
+		$response = $this->dispatch( self::create_json_request( $input ), static::$author_id );
+		$this->check( $response, 200 );
+		$this->assertStringNotContainsString( '<script>', get_post( $post_id )->post_content );
 	}
 }
