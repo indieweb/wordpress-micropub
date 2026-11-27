@@ -60,8 +60,6 @@ class Render {
 			$version = \get_post_meta( $post->ID, 'micropub_version', true );
 			if ( ! $version ) {
 				$should = false;
-			} elseif ( \get_post_meta( $post->ID, 'mf2_content', true ) ) {
-				$should = false;
 			} else {
 				$should = true;
 			}
