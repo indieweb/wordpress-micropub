@@ -879,6 +879,9 @@ class Endpoint_Controller extends \WP_REST_Controller {
 				}
 
 				$wp_cat = \get_category_by_slug( $mp_cat );
+				if ( ! $wp_cat ) {
+					$wp_cat = \get_term_by( 'name', $mp_cat, 'category' );
+				}
 				if ( $wp_cat ) {
 					$args['post_category'][] = $wp_cat->term_id;
 				} else {
