@@ -199,6 +199,27 @@ class Micropub_Media_Test extends Micropub_UnitTestCase {
 		$this->assertEquals( 'a field of canola', get_post_meta( $id, '_wp_attachment_image_alt', true ) );
 	}
 
+	public static function fail_the_download() {
+		return new WP_Error( 'http_request_failed', 'could not resolve host' );
+	}
+
+	/**
+	 * A failed download used to call get_message() on the WP_Error, which does
+	 * not exist, so the request died with a fatal error instead of a 400.
+	 */
+	public function test_sideload_of_an_unreachable_url_returns_an_error() {
+		add_filter( 'pre_http_request', array( get_called_class(), 'fail_the_download' ) );
+
+		$controller = new \Micropub\Rest\Media_Controller();
+		$result     = $controller->media_sideload_url( home_url( '/remote/missing.jpg' ), 0 );
+
+		remove_filter( 'pre_http_request', array( get_called_class(), 'fail_the_download' ) );
+
+		$this->assertTrue( is_micropub_error( $result ) );
+		$this->assertEquals( 400, $result->get_status() );
+		$this->assertEquals( 'could not resolve host', $result->get_data()['error_description'] );
+	}
+
 	/**
 	 * The alt has to survive the whole way from the request, not just the last call.
 	 */
